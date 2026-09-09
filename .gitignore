@@ -1,0 +1,6 @@
+assets/
+.env
+.venv
+logs
+__pacache__
+*.pyc
