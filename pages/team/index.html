@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#001a28" media="(prefers-color-scheme: dark)">
-  <title>Fluffy - Главная</title>
+  <title>Fluffy - Набор команды</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -121,7 +121,7 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-      max-width: 640px;
+      max-width: 720px;
       width: 100%;
       padding: 2rem;
       animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -138,96 +138,55 @@
       }
     }
 
-    .logo {
-      font-size: clamp(3rem, 14vw, 7.5rem);
-      font-weight: 600;
-      letter-spacing: -0.05em;
-      line-height: 1;
-      color: var(--text-primary);
-      margin-bottom: 1.5rem;
-      position: relative;
-      word-break: keep-all;
-    }
-
-    .logo::after {
-      content: '';
-      position: absolute;
-      bottom: -18px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 70%;
-      height: 28px;
-      background: var(--dot-color);
-      filter: blur(34px);
-      opacity: 0.55;
-      border-radius: 50%;
-      z-index: -1;
-      transition: background 0.4s ease;
-    }
-
-    .divider {
-      width: 48px;
-      height: 1px;
-      background: var(--divider);
-      margin: 0.5rem 0 1.75rem;
-      transition: background 0.4s ease;
-      flex-shrink: 0;
-    }
-
-    .status {
-      font-size: clamp(0.95rem, 2.5vw, 1.25rem);
-      font-weight: 400;
-      color: var(--text-secondary);
-      letter-spacing: -0.01em;
-      margin-bottom: 2rem;
-      max-width: 380px;
-      width: 100%;
-      line-height: 1.5;
-      transition: color 0.3s ease;
-      text-wrap: balance;
-    }
-
-    .recruit-card {
-      display: flex;
+    .back-link {
+      align-self: flex-start;
+      display: inline-flex;
       align-items: center;
-      gap: 1rem;
-      text-align: left;
-      max-width: 460px;
-      width: 100%;
-      padding: 1.1rem 1.4rem;
-      margin-bottom: 2.5rem;
-      border-radius: 1.5rem;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
       text-decoration: none;
-      color: var(--text-primary);
-      transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
-      animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards;
+      margin-bottom: 2rem;
+      letter-spacing: -0.01em;
+      transition: color 0.25s ease, opacity 0.25s ease;
+      opacity: 0.85;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
 
-    .recruit-card:hover {
-      background: var(--card-hover);
-      transform: translateY(-2px);
+    .back-link:hover {
+      color: var(--text-primary);
+      opacity: 1;
     }
 
-    .recruit-card:active {
-      transform: translateY(0);
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: 60px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: -0.005em;
+      margin-bottom: 2rem;
     }
 
-    .recruit-pulse {
-      flex-shrink: 0;
-      width: 10px;
-      height: 10px;
+    .status-pulse {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: var(--text-primary);
       position: relative;
+      flex-shrink: 0;
     }
 
-    .recruit-pulse::after {
+    .status-pulse::after {
       content: '';
       position: absolute;
       inset: 0;
@@ -247,62 +206,213 @@
       }
     }
 
-    .recruit-text {
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-      min-width: 0;
-    }
-
-    .recruit-title {
-      font-size: 0.95rem;
+    .logo {
+      font-size: clamp(2.75rem, 11vw, 5.5rem);
       font-weight: 600;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: var(--text-primary);
+      margin-bottom: 1.25rem;
+      position: relative;
+      word-break: keep-all;
     }
 
-    .recruit-subtitle {
-      font-size: 0.82rem;
-      font-weight: 400;
-      color: var(--text-secondary);
-      letter-spacing: -0.005em;
-      line-height: 1.4;
-    }
-
-    .loader {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1.5rem;
-      height: 12px;
-    }
-
-    .dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
+    .logo::after {
+      content: '';
+      position: absolute;
+      bottom: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      height: 24px;
       background: var(--dot-color);
-      opacity: 0.4;
-      animation: pulse 1.6s ease-in-out infinite;
+      filter: blur(34px);
+      opacity: 0.55;
+      border-radius: 50%;
+      z-index: -1;
       transition: background 0.4s ease;
     }
 
-    .dot:nth-child(2) { animation-delay: 0.25s; }
-    .dot:nth-child(3) { animation-delay: 0.5s; }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.25; transform: scale(0.85); }
-      50% { opacity: 1; transform: scale(1.1); }
+    .divider {
+      width: 48px;
+      height: 1px;
+      background: var(--divider);
+      margin: 0.5rem 0 1.75rem;
+      transition: background 0.4s ease;
+      flex-shrink: 0;
     }
 
-    .footnote {
-      font-size: 0.8rem;
+    .tagline {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      font-weight: 400;
       color: var(--text-secondary);
-      opacity: 0.7;
+      letter-spacing: -0.01em;
+      margin-bottom: 3rem;
+      max-width: 520px;
+      width: 100%;
+      line-height: 1.5;
+      transition: color 0.3s ease;
+      text-wrap: balance;
+    }
+
+    .section {
+      width: 100%;
+      text-align: left;
+      margin-bottom: 2.5rem;
+    }
+
+    .section:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+
+    .section-text {
+      font-size: clamp(0.95rem, 2vw, 1.05rem);
+      font-weight: 400;
+      color: var(--text-primary);
+      line-height: 1.65;
+      letter-spacing: -0.01em;
+      opacity: 0.92;
+    }
+
+    .section-text + .section-text {
+      margin-top: 0.9rem;
+    }
+
+    .roles {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      width: 100%;
+      margin-bottom: 2.5rem;
+      text-align: left;
+    }
+
+    .role {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.25rem 1.35rem;
+      border-radius: 1.5rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .role:hover {
+      background: var(--card-hover);
+      transform: translateY(-2px);
+    }
+
+    .role-marker {
+      flex-shrink: 0;
+      width: 6px;
+      align-self: stretch;
+      border-radius: 6px;
+      background: var(--text-primary);
+      opacity: 0.85;
+    }
+
+    .role-body {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .role-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.4rem;
+    }
+
+    .role-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .role-meta {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
       letter-spacing: 0.04em;
       text-transform: uppercase;
+      opacity: 0.75;
+      white-space: nowrap;
+    }
+
+    .role-text {
+      font-size: 0.88rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      letter-spacing: -0.005em;
+    }
+
+    .role-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+    }
+
+    .tag {
+      font-size: 0.72rem;
       font-weight: 500;
-      transition: color 0.3s ease;
+      color: var(--text-secondary);
+      padding: 0.25rem 0.7rem;
+      border-radius: 60px;
+      border: 1px solid var(--card-border);
+      letter-spacing: 0.01em;
+      opacity: 0.9;
+    }
+
+    .contact-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      max-width: 320px;
+      width: 100%;
+      padding: 1.05rem 1.75rem;
+      margin-top: 0.5rem;
+      border-radius: 60px;
+      background: var(--accent-deep);
+      color: var(--bg);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .contact-cta:hover {
+      transform: translateY(-2px);
+      opacity: 0.92;
+    }
+
+    .contact-cta:active {
+      transform: translateY(0);
+    }
+
+    .dark .contact-cta {
+      color: var(--bg);
     }
 
     .footer {
@@ -397,10 +507,6 @@
       .content {
         padding: 1.5rem;
       }
-
-      .recruit-card {
-        max-width: 420px;
-      }
     }
 
     @media (max-width: 600px) {
@@ -413,35 +519,32 @@
       }
 
       .logo {
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.1rem;
       }
 
       .logo::after {
-        height: 22px;
-        bottom: -14px;
+        height: 20px;
+        bottom: -12px;
       }
 
       .divider {
         margin: 0.4rem 0 1.5rem;
       }
 
-      .status {
-        margin-bottom: 1.75rem;
-        max-width: 320px;
+      .tagline {
+        margin-bottom: 2.25rem;
       }
 
-      .recruit-card {
-        padding: 1rem 1.15rem;
-        gap: 0.85rem;
+      .section {
         margin-bottom: 2rem;
       }
 
-      .recruit-title {
-        font-size: 0.9rem;
+      .roles {
+        margin-bottom: 2rem;
       }
 
-      .recruit-subtitle {
-        font-size: 0.78rem;
+      .role {
+        padding: 1.1rem 1.2rem;
       }
 
       .footer {
@@ -482,13 +585,27 @@
         padding: 1rem;
       }
 
-      .status {
-        max-width: 280px;
+      .back-link {
+        margin-bottom: 1.5rem;
       }
 
-      .recruit-card {
-        padding: 0.95rem 1rem;
+      .status-badge {
+        margin-bottom: 1.5rem;
+      }
+
+      .role {
+        padding: 1rem 1.1rem;
         border-radius: 1.25rem;
+      }
+
+      .role-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+      }
+
+      .role-meta {
+        white-space: normal;
       }
     }
 
@@ -512,41 +629,44 @@
         width: 40px;
       }
 
-      .status {
-        font-size: 0.92rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .recruit-card {
-        padding: 0.85rem 0.9rem;
-        gap: 0.7rem;
+      .tagline {
+        font-size: 0.95rem;
         margin-bottom: 1.75rem;
       }
 
-      .recruit-title {
-        font-size: 0.85rem;
+      .section {
+        margin-bottom: 1.75rem;
       }
 
-      .recruit-subtitle {
-        font-size: 0.72rem;
+      .section-title {
+        font-size: 0.7rem;
+        margin-bottom: 0.75rem;
       }
 
-      .recruit-pulse {
-        width: 8px;
-        height: 8px;
+      .role {
+        padding: 0.9rem 1rem;
       }
 
-      .loader {
-        gap: 8px;
+      .role-title {
+        font-size: 0.92rem;
       }
 
-      .dot {
-        width: 8px;
-        height: 8px;
+      .role-text {
+        font-size: 0.8rem;
       }
 
-      .footnote {
-        font-size: 0.72rem;
+      .role-tags {
+        margin-top: 0.6rem;
+      }
+
+      .tag {
+        font-size: 0.68rem;
+        padding: 0.2rem 0.6rem;
+      }
+
+      .contact-cta {
+        padding: 0.95rem 1.5rem;
+        font-size: 0.88rem;
       }
 
       .footer {
@@ -565,14 +685,15 @@
         letter-spacing: -0.06em;
       }
 
-      .recruit-card {
+      .role {
         flex-direction: column;
-        align-items: flex-start;
         gap: 0.6rem;
       }
 
-      .recruit-text {
+      .role-marker {
         width: 100%;
+        height: 4px;
+        align-self: auto;
       }
     }
 
@@ -588,31 +709,30 @@
       }
 
       .logo {
-        font-size: clamp(2.5rem, 8vw, 4rem);
+        font-size: clamp(2rem, 7vw, 3.25rem);
         margin-bottom: 0.75rem;
       }
 
       .logo::after {
-        height: 18px;
-        bottom: -10px;
+        height: 16px;
+        bottom: -8px;
       }
 
       .divider {
         margin: 0.35rem 0 1rem;
       }
 
-      .status {
+      .tagline {
         font-size: 0.95rem;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.5rem;
       }
 
-      .recruit-card {
-        padding: 0.85rem 1rem;
-        margin-bottom: 1.25rem;
+      .section {
+        margin-bottom: 1.5rem;
       }
 
-      .loader {
-        margin-bottom: 0.75rem;
+      .roles {
+        margin-bottom: 1.5rem;
       }
 
       .footer {
@@ -639,7 +759,10 @@
     }
 
     @media (hover: none) {
-      .recruit-card:hover {
+      .role:hover {
+        transform: none;
+      }
+      .contact-cta:hover {
         transform: none;
       }
       .footer-links a:hover {
@@ -660,32 +783,85 @@
   </div>
 
   <main class="content">
-    <h1 class="logo">Fluffy</h1>
-    <div class="divider"></div>
-    <p class="status">Создаём пространство, где будет уютно.</p>
+    <a href="../index.html" class="back-link">На главную</a>
 
-    <a href="team/index.html" class="recruit-card">
-      <span class="recruit-pulse" aria-hidden="true"></span>
-      <span class="recruit-text">
-        <span class="recruit-title">Набор команды</span>
-        <span class="recruit-subtitle">Ищем разработчиков. Подробнее здесь.</span>
-      </span>
-    </a>
-
-    <div class="loader" aria-label="Загрузка">
-      <span class="dot"></span>
-      <span class="dot"></span>
-      <span class="dot"></span>
+    <div class="status-badge">
+      <span class="status-pulse" aria-hidden="true"></span>
+      Набор открыт
     </div>
 
-    <p class="footnote">Разработка</p>
+    <h1 class="logo">Fluffy</h1>
+    <div class="divider"></div>
+
+    <p class="tagline">
+        Идёт набор в небольшую команду, чтобы строить социальную сеть, в которой будет уютно.
+    </p>
+
+    <div class="section">
+      <div class="section-title">Кто в розыке</div>
+    </div>
+
+    <div class="roles">
+      <div class="role">
+        <div class="role-marker" aria-hidden="true"></div>
+        <div class="role-body">
+          <div class="role-header">
+            <div class="role-title">Frontend-разработчик</div>
+            <div class="role-meta">Код</div>
+          </div>
+          <div class="role-text">
+            Тот, кто будет строить вид Fluffy: чистый, быстрый, приятный. Нам близок минимализм.
+          </div>
+          <div class="role-tags">
+            <span class="tag">JS (желательно TS)</span>
+            <span class="tag">React / Vue</span>
+            <span class="tag">CSS</span>
+            <span class="tag">HTTP-запросы</span>
+            <span class="tag">Работа с WebSocket</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="role">
+        <div class="role-marker" aria-hidden="true"></div>
+        <div class="role-body">
+          <div class="role-header">
+            <div class="role-title">Энтузиаст (им можете стать вы)</div>
+            <div class="role-meta">Развитие</div>
+          </div>
+          <div class="role-text">
+            Не обязательно быть разработчиком, чтобы вносить вклад. Вы можете предложить свои идеи и мы их учтём.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Что предлагаем</div>
+      <p class="section-text">
+        Участие в проекте на равных, гибкий график (но не расслабляйтесь). Это не работа с жесткими дедлайнами, а совместное создание пет-проекта, в который мы сами верим.
+      </p>
+      <p class="section-text">
+        Зарплат не будет, мы набиваем шишки, строим команду и продукт.
+      </p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Как присоединиться</div>
+      <p class="section-text">
+        Достаточно быть студентом с навыками, которые нам подходят. Напишите пару слов о себе и расскажите, чем хотите заниматься. Без формальностей и резюме - просто и с душой.
+      </p>
+    </div>
+
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfNWFVExs-RqHuVV8rvWFbeRqWM6qCYFgu3P-iRJVa2FaNPPw/viewform?usp=publish-editor" class="contact-cta">Если ты разработчик - тык.</a>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfWAjKsypAOyPnpy3wqk1PtDno1pT5ekHqQxYdG2-8rV7bDwQ/viewform?usp=publish-editor" class="contact-cta">Если ты энтузиаст - тык</a>
   </main>
 
   <footer class="footer">
     <span class="footer-copy">2026 Fluffy | Made with love by ghostfaccee</span>
     <nav class="footer-links">
-      <a href="about/index.html">О проекте</a>
-      <a href="team/index.html">Набор команды</a>
+      <a href="../index.html">Главная</a>
+      <a href="../about/index.html">О проекте</a>
     </nav>
   </footer>
 
