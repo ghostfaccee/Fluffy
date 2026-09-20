@@ -5,6 +5,9 @@ from pathlib import Path
 
 # === .env ===
 class EnvSettings(BaseSettings):
+    SECRET_JWT_KEY: str
+    SECRET_REFRESH_KEY: str
+
     POSTGRES_URL: str
 
     REDIS_URL: str
@@ -20,6 +23,10 @@ env_settings = EnvSettings()
 # === .yaml ===
 
 class YamlSettings(BaseModel):
+    JWT_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
+    ALGORITHM: str
+
     DEBUG: bool
     SLOW_REQUEST_THRESHOLD: float
     VERIFICATION_LINK: str
