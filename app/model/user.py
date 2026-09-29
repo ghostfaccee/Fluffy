@@ -19,5 +19,5 @@ class User(Base):
     group = Column(String(20), index = True, nullable = True)
 
     hashed_password = Column(String(255), nullable = False)
-    is_active = Column(Boolean, default = True)
+    is_active = Column(Boolean, default = False)
     created_at = Column(DateTime(timezone = True), server_default = func.now(), nullable = False)

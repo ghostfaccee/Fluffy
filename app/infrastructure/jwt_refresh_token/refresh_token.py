@@ -27,7 +27,7 @@ class TokenService:
         return f'{cls.BLACKLIST_PREFIX}:{cls._hash_token(token)}'
     
     @classmethod
-    async def store_refresh_token(cls, user_id: UUID, refresh_token: str, ttl: int) -> TokenServiceReturnValues:
+    async def store_refresh_token(cls, user_id: UUID, refresh_token: str, ttl: int = yaml_settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400) -> TokenServiceReturnValues:
         try:
             redis = await RedisClient.get_client()
             key = cls._refresh_key(user_id)

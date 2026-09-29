@@ -9,6 +9,7 @@ class EnvSettings(BaseSettings):
     SECRET_REFRESH_KEY: str
 
     POSTGRES_URL: str
+    RABBITMQ_URL: str
 
     REDIS_URL: str
 
@@ -30,6 +31,7 @@ class YamlSettings(BaseModel):
     DEBUG: bool
     SLOW_REQUEST_THRESHOLD: float
     VERIFICATION_LINK: str
+    VERIFICATION_TOKEN_EXPIRE_MINUTES: int
 
     @classmethod
     def load(cls, yaml_path: str = 'config.yaml') -> YamlSettings:

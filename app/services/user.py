@@ -1,3 +1,4 @@
+import secrets
 from uuid import UUID
 from typing import Optional
 from sqlalchemy.exc import IntegrityError
@@ -8,7 +9,8 @@ from app.repository import UnitOfWork, UserRepository
 from app.model import User
 from app.schemas import UserRegister, UserUpdate, PasswordUpdate
 from app.utils import hash_password, verify_password
-from app.infrastructure import TokenService, TokenServiceReturnValues
+from app.infrastructure import TokenService, TokenServiceReturnValues, VerificationTokenService, VerificationTokenServiceReturnValues
+from app.tasks.email import send_verification_email
 
 class UserService:
     def __init__(self, uow: UnitOfWork) -> None:
@@ -42,7 +44,13 @@ class UserService:
             if 'email' in msg:
                 raise user_exc.EmailAlreadyTaken()
             raise user_exc.UserAlreadyExists()
-        return user
+        else:
+            verification_token = secrets.token_urlsafe(32)
+            status = await VerificationTokenService.store_verification_token(user.user_id, verification_token)
+            if status is VerificationTokenServiceReturnValues.ERROR:
+                raise redis_exc.InternalRedisError()
+            send_verification_email.delay(user.email, verification_token)
+            return user
     
     async def get(self, user_id: UUID) -> Optional[User]:
         return await self.uow.user.get(user_id)
@@ -55,11 +63,9 @@ class UserService:
         if user is None:
             raise user_exc.UserDoesNotExists()
         update_data = data.model_dump(exclude_unset = True)
-        if 'email' in update_data and update_data['email'] != user.email:
-            # ---------
+        state = 'email' in update_data and update_data['email'] != user.email
+        if state:
             user.is_active = False
-            # ----------
-            await self._invalidate_token(user_id)
         for key, value in update_data.items():
             setattr(user, key, value)
         try:
@@ -72,7 +78,16 @@ class UserService:
             if 'email' in msg:
                 raise user_exc.EmailAlreadyTaken()
             raise user_exc.UserAlreadyExists()
-        return user
+        else:
+            if state:
+                verification_token = secrets.token_urlsafe(32)
+                status = await VerificationTokenService.store_verification_token(user_id, verification_token)
+                if status is VerificationTokenServiceReturnValues.ERROR:
+                    raise redis_exc.InternalRedisError()
+                send_verification_email.delay(update_data['email'], verification_token)
+                await self._invalidate_token(user_id)
+            return user
+
     
     async def update_password(self, user_id: UUID, data: PasswordUpdate) -> User:
         user = await self.uow.user.get(user_id)
