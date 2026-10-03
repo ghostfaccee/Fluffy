@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from app.core import RedisClient, logger
-from app.api import router # !!!!
+from app.api import router
 from app.exceptions import user as user_exc
 from app.middleware import LoggingMiddleware
 
