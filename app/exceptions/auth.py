@@ -1,14 +1,8 @@
 from fastapi import HTTPException, status
 
-class InvalidUsername(HTTPException):
+class InvalidCredentials(HTTPException):
     def __init__(self) -> None:
-        self.field = 'username'
-        super().__init__(status.HTTP_401_UNAUTHORIZED, 'Invalid username')
-
-class InvalidPassword(HTTPException):
-    def __init__(self):
-        self.field = 'password'
-        super().__init__(status.HTTP_401_UNAUTHORIZED, 'Invalid password')
+        super().__init__(status.HTTP_401_UNAUTHORIZED, 'Invalid username or password')
 
 class UserNotActive(HTTPException):
     def __init__(self):
@@ -29,3 +23,15 @@ class DifferentTokensError(HTTPException):
 class TokenNotFoundError(HTTPException):
     def __init__(self):
         super().__init__(status.HTTP_404_NOT_FOUND, 'Token not found')
+
+class LoginCodeIsNotEqual(HTTPException):
+    def __init__(self):
+        super().__init__(status.HTTP_401_UNAUTHORIZED, 'Invalid code. Brute-force attack possible.')
+
+class LoginCodeNotFound(HTTPException):
+    def __init__(self):
+        super().__init__(status.HTTP_401_UNAUTHORIZED, 'Code not found. It may have expired.')
+
+class InvalidAccessTokenError(HTTPException):
+    def __init__(self):
+        super().__init__(status.HTTP_401_UNAUTHORIZED, 'Invalid access token')

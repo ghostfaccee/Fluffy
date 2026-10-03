@@ -4,3 +4,4 @@ assets/
 logs
 __pycache__
 *.pyc
+newalembic.md

@@ -22,7 +22,7 @@ def decode_access_token(token: str) -> Optional[dict]:
 def create_refresh_token(data: dict, expires: int = yaml_settings.REFRESH_TOKEN_EXPIRE_DAYS) -> str:
     to_encode = data.copy()
     expire = datetime.now() + timedelta(days = expires)
-    to_encode.update({'exp': expires, 'type': 'refresh'})
+    to_encode.update({'exp': expire, 'type': 'refresh'})
     return jwt.encode(to_encode, env_settings.SECRET_REFRESH_KEY, yaml_settings.ALGORITHM)
 
 def decode_refresh_token(token: str) -> Optional[dict]:

@@ -49,7 +49,7 @@ class UserService:
             status = await VerificationTokenService.store_verification_token(user.user_id, verification_token)
             if status is VerificationTokenServiceReturnValues.ERROR:
                 raise redis_exc.InternalRedisError()
-            send_verification_email.delay(user.email, verification_token)
+            send_verification_email.delay(user.email, user.user_id, verification_token)
             return user
     
     async def get(self, user_id: UUID) -> Optional[User]:

@@ -7,6 +7,7 @@ celery_app = Celery(
     broker = env_settings.RABBITMQ_URL,
     include = [
         'app.tasks.email',
+        'app.tasks.login_code'
     ]
 )
 

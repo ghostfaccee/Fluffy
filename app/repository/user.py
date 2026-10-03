@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import User
+from app.model import User
 from typing import Optional
 from uuid import UUID
 

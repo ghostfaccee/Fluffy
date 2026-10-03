@@ -1,7 +1,8 @@
-from app.schemas.user import UserRegister, UserUpdate, PasswordUpdate
-from app.schemas.auth import UserLoginRequest, RefreshTokenRequest, TokenResponse
+from app.schemas.user import UserRegister, UserUpdate, PasswordUpdate, UserResponse
+from app.schemas.auth import UserLoginRequest, RefreshTokenRequest, TokenResponse, LoginVerifyRequest
 
 __all__ = [
     'UserRegister', 'UserUpdate', 'PasswordUpdate', 'UserLoginRequest',
-    'RefreshTokenRequest', 'TokenResponse'
+    'RefreshTokenRequest', 'TokenResponse', 'LoginVerifyRequest',
+    'UserResponse'
 ]

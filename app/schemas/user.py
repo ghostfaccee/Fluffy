@@ -14,10 +14,21 @@ class UserRegister(BaseModel):
 
     password: str = Field(..., min_length = 4, max_length = 10)
 
+class UserResponse(BaseModel):
+    name: Optional[str] = None
+    username: str
+    email: str
+    bio: Optional[str] = None
+
+    city: Optional[str] = None
+    university: Optional[str] = None
+    institute: Optional[str] = None
+    group: Optional[str] = None
+
 class UserUpdate(BaseModel):
     name: Optional[str] = None
-    username: str = Field(..., min_length = 3, max_length = 20)
-    email: EmailStr = Field(..., max_length = 255)
+    username: Optional[str] = Field(None, min_length = 3, max_length = 20)
+    email: Optional[EmailStr] = Field(None, max_length = 255)
     bio: Optional[str] = None
 
     city: Optional[str] = None

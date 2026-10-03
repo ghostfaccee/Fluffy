@@ -59,8 +59,8 @@ class VerificationTokenService:
             key = cls._verification_token_key(user_id)
             deleted = await redis.delete(key)
             if deleted == 0:
-                return TokenServiceReturnValues.NOT_FOUND
-            return TokenServiceReturnValues.SUCCESS
+                return VerificationTokenService.NOT_FOUND
+            return VerificationTokenServiceReturnValues.SUCCESS
         except Exception as e:
             logger.error(f'Failed to delete verification token: {e}')
             return VerificationTokenServiceReturnValues.ERROR

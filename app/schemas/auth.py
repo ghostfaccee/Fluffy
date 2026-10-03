@@ -5,6 +5,9 @@ class UserLoginRequest(BaseModel):
     username: str
     password: str
 
+class LoginVerifyRequest(BaseModel):
+    code: str
+
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
 

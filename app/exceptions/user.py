@@ -9,8 +9,8 @@ class InvalidPassword(HTTPException):
         super().__init__(status.HTTP_401_UNAUTHORIZED, 'Invalid password')
 
 class UsernameAlreadyTaken(HTTPException):
-    self.field = 'username'
     def __init__(self):
+        self.field = 'username'
         super().__init__(status.HTTP_409_CONFLICT, 'Username already taken')
 
 class EmailAlreadyTaken(HTTPException):
