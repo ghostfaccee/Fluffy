@@ -5,3 +5,7 @@ logs
 __pycache__
 *.pyc
 newalembic.md
+backup.md
+backup_1.sql
+backup_2.sql
+notes.md

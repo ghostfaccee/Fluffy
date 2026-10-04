@@ -1,15 +1,16 @@
 import secrets
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import Optional
 from sqlalchemy.exc import IntegrityError
 
 from app.exceptions import user as user_exc
 from app.exceptions import redis as redis_exc
+from app.exceptions import s3_storage as s3_storage_exc
 from app.repository import UnitOfWork, UserRepository
 from app.model import User
 from app.schemas import UserRegister, UserUpdate, PasswordUpdate
 from app.utils import hash_password, verify_password
-from app.infrastructure import TokenService, TokenServiceReturnValues, VerificationTokenService, VerificationTokenServiceReturnValues
+from app.infrastructure import TokenService, TokenServiceReturnValues, VerificationTokenService, VerificationTokenServiceReturnValues, s3_avatars, AvatarUrlCacheService
 from app.tasks.email import send_verification_email
 
 class UserService:
@@ -84,10 +85,45 @@ class UserService:
                 status = await VerificationTokenService.store_verification_token(user_id, verification_token)
                 if status is VerificationTokenServiceReturnValues.ERROR:
                     raise redis_exc.InternalRedisError()
-                send_verification_email.delay(update_data['email'], verification_token)
+                send_verification_email.delay(update_data['email'], user_id, verification_token)
                 await self._invalidate_token(user_id)
             return user
 
+    async def generate_avatar_upload_url(self, user_id: UUID, content_type: str) -> tuple[str, str]:
+        key = f'avatars/{user_id}/{uuid4()}.{'jpg' if content_type == 'image/jpeg' else 'png'}'
+        upload_url = await s3_avatars.generate_presigned_put_url(key, content_type)
+        return upload_url, key
+    
+    async def set_avatar(self, user_id: UUID, key: str) -> User:
+        user = await self.uow.user.get(user_id)
+        if user is None:
+            raise user_exc.UserDoesNotExists()
+        old_key = user.avatar_key
+        user.avatar_key = key
+        await self.uow.commit()
+        status = await AvatarUrlCacheService.delete_avatar(user_id)
+        if not status:
+            raise s3_storage_exc.S3InternalError()
+        if old_key:
+            status = await s3_avatars.delete_object(old_key)
+            if not status:
+                raise s3_storage_exc.S3InternalError()
+        return user
+    
+    async def delete_avatar(self, user_id: UUID) -> None:
+        user = await self.uow.user.get(user_id)
+        if user is None:
+            raise user_exc.UserDoesNotExists()
+        old_key = user.avatar_key
+        user.avatar_key = None
+        await self.uow.commit()
+        status = await AvatarUrlCacheService.delete_avatar(user_id)
+        if not status:
+            raise s3_storage_exc.S3InternalError()
+        if old_key:
+            status = await s3_avatars.delete_object(old_key)
+            if not status:
+                raise s3_storage_exc.S3InternalError()
     
     async def update_password(self, user_id: UUID, data: PasswordUpdate) -> User:
         user = await self.uow.user.get(user_id)
@@ -104,9 +140,17 @@ class UserService:
         user = await self.uow.user.get(user_id)
         if user is None:
             raise user_exc.UserDoesNotExists()
+        avatar_key = user.avatar_key
         await self.uow.user.delete(user)
         await self._invalidate_token(user_id)
         await self.uow.commit()
+        status = await AvatarUrlCacheService.delete_avatar(user_id)
+        if not status:
+            raise s3_storage_exc.S3InternalError()
+        if avatar_key:
+            status = await s3_avatars.delete_object(avatar_key)
+            if not status:
+                raise s3_storage_exc.S3InternalError()
 
     async def _invalidate_token(self, user_id: UUID) -> bool:
         refresh_token = await TokenService.get_refresh_token(user_id)
@@ -118,4 +162,3 @@ class UserService:
         if status is TokenServiceReturnValues.ERROR:
             raise redis_exc.InternalRedisError()
         return True
-    

@@ -1,6 +1,16 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
+class AvatarUploadRequest(BaseModel):
+    content_type: str = Field(..., pattern = '^image/(jpeg|png)$')
+
+class AvatarUploadResponse(BaseModel):
+    upload_url: str
+    key: str
+
+class AvatarSetRequest(BaseModel):
+    key: str
+
 class UserRegister(BaseModel):
     name: Optional[str] = None
     username: str = Field(..., min_length = 3, max_length = 20)
@@ -19,6 +29,7 @@ class UserResponse(BaseModel):
     username: str
     email: str
     bio: Optional[str] = None
+    avatar_url: Optional[str] = None
 
     city: Optional[str] = None
     university: Optional[str] = None

@@ -12,6 +12,7 @@ class User(Base):
     username = Column(String(20), unique = True, index = True, nullable = False)
     email = Column(String(255), unique = True, index = True,  nullable = False)
     bio = Column(String(60), nullable = True)
+    avatar_key = Column(String(500), nullable = True)
 
     city = Column(String(20), index = True, nullable = True)
     university = Column(String(20), index = True, nullable = True)

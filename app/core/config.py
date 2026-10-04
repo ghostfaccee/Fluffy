@@ -43,6 +43,7 @@ class YamlSettings(BaseModel):
 
     AVATAR_PRESIGNED_PUT_URL_LIFETIME_MINUTES: int
     AVATAR_PRESIGNED_GET_URL_LIFETIME_MINUTES: int
+    AVATAR_URL_CACHE_LIFETIME_MINUTES: int
 
     @classmethod
     def load(cls, yaml_path: str = 'config.yaml') -> YamlSettings:
