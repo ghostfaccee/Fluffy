@@ -1,6 +1,10 @@
-assets/
 .env
 .venv
 logs
-__pacache__
+__pycache__
 *.pyc
+newalembic.md
+backup.md
+backup_1.sql
+backup_2.sql
+notes.md
