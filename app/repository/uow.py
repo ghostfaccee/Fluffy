@@ -1,10 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.repository import UserRepository
+from app.repository import UserRepository, MessageRepository
 
 class UnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.user = UserRepository(session)
+        self.message = MessageRepository(session)
     
     async def commit(self) -> None:
         await self.session.commit()

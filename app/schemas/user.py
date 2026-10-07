@@ -1,3 +1,4 @@
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
@@ -25,6 +26,7 @@ class UserRegister(BaseModel):
     password: str = Field(..., min_length = 4, max_length = 10)
 
 class UserResponse(BaseModel):
+    user_id: UUID
     name: Optional[str] = None
     username: str
     email: str
