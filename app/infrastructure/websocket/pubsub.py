@@ -43,3 +43,12 @@ class PubSubService:
             await pubsub.punsubscribe(f'{cls.WS_CHANNEL_PREFIX}:*')
             await pubsub.close()
 
+async def listen_ws_channel_with_reconnect() -> None:
+    while True:
+        try:
+            await PubSubService.listen_ws_channel()
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.error(f'WS listener died: {e}. Reconnect in 5s...')
+            await asyncio.sleep(5)

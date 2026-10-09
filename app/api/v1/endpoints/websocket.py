@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 from typing import Optional
 
@@ -18,6 +19,15 @@ def _extract_token(ws: WebSocket) -> Optional[str]:
         if p.startswith(BEARER_PREFIX):
             return p[len(BEARER_PREFIX):]
     return
+
+async def _handle_message(ws: WebSocket, user_id: UUID, raw: str) -> None:
+    manager.touch(ws)
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return
+    if data.get('type') == 'ping':
+        await ws.send_json({'type': 'pong'})
 
 @router.websocket('/ws')
 async def websocket_endpoint(ws: WebSocket) -> None:
@@ -43,7 +53,8 @@ async def websocket_endpoint(ws: WebSocket) -> None:
 
     try:
         while True:
-            await ws.receive_text()
+            raw = await ws.receive_text()
+            await _handle_message(ws, user_id, raw)
     except WebSocketDisconnect:
         manager.disconnect(user_id, ws)
     except Exception as e:
