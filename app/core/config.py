@@ -45,6 +45,8 @@ class YamlSettings(BaseModel):
     AVATAR_PRESIGNED_GET_URL_LIFETIME_MINUTES: int
     AVATAR_URL_CACHE_LIFETIME_MINUTES: int
 
+    MAX_WS_CONNECTIONS_PER_USER: int
+
     @classmethod
     def load(cls, yaml_path: str = 'config.yaml') -> YamlSettings:
         yaml_file = Path(yaml_path)

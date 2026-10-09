@@ -49,7 +49,7 @@ async def websocket_endpoint(ws: WebSocket) -> None:
     accepted = SUBPROTOCOL if SUBPROTOCOL in offered else None
     await ws.accept(subprotocol = accepted)
 
-    manager.connect(user_id, ws)
+    await manager.connect(user_id, ws)
 
     try:
         while True:

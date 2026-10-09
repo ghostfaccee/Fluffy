@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import WebSocket
 
-from app.core import logger
+from app.core import logger, yaml_settings
 
 class ConnectionManager:
     '''
@@ -21,10 +21,20 @@ class ConnectionManager:
         self._connections: dict[UUID, set[WebSocket]] = {}
         self._last_seen: dict[WebSocket, float] = {}
     
-    def connect(self, user_id: UUID, ws: WebSocket) -> None:
-        self._connections.setdefault(user_id, set()).add(ws)
+    async def connect(self, user_id: UUID, ws: WebSocket) -> None:
+        conns = self._connections.setdefault(user_id, set())
+        if len(conns) >= yaml_settings.MAX_WS_CONNECTIONS_PER_USER:
+            oldest_ws = min(conns, key = lambda w: self._last_seen.get(w, 0))
+            logger.warning(f'WS limit exceed for user: {user_id}, evicting oldest connection...')
+            try:
+                await oldest_ws.close(code = 1001)
+            except Exception:
+                pass
+            conns.discard(oldest_ws)
+            self._last_seen.pop(oldest_ws, None)
+        conns.add(ws)
         self._last_seen[ws] = time.monotonic()
-        logger.info(f'User {user_id} was connected. Total connections: {len(self._connections)}')
+        logger.info(f'User {user_id} was connected. Total connections: {len(conns)}')
     
     def disconnect(self, user_id: UUID, ws: WebSocket) -> None:
         conns = self._connections.get(user_id)
@@ -33,8 +43,8 @@ class ConnectionManager:
         conns.discard(ws)
         if not conns:
             self._connections.pop(user_id, None)
-        self._last_seen.pop(ws)
-        logger.info(f'WS was disconnected for user {user_id}. Total connections: {len(self._connections)}')
+        self._last_seen.pop(ws, None)
+        logger.info(f'WS was disconnected for user {user_id}. Total connections: {len(conns)}')
     
     async def send_to_local(self, user_id: UUID, message: dict) -> int:
         conns = self._connections.get(user_id)
