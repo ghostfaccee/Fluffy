@@ -4,6 +4,7 @@ from app.exceptions import user as user_exc
 from app.repository import UnitOfWork
 from app.schemas import MessageCreate
 from app.model import Message
+from app.infrastructure import PubSubService
 
 class MessageService:
     def __init__(self, uow: UnitOfWork) -> None:
@@ -23,6 +24,15 @@ class MessageService:
         self.uow.message.add(message)
         await self.uow.commit()
         await self.uow.session.refresh(message)
+
+        await PubSubService.publish_to_user(receiver_id, {
+            'type' : 'new_message',
+            'message_id' : str(message.message_id),
+            'sender_id' : str(sender_id),
+            'content' : message.content,
+            'created_at' : message.created_at.isoformat()
+        })
+
         return message
     
     async def get_history(self, user_a_uuid: UUID, user_b_uuid: UUID, limit: int = 20, offset: int = 0) -> list[Message]:

@@ -1,4 +1,5 @@
 import traceback
+import asyncio
 from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
@@ -8,13 +9,22 @@ from app.core import RedisClient, logger
 from app.api import router
 from app.exceptions import user as user_exc
 from app.middleware import LoggingMiddleware
+from app.infrastructure import PubSubService
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     await (await RedisClient.get_client()).ping()
     logger.info('Fluffy started')
+    ws_listener = asyncio.create_task(PubSubService.listen_ws_channel())
+
     yield
-    await (await RedisClient.get_client()).close()
+
+    ws_listener.cancel()
+    try:
+        await ws_listener
+    except asyncio.CancelledError:
+        pass
+    await RedisClient.close()
     logger.info('Fluffy stopped')
 
 app = FastAPI(lifespan = lifespan)
