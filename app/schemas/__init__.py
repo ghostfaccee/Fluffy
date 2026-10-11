@@ -2,12 +2,12 @@ from app.schemas.user import UserRegister, UserUpdate, PasswordUpdate, UserRespo
 from app.schemas.auth import UserLoginRequest, RefreshTokenRequest, TokenResponse, LoginVerifyRequest
 from app.schemas.message import MessageCreate, MessageResponse
 from app.schemas.group import GroupCreate, GroupMemberResponse, GroupMessageCreate, GroupMessageResponse
-from app.schemas.group import GroupResponse, GroupUpdate
+from app.schemas.group import GroupResponse, GroupUpdate, AvatarUploadUrlResponse
 
 __all__ = [
     'UserRegister', 'UserUpdate', 'PasswordUpdate', 'UserLoginRequest',
     'RefreshTokenRequest', 'TokenResponse', 'LoginVerifyRequest',
     'UserResponse', 'AvatarSetRequest', 'AvatarUploadResponse', 'AvatarUploadRequest',
     'MessageCreate', 'MessageResponse', 'GroupCreate', 'GroupMemberResponse', 'GroupMessageCreate',
-    'GroupMessageResponse', 'GroupResponse', 'GroupUpdate'
+    'GroupMessageResponse', 'GroupResponse', 'GroupUpdate', 'AvatarUploadUrlResponse'
 ]

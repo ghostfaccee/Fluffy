@@ -37,3 +37,7 @@ class GroupMemberResponse(BaseModel):
     user_id: UUID
     role: str
     joined_at: datetime
+
+class AvatarUploadUrlResponse(BaseModel):
+    upload_url: str
+    key: str

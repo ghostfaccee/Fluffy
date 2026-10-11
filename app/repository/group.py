@@ -46,6 +46,20 @@ class GroupMemberRepository:
         )
         res = await self.session.execute(stmt)
         return list(res.scalars().all())
+    
+    async def get_members(self, group_id: UUID) -> list[GroupMember]:
+        stmt = (
+            select(GroupMember)
+            .where(GroupMember.group_id == group_id)
+            .order_by(GroupMember.joined_at.desc())
+        )
+        res = await self.session.execute(stmt)
+        return list(res.scalars().all())
+    
+    async def get_members_ids(self, group_id: UUID) -> list[UUID]:
+        stmt = select(GroupMember.user_id).where(GroupMember.group_id == group_id)
+        res = await self.session.execute(stmt)
+        return list(res.scalars().all())
 
 class GroupMessageRepository:
     def __init__(self, session: AsyncSession) -> None:
