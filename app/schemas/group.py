@@ -38,6 +38,12 @@ class GroupMemberResponse(BaseModel):
     role: str
     joined_at: datetime
 
-class AvatarUploadUrlResponse(BaseModel):
+class GroupAvatarUploadUrlResponse(BaseModel):
     upload_url: str
+    key: str
+
+class GroupAvatarUploadRequest(BaseModel):
+    content_type: str = Field(..., pattern = '^image/(jpeg|png)$')
+
+class GroupAvatarSetRequest(BaseModel):
     key: str

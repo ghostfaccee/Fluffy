@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.model import Group, GroupMember, GroupMessage
 from app.repository import UnitOfWork
-from app.schemas import GroupCreate, GroupUpdate, AvatarUploadUrlResponse, MessageCreate
+from app.schemas import GroupCreate, GroupUpdate, GroupAvatarUploadUrlResponse, MessageCreate
 from app.exceptions import group as group_exc
 from app.exceptions import redis as redis_exc
 from app.exceptions import s3_storage as s3_storage_exc
@@ -146,7 +146,7 @@ class GroupService:
         self._require_role(member, 'admin')
         key = f'{self._avatar_prefix(group_id)}{uuid4()}.{'jpg' if content_type == 'image/jpeg' else 'png'}'
         upload_url = await s3_avatars.generate_presigned_put_url(key, content_type)
-        return AvatarUploadResponse(
+        return GroupAvatarUploadUrlResponse(
             upload_url = upload_url,
             key = key
         )
