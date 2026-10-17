@@ -99,3 +99,7 @@ export async function api(path, { method = 'GET', body, auth = true } = {}, retr
   if (res.status === 204) return null
   return res.json()
 }
+
+export function getAccessToken() {
+  return accessToken
+}

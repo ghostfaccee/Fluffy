@@ -41,18 +41,20 @@ watch(() => route.params.username, (u) => { if (u) load(u) })
   <AppShell>
     <div class="container">
       <section class="app-section">
-        <div class="app-section--hero">
-        <span class="eyebrow">
-            <span class="status-dot"></span>
-            Профиль
-        </span>
-        <h1 class="app-title app-title--hero">
-            <span class="gradient-text">@{{ route.params.username }}</span>
-        </h1>
-        </div>
         <p v-if="loading" class="app-hint">Загружаем…</p>
         <p v-else-if="error" class="form-error" role="alert">{{ error }}</p>
-        <UserCard v-else-if="user" :user="user" />
+        <template v-else-if="user">
+          <UserCard :user="user" />
+
+          <div class="app-profile-actions" style="margin-top: 18px;">
+            <RouterLink
+              :to="{ name: 'chat', params: { userId: user.user_id } }"
+              class="btn btn-primary"
+            >
+              Написать
+            </RouterLink>
+          </div>
+        </template>
       </section>
     </div>
   </AppShell>

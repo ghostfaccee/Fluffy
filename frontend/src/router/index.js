@@ -48,6 +48,42 @@ const router = createRouter({
       component: () => import('../views/UserProfileView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/chats',
+      name: 'chats',
+      component: () => import('../views/ChatsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/chats/:userId',
+      name: 'chat',
+      component: () => import('../views/ChatView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/groups',
+      name: 'groups',
+      component: () => import('../views/GroupsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/groups/:groupId',
+      name: 'group',
+      component: () => import('../views/GroupView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/groups/:groupId/members',
+      name: 'group-members',
+      component: () => import('../views/GroupMembersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/groups/:groupId/settings',
+      name: 'group-settings',
+      component: () => import('../views/GroupSettingsView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

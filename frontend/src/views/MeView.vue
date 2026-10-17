@@ -99,16 +99,6 @@ async function saveProfile() {
   <AppShell>
     <div class="container">
       <section class="app-section">
-        <div class="app-section--hero">
-        <span class="eyebrow">
-            <span class="status-dot"></span>
-            Профиль
-        </span>
-        <h1 class="app-title app-title--hero">
-            Твой <span class="gradient-text">профиль.</span>
-        </h1>
-        </div>
-
         <div class="app-profile-row">
           <div class="app-profile-avatar">
             <UserAvatar :user="user" :size="128" />

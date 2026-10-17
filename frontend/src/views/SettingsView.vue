@@ -8,7 +8,6 @@ import AppShell from '@/components/AppShell.vue'
 const auth = useAuthStore()
 const router = useRouter()
 
-// --- смена пароля ---
 const passwordForm = ref({ old_password: '', new_password: '' })
 const passwordLoading = ref(false)
 const passwordError = ref('')
@@ -33,7 +32,6 @@ async function changePassword() {
   }
 }
 
-// --- удаление аккаунта ---
 const showDeleteConfirm = ref(false)
 const deleteLoading = ref(false)
 const deleteError = ref('')
@@ -61,20 +59,7 @@ async function deleteAccount() {
   <AppShell>
     <div class="container">
       <section class="app-section">
-        <div class="app-section--hero settings-hero">
-        <span class="eyebrow">
-            <span class="status-dot"></span>
-            Настройки
-        </span>
-        <h1 class="app-title app-title--hero">
-            Твои <span class="gradient-text">настройки.</span>
-        </h1>
-        <p class="app-welcome">
-            Смена пароля и управление аккаунтом — здесь.
-        </p>
-        </div>
 
-        <!-- Профиль -->
         <div class="settings-card">
           <div class="settings-card-head">
             <h2 class="settings-card-title">Профиль</h2>
@@ -85,9 +70,8 @@ async function deleteAccount() {
           <RouterLink to="/me" class="btn btn-secondary">Открыть профиль</RouterLink>
         </div>
 
-        <!-- Warning: смена пароля -->
         <div class="settings-card settings-card--warning">
-          <span class="settings-card-label">Warning</span>
+          <span class="settings-card-label">Warning zone</span>
           <div class="settings-card-head">
             <h2 class="settings-card-title">Смена пароля</h2>
             <p class="settings-card-hint">
@@ -115,9 +99,8 @@ async function deleteAccount() {
           </form>
         </div>
 
-        <!-- Danger: удаление -->
         <div class="settings-card settings-card--danger">
-          <span class="settings-card-label">Danger</span>
+          <span class="settings-card-label">Danger zone</span>
           <div class="settings-card-head">
             <h2 class="settings-card-title">Удаление аккаунта</h2>
             <p class="settings-card-hint">

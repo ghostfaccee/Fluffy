@@ -16,7 +16,7 @@ const user = computed(() => auth.user)
           <span class="gradient-text">{{ user?.name || user?.username }}.</span>
         </h1>
         <p class="app-welcome">
-          Тихое место в шумной сети. Здесь ты сам решаешь, что заслуживает твоего внимания.
+          Чем вы будете заниматься сегодня?
         </p>
       </section>
     </div>
