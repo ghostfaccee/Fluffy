@@ -2,11 +2,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status, Request
 
-from app.model import GroupMessage
+from app.model import GroupMessage, GroupMember
 from app.schemas import (
     GroupCreate, GroupUpdate, GroupResponse,
     GroupMessageResponse, GroupMessageCreate, GroupMemberResponse, GroupAvatarUploadUrlResponse,
-    GroupAvatarUploadRequest, GroupAvatarSetRequest
+    GroupAvatarUploadRequest, GroupAvatarSetRequest, GroupMemberRoleUpdate
 )
 from app.dependencies import get_group_message_service, get_group_service, get_current_user_uuid
 from app.services import GroupMessageService, GroupService
@@ -79,6 +79,10 @@ async def leave_group(request: Request, group_id: str, current_user_uuid: UUID =
 @router.delete('/{group_id}/members/{user_id}', status_code = status.HTTP_204_NO_CONTENT)
 async def kick_group_member(request: Request, group_id: str, user_id: str, current_user_uuid: UUID = Depends(get_current_user_uuid), service: GroupService = Depends(get_group_service)) -> None:
     await service.kick(UUID(group_id), current_user_uuid, UUID(user_id))
+
+@router.patch('/{group_id}/members/{user_id}/change-role', response_model = GroupMemberResponse, status_code = status.HTTP_200_OK)
+async def update_role(request: Request, group_id: str, user_id: str, data: GroupMemberRoleUpdate, current_user_uuid: UUID = Depends(get_current_user_uuid), service: GroupService = Depends(get_group_service)) -> GroupMember:
+    return await service.update_role(UUID(group_id), current_user_uuid, UUID(user_id), data.role)
 
 # === messages ===
 

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { api } from '@/api/client'
 
 const GROUPS_KEY = 'fluffy.groups'
@@ -114,6 +114,18 @@ export const useGroupStore = defineStore('group', () => {
     }
   }
 
+  async function changeRole(groupId, userId, role) {
+    const res = await api(
+      `/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}/change-role`,
+      { method: 'PATCH', body: { role } },
+    )
+    if (members.value[groupId]) {
+      const m = members.value[groupId].find((x) => x.user_id === userId)
+      if (m) m.role = res?.role || role
+    }
+    return res
+  }
+
   async function fetchMembers(groupId) {
     const list = await api(`/groups/${encodeURIComponent(groupId)}/members`)
     members.value[groupId] = Array.isArray(list) ? list : []
@@ -204,6 +216,7 @@ export const useGroupStore = defineStore('group', () => {
     regenerateInviteToken,
     leaveGroup,
     kickMember,
+    changeRole,
     fetchMembers,
     requestAvatarUploadUrl,
     setAvatar,

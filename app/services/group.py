@@ -121,6 +121,18 @@ class GroupService:
         await self._get_group_and_member(group_id, user_id)
         return await self.uow.group_member.get_members(group_id)
     
+    async def update_role(self, group_id: UUID, actor_id: UUID, target_id: UUID, new_role: str) -> GroupMember:
+        _, actor = await self._get_group_and_member(group_id, actor_id)
+        self._require_role(actor, 'owner')
+        target = await self.uow.group_member.get(group_id, target_id)
+        if not target:
+            raise group_exc.NotGroupMember()
+        if target.user_id == actor.user_id:
+            raise group_exc.NoPermissions()
+        target.role = new_role
+        await self.uow.commit()
+        return target
+    
     async def leave(self, group_id: UUID, user_id: UUID) -> None:
         _, member = await self._get_group_and_member(group_id, user_id)
         if member.role == 'owner':
