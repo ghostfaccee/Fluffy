@@ -13,9 +13,11 @@ from app.model import User
 from app.exceptions import auth as auth_exc
 from app.exceptions import redis as redis_exc
 from app.exceptions import user as user_exc
+from app.exceptions import verification_token as verification_exc
 from app.utils import hash_password
 from app.infrastructure import LoginCodeServiceReturnValues, LoginCodeService
 from app.infrastructure import TokenServiceReturnValues, TokenService
+from app.infrastructure import VerificationTokenService, VerificationTokenServiceReturnValues
 
 
 # --- fixtures ---
@@ -234,5 +236,128 @@ async def test_verify_login_code_success(
     check_code.assert_awaited_once()
     delete_code.assert_awaited_once()
     store_refresh.assert_awaited_once()
+
+# --- logout ---
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('status', 'excepted_exc'),
+    [
+        (TokenServiceReturnValues.ERROR, redis_exc.InternalRedisError),
+        (TokenServiceReturnValues.NOT_FOUND, auth_exc.TokenNotFoundError)
+    ],
+    ids = ['internal_redis_error', 'not_found_error']
+)
+async def test_logout_with_errors(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch,
+    status: int,
+    excepted_exc: HTTPException
+) -> None:
+    delete_refresh_token = AsyncMock(return_value = status)
+    monkeypatch.setattr(TokenService, 'delete_refresh_token', delete_refresh_token)
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    with pytest.raises(excepted_exc):
+        await service.logout(active_user.user_id)
+    delete_refresh_token.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_logout_success(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delete_refresh_token = AsyncMock(return_value = TokenServiceReturnValues.SUCCESS)
+    monkeypatch.setattr(TokenService, 'delete_refresh_token', delete_refresh_token)
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    res = await service.logout(active_user.user_id)
+    assert res is None
+    delete_refresh_token.assert_awaited_once()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('status', 'excepted_exc'),
+    [
+        (VerificationTokenServiceReturnValues.ERROR, redis_exc.InternalRedisError),
+        (VerificationTokenServiceReturnValues.NOT_FOUND, verification_exc.VerificationTokenNotFoundError),
+        (VerificationTokenServiceReturnValues.NOT_EQUAL, verification_exc.VerificationTokenNotEqualError)
+    ],
+    ids = ['internal_redis_error', 'not_found', 'not_equal']
+)
+async def test_verify_email_with_first_errors(
+    db_session: AsyncSession,
+    active_user: User, 
+    monkeypatch: pytest.MonkeyPatch,
+    status: int,
+    excepted_exc: HTTPException
+) -> None:
+    check_verification_token = AsyncMock(return_value = status)
+    monkeypatch.setattr(VerificationTokenService, 'check_verification_token', check_verification_token)
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    with pytest.raises(excepted_exc):
+        await service.verify_email(active_user.user_id, '1234')
+    check_verification_token.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_verify_email_but_user_does_not_exists(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    check_verification_token = AsyncMock(return_value = VerificationTokenServiceReturnValues.SUCCESS)
+    monkeypatch.setattr(VerificationTokenService, 'check_verification_token', check_verification_token)
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    with pytest.raises(user_exc.UserDoesNotExists):
+        await service.verify_email(uuid4(), '1234')
+    check_verification_token.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_verify_email_but_user_is_active(
+    db_session: AsyncSession, 
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    check_verification_token = AsyncMock(return_value = VerificationTokenServiceReturnValues.SUCCESS)
+    monkeypatch.setattr(VerificationTokenService, 'check_verification_token', check_verification_token)
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    res = await service.verify_email(active_user.user_id, '1234')
+    assert isinstance(res, User)
+    check_verification_token.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_verify_email_but_user_is_not_active_and_internal_redis_error(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    active_user.is_active = False
+    await db_session.flush()
+    check_verification_token = AsyncMock(return_value = VerificationTokenServiceReturnValues.SUCCESS)
+    delete_verification_token = AsyncMock(return_value = VerificationTokenServiceReturnValues.ERROR)
+    monkeypatch.setattr(VerificationTokenService, 'check_verification_token', check_verification_token)
+    monkeypatch.setattr(VerificationTokenService, 'delete_verification_token', delete_verification_token)
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    with pytest.raises(redis_exc.InternalRedisError):
+        await service.verify_email(active_user.user_id, '1234')
+    check_verification_token.assert_awaited_once()
+    delete_verification_token.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_verify_success(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    active_user.is_active = False
+    await db_session.flush()
+    check_verification_token = AsyncMock(return_value = VerificationTokenServiceReturnValues.SUCCESS)
+    delete_verification_token = AsyncMock(return_value = VerificationTokenServiceReturnValues.SUCCESS)
+    monkeypatch.setattr(VerificationTokenService, 'check_verification_token', check_verification_token)
+    monkeypatch.setattr(VerificationTokenService, 'delete_verification_token', delete_verification_token)
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    res = await service.verify_email(active_user.user_id, '1234')
+    assert isinstance(res, User)
+    check_verification_token.assert_awaited_once()
+    delete_verification_token.assert_awaited_once()
 
 # --- ---

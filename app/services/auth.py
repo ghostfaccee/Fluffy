@@ -61,7 +61,7 @@ class AuthService:
         if status is TokenServiceReturnValues.ERROR:
             raise redis_exc.InternalRedisError()
         elif status is TokenServiceReturnValues.NOT_FOUND:
-            raise auth_exc.TokenNotFound()
+            raise auth_exc.TokenNotFoundError()
         else:
             return None
     
