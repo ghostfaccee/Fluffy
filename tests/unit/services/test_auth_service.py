@@ -1,5 +1,5 @@
 from uuid import uuid4
-from unittest.mock import AsyncMock, Mock, ANY
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import pytest_asyncio
@@ -275,6 +275,8 @@ async def test_logout_success(
     assert res is None
     delete_refresh_token.assert_awaited_once()
 
+# --- verify email ---
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('status', 'excepted_exc'),
@@ -360,4 +362,218 @@ async def test_verify_success(
     check_verification_token.assert_awaited_once()
     delete_verification_token.assert_awaited_once()
 
-# --- ---
+# --- refresh ---
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('value', 'excepted_exc'),
+    [
+        (None, auth_exc.InvalidTokenError),
+        ({'token': '1234'}, auth_exc.InvalidTokenError)
+    ],
+    ids = ['payload_is_none', 'payload_hasnt_sub']
+)
+async def test_refresh_but_payload_errors(
+    db_session: AsyncSession,
+    value: str | None,
+    excepted_exc: HTTPException
+) -> None:
+    decode_refresh_token = Mock(return_value = value)
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    with patch.object(auth_module, 'decode_refresh_token', decode_refresh_token):
+        with pytest.raises(excepted_exc):
+            await service.refresh('bad-token')
+    decode_refresh_token.assert_called_once()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('user_exists', 'is_active', 'status', 'excepted_exc'),
+    [
+        (False, None,  TokenServiceReturnValues.ERROR,   redis_exc.InternalRedisError),
+        (False, None,  TokenServiceReturnValues.SUCCESS, auth_exc.UserNotActive),
+        (True,  False, TokenServiceReturnValues.ERROR,   redis_exc.InternalRedisError),
+        (True,  False, TokenServiceReturnValues.SUCCESS, auth_exc.UserNotActive)
+    ],
+    ids = [
+        'user_doesnt_exists_redis_error',
+        'user_doesnt_exists_redis_success',
+        'user_exists_but_not_active_redis_error',
+        'user_exists_but_not_active_redis_success'
+    ]
+)
+async def test_refresh_but_user_doesnt_exists_or_not_active(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch,
+    user_exists: bool,
+    is_active: bool | None,
+    status: int, 
+    excepted_exc: HTTPException
+) -> None:
+    if user_exists:
+        active_user.is_active = is_active
+        await db_session.flush()
+        user_id = active_user.user_id
+    else:
+        user_id = uuid4()
+    decode_refresh_token = Mock(return_value = {'sub': str(user_id)})
+    delete_refresh_token = AsyncMock(return_value = status)
+
+    monkeypatch.setattr(auth_module, 'decode_refresh_token', decode_refresh_token)
+    monkeypatch.setattr(TokenService, 'delete_refresh_token', delete_refresh_token)
+
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    with pytest.raises(excepted_exc):
+        await service.refresh('refresh-token')
+    decode_refresh_token.assert_called_once_with('refresh-token')
+    delete_refresh_token.assert_awaited_once()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('status', 'excepted_exc'),
+    [
+        (TokenServiceReturnValues.ERROR, redis_exc.InternalRedisError),
+        (TokenServiceReturnValues.SUCCESS, auth_exc.TokenInBlacklistError)
+    ],
+    ids = [
+        'internal_redis_error',
+        'token_in_blacklist_error'
+    ]
+)
+async def test_refresh_in_blacklist_with_errors(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch,
+    status: int,
+    excepted_exc: HTTPException
+) -> None:
+    decode_refresh_token = Mock(return_value = {'sub': str(active_user.user_id)})
+    in_blacklist = AsyncMock(return_value = TokenServiceReturnValues.SUCCESS)
+    delete_refresh_token = AsyncMock(return_value = status)
+
+    monkeypatch.setattr(auth_module, 'decode_refresh_token', decode_refresh_token)
+    monkeypatch.setattr(TokenService, 'in_blacklist', in_blacklist)
+    monkeypatch.setattr(TokenService, 'delete_refresh_token', delete_refresh_token)
+
+    service = auth_module.AuthService(UnitOfWork(db_session))
+
+    with pytest.raises(excepted_exc):
+        await service.refresh('refresh-token')
+    in_blacklist.assert_awaited_once_with('refresh-token')
+    delete_refresh_token.assert_awaited_once()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('stored', 'status_deleted', 'excepted_exc'),
+    [
+        (TokenServiceReturnValues.ERROR, TokenServiceReturnValues.SUCCESS, redis_exc.InternalRedisError),
+        (TokenServiceReturnValues.NOT_FOUND, TokenServiceReturnValues.SUCCESS, auth_exc.TokenNotFoundError),
+        ('another-token', TokenServiceReturnValues.ERROR, redis_exc.InternalRedisError),
+        ('another-token', TokenServiceReturnValues.SUCCESS, auth_exc.DifferentTokensError)
+    ],
+    ids = [
+        'stored_error',
+        'stored_not_found',
+        'another_token_and_redis_error',
+        'another_token'
+    ]
+)
+async def test_refresh_stored_with_errors(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch,
+    stored: int,
+    status_deleted: int,
+    excepted_exc: HTTPException
+) -> None:
+    decode_refresh_token = Mock(return_value = {'sub': str(active_user.user_id)})
+    in_blacklist = AsyncMock(return_value = TokenServiceReturnValues.NOT_FOUND)
+    get_refresh_token = AsyncMock(return_value = stored)
+    delete_refresh_token = AsyncMock(return_value = status_deleted)
+
+    monkeypatch.setattr(auth_module, 'decode_refresh_token', decode_refresh_token)
+    monkeypatch.setattr(TokenService, 'in_blacklist', in_blacklist)
+    monkeypatch.setattr(TokenService, 'get_refresh_token', get_refresh_token)
+    monkeypatch.setattr(TokenService, 'delete_refresh_token', delete_refresh_token)
+
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    with pytest.raises(excepted_exc):
+        await service.refresh('refresh-token')
+    in_blacklist.assert_awaited_once_with('refresh-token')
+    get_refresh_token.assert_awaited_once()
+    delete_refresh_token.assert_awaited_once() if stored == 'another-token' else None
+
+@pytest.mark.asyncio
+async def test_refresh_but_add_old_token_to_blacklist_error(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    decode_refresh_token = Mock(return_value = {'sub': str(active_user.user_id)})
+    in_blacklist = AsyncMock(return_value = TokenServiceReturnValues.NOT_FOUND)
+    get_refresh_token = AsyncMock(return_value = 'refresh-token')
+    add_to_blacklist = AsyncMock(return_value = TokenServiceReturnValues.ERROR)
+    
+    monkeypatch.setattr(auth_module, 'decode_refresh_token', decode_refresh_token)
+    monkeypatch.setattr(TokenService, 'in_blacklist', in_blacklist)
+    monkeypatch.setattr(TokenService, 'get_refresh_token', get_refresh_token)
+    monkeypatch.setattr(TokenService, 'add_to_blacklist', add_to_blacklist)
+
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    with pytest.raises(redis_exc.InternalRedisError):
+        await service.refresh('refresh-token')
+    in_blacklist.assert_awaited_once_with('refresh-token')
+    get_refresh_token.assert_awaited_once()
+    add_to_blacklist.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_refresh_success_but_store_new_refresh_token_error(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    decode_refresh_token = Mock(return_value = {'sub': str(active_user.user_id)})
+    in_blacklist = AsyncMock(return_value = TokenServiceReturnValues.NOT_FOUND)
+    get_refresh_token = AsyncMock(return_value = 'refresh-token')
+    add_to_blacklist = AsyncMock(return_value = TokenServiceReturnValues.SUCCESS)
+    store_refresh_token = AsyncMock(return_value = TokenServiceReturnValues.ERROR)
+    
+    monkeypatch.setattr(auth_module, 'decode_refresh_token', decode_refresh_token)
+    monkeypatch.setattr(TokenService, 'in_blacklist', in_blacklist)
+    monkeypatch.setattr(TokenService, 'get_refresh_token', get_refresh_token)
+    monkeypatch.setattr(TokenService, 'add_to_blacklist', add_to_blacklist)
+    monkeypatch.setattr(TokenService, 'store_refresh_token', store_refresh_token)
+
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    with pytest.raises(redis_exc.InternalRedisError):
+        await service.refresh('refresh-token')
+    in_blacklist.assert_awaited_once_with('refresh-token')
+    get_refresh_token.assert_awaited_once()
+    add_to_blacklist.assert_awaited_once()
+    store_refresh_token.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_refresh_success(
+    db_session: AsyncSession,
+    active_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    decode_refresh_token = Mock(return_value = {'sub': str(active_user.user_id)})
+    in_blacklist = AsyncMock(return_value = TokenServiceReturnValues.NOT_FOUND)
+    get_refresh_token = AsyncMock(return_value = 'refresh-token')
+    add_to_blacklist = AsyncMock(return_value = TokenServiceReturnValues.SUCCESS)
+    store_refresh_token = AsyncMock(return_value = TokenServiceReturnValues.SUCCESS)
+    
+    monkeypatch.setattr(auth_module, 'decode_refresh_token', decode_refresh_token)
+    monkeypatch.setattr(TokenService, 'in_blacklist', in_blacklist)
+    monkeypatch.setattr(TokenService, 'get_refresh_token', get_refresh_token)
+    monkeypatch.setattr(TokenService, 'add_to_blacklist', add_to_blacklist)
+    monkeypatch.setattr(TokenService, 'store_refresh_token', store_refresh_token)
+
+    service = auth_module.AuthService(UnitOfWork(db_session))
+    res = await service.refresh('refresh-token')
+    assert isinstance(res, TokenResponse)
+    in_blacklist.assert_awaited_once_with('refresh-token')
+    get_refresh_token.assert_awaited_once()
+    add_to_blacklist.assert_awaited_once()
+    store_refresh_token.assert_awaited_once()
