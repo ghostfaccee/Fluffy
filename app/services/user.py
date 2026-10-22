@@ -103,7 +103,7 @@ class UserService:
         await self.uow.commit()
         status = await AvatarUrlCacheService.delete_avatar(user_id)
         if not status:
-            raise s3_storage_exc.S3InternalError()
+            raise redis_exc.InternalRedisError()
         if old_key:
             status = await s3_avatars.delete_object(old_key)
             if not status:
@@ -119,7 +119,7 @@ class UserService:
         await self.uow.commit()
         status = await AvatarUrlCacheService.delete_avatar(user_id)
         if not status:
-            raise s3_storage_exc.S3InternalError()
+            raise redis_exc.InternalRedisError()
         if old_key:
             status = await s3_avatars.delete_object(old_key)
             if not status:
@@ -146,7 +146,7 @@ class UserService:
         await self.uow.commit()
         status = await AvatarUrlCacheService.delete_avatar(user_id)
         if not status:
-            raise s3_storage_exc.S3InternalError()
+            raise redis_exc.InternalRedisError()
         if avatar_key:
             status = await s3_avatars.delete_object(avatar_key)
             if not status:
