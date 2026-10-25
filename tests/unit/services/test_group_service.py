@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from uuid import uuid4
+from unittest.mock import AsyncMock
 
 from app.model import User, Group, GroupMember
 from app.services import group as group_module
@@ -9,6 +10,9 @@ from app.repository import UnitOfWork
 from app.schemas import GroupCreate, GroupUpdate
 from app.utils import hash_password
 from app.exceptions import group as group_exc
+from app.exceptions import redis as redis_exc
+from app.exceptions import s3_storage as s3_storage_exc
+from app.infrastructure import GroupAvatarUrlCacheService, s3_avatars
 
 # --- fixtures ---
 
@@ -40,6 +44,15 @@ async def test_group(
         )
     )
     return group
+
+@pytest.fixture
+async def test_group_member(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> GroupMember:
+    _, m = await group_module.GroupService(UnitOfWork(db_session))._get_group_and_member(test_group.group_id, test_user.user_id)
+    return m
 
 # --- create ---
 
@@ -172,27 +185,363 @@ async def test_update_success(
 
 # --- _require_role ---
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ('role'),
+    ('rank', 'require_role'),
     [
-        ('admin'),
-        ('owner')
+        ('member', 'admin'),
+        ('member', 'owner'),
+        ('admin', 'owner')
     ],
     ids = [
-        'role_admin',
-        'role_owner'
+        'member & admin',
+        'member & owner',
+        'admin & owner'
     ]
 )
-async def test_require_role_for_member(
+@pytest.mark.asyncio
+async def test_require_role_with_no_permission(
+    db_session: AsyncSession,
+    test_group_member: GroupMember,
+    rank: str,
+    require_role: str
+) -> None:
+    test_group_member.role = rank
+    await db_session.commit()
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+
+    with pytest.raises(group_exc.NoPermissions):
+        service._require_role(test_group_member, require_role)
+
+@pytest.mark.parametrize(
+    ('rank', 'require_role'),
+    [
+        ('member', 'member'),
+        ('admin', 'member'),
+        ('admin', 'admin'),
+        ('owner', 'admin'),
+        ('owner', 'member'),
+        ('owner', 'owner')
+    ],
+    ids = [
+        'member & member',
+        'admin & member',
+        'admin & admin',
+        'owner & admin',
+        'owner & member',
+        'owner & owner'
+    ]
+)
+@pytest.mark.asyncio
+async def test_require_role_success(
+    db_session: AsyncSession,
+    test_group_member: GroupMember,
+    rank: str,
+    require_role: str
+) -> None:
+    test_group_member.role = rank
+    await db_session.commit()
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+
+    service._require_role(test_group_member, require_role)
+
+# _cleanup_avatar
+
+@pytest.mark.asyncio
+async def test_cleanup_avatar_without_old_key_with_internal_redis_error(
+    db_session: AsyncSession,
+    test_group: Group,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delete_avatar = AsyncMock(return_value = False)
+    monkeypatch.setattr(GroupAvatarUrlCacheService, 'delete_avatar', delete_avatar)
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(redis_exc.InternalRedisError):
+        await service._cleanup_avatar(test_group.group_id, None)
+    delete_avatar.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_cleanup_avatar_with_old_key_but_s3_internal_error(
+    db_session: AsyncSession,
+    test_group: Group,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delete_avatar = AsyncMock(return_value = True)
+    delete_object = AsyncMock(return_value = False)
+
+    monkeypatch.setattr(GroupAvatarUrlCacheService, 'delete_avatar', delete_avatar)
+    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(s3_storage_exc.S3InternalError):
+        await service._cleanup_avatar(test_group.group_id, 'old_key ;)')
+    delete_avatar.assert_awaited_once()
+    delete_object.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_cleanup_avatar_with_old_key_success(
+    db_session: AsyncSession,
+    test_group: Group,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delete_avatar = AsyncMock(return_value = True)
+    delete_object = AsyncMock(return_value = True)
+
+    monkeypatch.setattr(GroupAvatarUrlCacheService, 'delete_avatar', delete_avatar)
+    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+
+    await service._cleanup_avatar(test_group.group_id, 'old key ;)')
+
+    delete_avatar.assert_awaited_once()
+    delete_object.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_cleanup_avatar_without_old_key_success(
+    db_session: AsyncSession,
+    test_group: Group,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delete_avatar = AsyncMock(return_value = True)
+
+    monkeypatch.setattr(GroupAvatarUrlCacheService, 'delete_avatar', delete_avatar)
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+
+    await service._cleanup_avatar(test_group.group_id, None)
+
+    delete_avatar.assert_awaited_once()
+
+# --- delete ---
+
+@pytest.mark.asyncio
+async def test_delete_success(
     db_session: AsyncSession,
     test_user: User,
     test_group: Group,
-    role: str
+    monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    test_user.role = 'member'
-    await db_session.commit()
+    cleanup_avatar = AsyncMock(return_value = None)
+
+    monkeypatch.setattr(group_module.GroupService, '_cleanup_avatar', cleanup_avatar)
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    await service.delete(test_group.group_id, test_user.user_id)
+
+    cleanup_avatar.assert_awaited_once()
+
+# --- join ---
+
+@pytest.mark.asyncio
+async def test_join_but_group_not_found(
+    db_session: AsyncSession,
+    test_user: User
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.GroupNotFound):
+        await service.join('unknown_token', test_user.user_id)
+
+@pytest.mark.asyncio
+async def test_join_but_user_already_group_member(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.AlreadyGroupMember):
+        await service.join(test_group.invite_token, test_user.user_id)
+
+@pytest.mark.asyncio
+async def test_join_success(
+    db_session: AsyncSession,
+    test_group: Group
+) -> None:
+    instance = User(
+        username = 'iwantinyourgroup',
+        name = ';)',
+        email = 'myemail@mail.com',
+        hashed_password = hash_password('testpass'),
+        is_active = True
+    )
+    db_session.add(instance)
+    await db_session.flush()
+
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    await service.join(test_group.invite_token, instance.user_id)
+
+@pytest.mark.asyncio
+async def test_join_with_integrity_error(
+    db_session: AsyncSession,
+    test_group: Group
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.AlreadyGroupMember):
+        await service.join(test_group.invite_token, uuid4())
+
+# --- regenerate group token ---
+
+@pytest.mark.asyncio
+async def test_regenerate_group_token_success(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    old_token = test_group.invite_token
+    new_token = (await service.regenerate_group_token(test_group.group_id, test_user.user_id)).invite_token
+    assert old_token != new_token
+
+# --- get members ---
+
+@pytest.mark.asyncio
+async def test_get_members_success(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    res = await service.get_members(test_group.group_id, test_user.user_id)
+    assert isinstance(res, list)
+    assert res[0].user_id == test_user.user_id
+
+# --- update role ---
+
+@pytest.mark.asyncio
+async def test_update_role_but_target_is_not_group_member(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.NotGroupMember):
+        await service.update_role(test_group.group_id, test_user.user_id, uuid4(), 'admin')
+
+@pytest.mark.asyncio
+async def test_update_role_but_target_id_is_actor_id(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
     service = group_module.GroupService(UnitOfWork(db_session))
     with pytest.raises(group_exc.NoPermissions):
-        await service._require_role(test_user.user_id, role)
-    
+        await service.update_role(test_group.group_id, test_user.user_id, test_user.user_id, 'admin')
+
+@pytest.mark.asyncio
+async def test_update_role_success(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    instance = User(
+        username = 'iwantinyourgroup',
+        name = ';)',
+        email = 'myemail@mail.com',
+        hashed_password = hash_password('testpass'),
+        is_active = True
+    )
+    db_session.add(instance)
+    await db_session.flush()
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    await service.join(test_group.invite_token, instance.user_id)
+
+    res = await service.update_role(test_group.group_id, test_user.user_id, instance.user_id, 'admin')
+    assert isinstance(res, GroupMember)
+
+# --- leave ---
+
+@pytest.mark.asyncio
+async def test_leave_but_owner_cant_leave(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.OwnerCannotLeave):
+        await service.leave(test_group.group_id, test_user.user_id)
+
+@pytest.mark.asyncio
+async def test_leave_success(
+    db_session: AsyncSession,
+    test_group: Group
+) -> None:
+    instance = User(
+        username = 'iwantinyourgroup',
+        name = ';)',
+        email = 'myemail@mail.com',
+        hashed_password = hash_password('testpass'),
+        is_active = True
+    )
+    db_session.add(instance)
+    await db_session.flush()
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    await service.join(test_group.invite_token, instance.user_id)
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    await service.leave(test_group.group_id, instance.user_id)
+
+    groups = await service.get_user_groups(instance.user_id)
+    assert len(groups) == 0
+
+# --- kick ---
+
+@pytest.mark.asyncio
+async def test_kick_but_target_is_not_group_member(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.NotGroupMember):
+        await service.kick(test_group.group_id, test_user.user_id, uuid4())
+
+@pytest.mark.asyncio
+async def test_kick_but_no_permissions(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    instance = User(
+        username = 'iwantinyourgroup',
+        name = ';)',
+        email = 'myemail@mail.com',
+        hashed_password = hash_password('testpass'),
+        is_active = True
+    )
+    db_session.add(instance)
+    await db_session.flush()
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    await service.join(test_group.invite_token, instance.user_id)
+
+    with pytest.raises(group_exc.NoPermissions):
+        await service.kick(test_group.group_id, instance.user_id, test_user.user_id)
+
+@pytest.mark.asyncio
+async def test_kick_success(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    instance = User(
+        username = 'iwantinyourgroup',
+        name = ';)',
+        email = 'myemail@mail.com',
+        hashed_password = hash_password('testpass'),
+        is_active = True
+    )
+    db_session.add(instance)
+    await db_session.flush()
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    await service.join(test_group.invite_token, instance.user_id)
+
+    await service.kick(test_group.group_id, test_user.user_id, instance.user_id)
+    groups = await service.get_user_groups(instance.user_id)
+    assert len(groups) == 0
+

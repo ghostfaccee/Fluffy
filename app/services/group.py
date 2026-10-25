@@ -19,7 +19,7 @@ class GroupService:
     
     # === crud ===
     
-    async def create(self, owner_id: UUID, data: GroupCreate) -> Group:
+    async def create(self, owner_id: UUID, data: GroupCreate) -> Group: # done
         group = Group(
             name = data.name,
             description = data.description,
@@ -38,14 +38,14 @@ class GroupService:
         await self.uow.session.refresh(group)
         return group
     
-    async def get(self, group_id: UUID, user_id: UUID) -> Group:
+    async def get(self, group_id: UUID, user_id: UUID) -> Group: # done
         group, _ = await self._get_group_and_member(group_id, user_id)
         return group
     
-    async def get_user_groups(self, user_id: UUID) -> list[Group]:
+    async def get_user_groups(self, user_id: UUID) -> list[Group]: # done
         return await self.uow.group_member.get_user_groups(user_id)
     
-    async def update(self, group_id: UUID, user_id: UUID, data: GroupUpdate) -> Group:
+    async def update(self, group_id: UUID, user_id: UUID, data: GroupUpdate) -> Group: # done
         group, member = await self._get_group_and_member(group_id, user_id)
         self._require_role(member, 'admin')
         for k, v in data.model_dump(exclude_unset = True).items():
@@ -53,7 +53,7 @@ class GroupService:
         await self.uow.commit()
         return group
     
-    async def delete(self, group_id: UUID, user_id: UUID) -> None:
+    async def delete(self, group_id: UUID, user_id: UUID) -> None: # done
         group, member = await self._get_group_and_member(group_id, user_id)
         self._require_role(member, 'owner')
         avatar_key = group.avatar_key
@@ -63,7 +63,7 @@ class GroupService:
     
     # === helpers ===
 
-    async def _get_group_and_member(self, group_id: UUID, user_id: UUID) -> tuple[Group, GroupMember]:
+    async def _get_group_and_member(self, group_id: UUID, user_id: UUID) -> tuple[Group, GroupMember]: # done
         group = await self.uow.group.get(group_id)
         if not group:
             raise group_exc.GroupNotFound()
@@ -72,11 +72,11 @@ class GroupService:
             raise group_exc.NotGroupMember()
         return group, member
     
-    def _require_role(self, member: GroupMember, min_role: str) -> None:
+    def _require_role(self, member: GroupMember, min_role: str) -> None: # done
         if ROLE_RANK.get(member.role) < ROLE_RANK.get(min_role):
             raise group_exc.NoPermissions()
     
-    async def _cleanup_avatar(self, group_id: UUID, old_key: str | None) -> None:
+    async def _cleanup_avatar(self, group_id: UUID, old_key: str | None) -> None: # done
         status = await GroupAvatarUrlCacheService.delete_avatar(group_id)
         if not status:
             raise redis_exc.InternalRedisError()
@@ -90,7 +90,7 @@ class GroupService:
 
     # === invite ===
 
-    async def join(self, token: str, user_id: UUID) -> Group:
+    async def join(self, token: str, user_id: UUID) -> Group: # done
         group = await self.uow.group.get_by_invite_token(token)
         if not group:
             raise group_exc.GroupNotFound()
@@ -105,10 +105,12 @@ class GroupService:
             await self.uow.commit()
         except IntegrityError:
             await self.uow.rollback()
-            raise group_exc.AlreadyGroupMember()
+            raise group_exc.AlreadyGroupMember() 
+            # TODO: An "integrity error" doesn't always mean "already a group member."
+            # In our case, it can also occur if we pass the UUID of a non-existent user.
         return group
     
-    async def regenerate_group_token(self, group_id: UUID, user_id: UUID) -> Group:
+    async def regenerate_group_token(self, group_id: UUID, user_id: UUID) -> Group: # done
         group, member = await self._get_group_and_member(group_id, user_id)
         self._require_role(member, 'admin')
         group.invite_token = secrets.token_urlsafe(32)
@@ -117,11 +119,11 @@ class GroupService:
     
     # === members ===
 
-    async def get_members(self, group_id: UUID, user_id: UUID) -> list[GroupMember]:
+    async def get_members(self, group_id: UUID, user_id: UUID) -> list[GroupMember]: # done
         await self._get_group_and_member(group_id, user_id)
         return await self.uow.group_member.get_members(group_id)
     
-    async def update_role(self, group_id: UUID, actor_id: UUID, target_id: UUID, new_role: str) -> GroupMember:
+    async def update_role(self, group_id: UUID, actor_id: UUID, target_id: UUID, new_role: str) -> GroupMember: # done
         _, actor = await self._get_group_and_member(group_id, actor_id)
         self._require_role(actor, 'owner')
         target = await self.uow.group_member.get(group_id, target_id)
@@ -133,14 +135,14 @@ class GroupService:
         await self.uow.commit()
         return target
     
-    async def leave(self, group_id: UUID, user_id: UUID) -> None:
+    async def leave(self, group_id: UUID, user_id: UUID) -> None: # done
         _, member = await self._get_group_and_member(group_id, user_id)
         if member.role == 'owner':
             raise group_exc.OwnerCannotLeave()
         await self.uow.group_member.delete(member)
         await self.uow.commit()
     
-    async def kick(self, group_id: UUID, actor_id: UUID, target_id: UUID) -> None:
+    async def kick(self, group_id: UUID, actor_id: UUID, target_id: UUID) -> None: # done
         _, actor = await self._get_group_and_member(group_id, actor_id)
         self._require_role(actor, 'admin')
         target = await self.uow.group_member.get(group_id, target_id)
