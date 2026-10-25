@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 from app.model import User, Group, GroupMember
 from app.services import group as group_module
 from app.repository import UnitOfWork
-from app.schemas import GroupCreate, GroupUpdate
+from app.schemas import GroupCreate, GroupUpdate, GroupAvatarUploadUrlResponse
 from app.utils import hash_password
 from app.exceptions import group as group_exc
 from app.exceptions import redis as redis_exc
@@ -545,3 +545,50 @@ async def test_kick_success(
     groups = await service.get_user_groups(instance.user_id)
     assert len(groups) == 0
 
+# --- generate avatar upload url ---
+
+@pytest.mark.asyncio
+async def test_generate_avatar_upload_url_success(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    generate_presigned_put_url = AsyncMock(return_value = 'upload-url')
+    monkeypatch.setattr(s3_avatars, 'generate_presigned_put_url', generate_presigned_put_url)
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    res = await service.generate_avatar_upload_url(test_group.group_id, test_user.user_id, 'png')
+    assert isinstance(res, GroupAvatarUploadUrlResponse)
+
+# --- set avatar ---
+
+@pytest.mark.asyncio
+async def test_set_avatar_success(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cleanup_avatar = AsyncMock(return_value = None)
+    monkeypatch.setattr(group_module.GroupService, '_cleanup_avatar', cleanup_avatar)
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    res = await service.set_avatar(test_group.group_id, test_user.user_id, 'key')
+    assert isinstance(res, Group)
+
+# --- delete avatar ---
+
+@pytest.mark.asyncio
+async def test_delete_avatar(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cleanup_avatar = AsyncMock(return_value = None)
+    monkeypatch.setattr(group_module.GroupService, '_cleanup_avatar', cleanup_avatar)
+
+    service = group_module.GroupService(UnitOfWork(db_session))
+    await service.delete_avatar(test_group.group_id, test_user.user_id)
+    assert test_group.avatar_key is None
