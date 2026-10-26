@@ -592,3 +592,24 @@ async def test_delete_avatar(
     service = group_module.GroupService(UnitOfWork(db_session))
     await service.delete_avatar(test_group.group_id, test_user.user_id)
     assert test_group.avatar_key is None
+
+# --- _require_member ---
+
+@pytest.mark.asyncio
+async def test_require_member_but_group_not_found(
+    db_session: AsyncSession
+) -> None:
+    service = group_module.GroupMessageService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.GroupNotFound):
+        await service._require_member(uuid4(), uuid4())
+
+@pytest.mark.asyncio
+async def test_require_member_but_user_not_group_member(
+    db_session: AsyncSession,
+    test_group: Group
+) -> None:
+    service = group_module.GroupMessageService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.NotGroupMember):
+        await service._require_member(test_group.group_id, uuid4())
+
+# --- ---
