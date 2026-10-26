@@ -38,6 +38,7 @@ async def active_user(db_session: AsyncSession) -> User:
 
 # --- login tests ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('username', 'password', 'active', 'excepted_exc'),
@@ -79,6 +80,7 @@ async def test_login_errors(
     store_code.assert_not_awaited()
     # Verification: whether or not the test invoked a mock.
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_login_success(db_session: AsyncSession, active_user: User, monkeypatch: pytest.MonkeyPatch) -> None:
     store_code = AsyncMock(return_value = LoginCodeServiceReturnValues.SUCCESS)
@@ -99,6 +101,7 @@ async def test_login_success(db_session: AsyncSession, active_user: User, monkey
     assert res is None
     store_code.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_login_excepted_redis_error(db_session: AsyncSession, active_user: User, monkeypatch: pytest.MonkeyPatch) -> None:
     store_code = AsyncMock(return_value = LoginCodeServiceReturnValues.ERROR)
@@ -115,6 +118,7 @@ async def test_login_excepted_redis_error(db_session: AsyncSession, active_user:
 
 # --- verification login code ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_login_verification_code_but_user_does_not_exists(db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch) -> None:
     service = auth_module.AuthService(UnitOfWork(db_session))
@@ -124,6 +128,7 @@ async def test_login_verification_code_but_user_does_not_exists(db_session: Asyn
             username = 'unknown_user'
         )
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_login_verification_code_but_user_is_not_active(db_session: AsyncSession, active_user: User, monkeypatch: pytest.MonkeyPatch) -> None:
     active_user.is_active = False
@@ -135,6 +140,7 @@ async def test_login_verification_code_but_user_is_not_active(db_session: AsyncS
             username = active_user.username
         )
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('status', 'excepted_exc'),
@@ -163,6 +169,7 @@ async def test_verify_login_code_check_first_status(
         )
     check_code.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_verify_login_code_success_but_internal_redis_error_while_deleting(
     db_session: AsyncSession,
@@ -184,6 +191,7 @@ async def test_verify_login_code_success_but_internal_redis_error_while_deleting
     check_code.assert_awaited_once()
     delete_code.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_verify_login_code_success_but_internal_redis_error_while_store_refresh_token(
     db_session: AsyncSession, 
@@ -209,6 +217,7 @@ async def test_verify_login_code_success_but_internal_redis_error_while_store_re
     delete_code.assert_awaited_once()
     store_refresh.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_verify_login_code_success(
     db_session: AsyncSession,
@@ -239,6 +248,7 @@ async def test_verify_login_code_success(
 
 # --- logout ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('status', 'excepted_exc'),
@@ -262,6 +272,7 @@ async def test_logout_with_errors(
         await service.logout(active_user.user_id)
     delete_refresh_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_logout_success(
     db_session: AsyncSession,
@@ -277,6 +288,7 @@ async def test_logout_success(
 
 # --- verify email ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('status', 'excepted_exc'),
@@ -301,6 +313,7 @@ async def test_verify_email_with_first_errors(
         await service.verify_email(active_user.user_id, '1234')
     check_verification_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_verify_email_but_user_does_not_exists(
     db_session: AsyncSession,
@@ -313,6 +326,7 @@ async def test_verify_email_but_user_does_not_exists(
         await service.verify_email(uuid4(), '1234')
     check_verification_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_verify_email_but_user_is_active(
     db_session: AsyncSession, 
@@ -326,6 +340,7 @@ async def test_verify_email_but_user_is_active(
     assert isinstance(res, User)
     check_verification_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_verify_email_but_user_is_not_active_and_internal_redis_error(
     db_session: AsyncSession,
@@ -344,6 +359,7 @@ async def test_verify_email_but_user_is_not_active_and_internal_redis_error(
     check_verification_token.assert_awaited_once()
     delete_verification_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_verify_success(
     db_session: AsyncSession,
@@ -364,6 +380,7 @@ async def test_verify_success(
 
 # --- refresh ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('value', 'excepted_exc'),
@@ -385,6 +402,7 @@ async def test_refresh_but_payload_errors(
             await service.refresh('bad-token')
     decode_refresh_token.assert_called_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('user_exists', 'is_active', 'status', 'excepted_exc'),
@@ -428,6 +446,7 @@ async def test_refresh_but_user_doesnt_exists_or_not_active(
     decode_refresh_token.assert_called_once_with('refresh-token')
     delete_refresh_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('status', 'excepted_exc'),
@@ -462,6 +481,7 @@ async def test_refresh_in_blacklist_with_errors(
     in_blacklist.assert_awaited_once_with('refresh-token')
     delete_refresh_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('stored', 'status_deleted', 'excepted_exc'),
@@ -503,6 +523,7 @@ async def test_refresh_stored_with_errors(
     get_refresh_token.assert_awaited_once()
     delete_refresh_token.assert_awaited_once() if stored == 'another-token' else None
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_refresh_but_add_old_token_to_blacklist_error(
     db_session: AsyncSession,
@@ -526,6 +547,7 @@ async def test_refresh_but_add_old_token_to_blacklist_error(
     get_refresh_token.assert_awaited_once()
     add_to_blacklist.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_refresh_success_but_store_new_refresh_token_error(
     db_session: AsyncSession,
@@ -552,6 +574,7 @@ async def test_refresh_success_but_store_new_refresh_token_error(
     add_to_blacklist.assert_awaited_once()
     store_refresh_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_refresh_success(
     db_session: AsyncSession,

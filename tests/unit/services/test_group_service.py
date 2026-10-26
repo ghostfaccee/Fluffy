@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 from unittest.mock import AsyncMock
 
-from app.model import User, Group, GroupMember
+from app.model import User, Group, GroupMember, GroupMessage
 from app.services import group as group_module
 from app.repository import UnitOfWork
-from app.schemas import GroupCreate, GroupUpdate, GroupAvatarUploadUrlResponse
+from app.schemas import GroupCreate, GroupUpdate, GroupAvatarUploadUrlResponse, MessageCreate
 from app.utils import hash_password
 from app.exceptions import group as group_exc
 from app.exceptions import redis as redis_exc
@@ -56,6 +56,7 @@ async def test_group_member(
 
 # --- create ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_create(
     db_session: AsyncSession,
@@ -75,6 +76,7 @@ async def test_create(
 
 # --- _get_group_and_member
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_group_and_member_but_group_not_found(
     db_session: AsyncSession
@@ -83,6 +85,7 @@ async def test_get_group_and_member_but_group_not_found(
     with pytest.raises(group_exc.GroupNotFound):
         await service._get_group_and_member(uuid4(), uuid4())
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_group_and_member_but_not_group_member(
     db_session: AsyncSession,
@@ -92,6 +95,7 @@ async def test_get_group_and_member_but_not_group_member(
     with pytest.raises(group_exc.NotGroupMember):
         await service._get_group_and_member(test_group.group_id, uuid4())
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_group_and_member_success(
     db_session: AsyncSession,
@@ -107,6 +111,7 @@ async def test_get_group_and_member_success(
 
 # --- get ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get(
     db_session: AsyncSession,
@@ -119,6 +124,7 @@ async def test_get(
 
 # --- get_user_groups ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_user_groups_one_group(
     db_session: AsyncSession,
@@ -130,6 +136,7 @@ async def test_get_user_groups_one_group(
     assert test_group in groups
     assert isinstance(groups, list)
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_user_groups_not_one(
     db_session: AsyncSession,
@@ -151,6 +158,7 @@ async def test_get_user_groups_not_one(
 
 # --- update ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('name', 'desc', 'vals'),
@@ -185,6 +193,7 @@ async def test_update_success(
 
 # --- _require_role ---
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     ('rank', 'require_role'),
     [
@@ -213,6 +222,7 @@ async def test_require_role_with_no_permission(
     with pytest.raises(group_exc.NoPermissions):
         service._require_role(test_group_member, require_role)
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     ('rank', 'require_role'),
     [
@@ -248,6 +258,7 @@ async def test_require_role_success(
 
 # _cleanup_avatar
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_cleanup_avatar_without_old_key_with_internal_redis_error(
     db_session: AsyncSession,
@@ -262,6 +273,7 @@ async def test_cleanup_avatar_without_old_key_with_internal_redis_error(
         await service._cleanup_avatar(test_group.group_id, None)
     delete_avatar.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_cleanup_avatar_with_old_key_but_s3_internal_error(
     db_session: AsyncSession,
@@ -280,6 +292,7 @@ async def test_cleanup_avatar_with_old_key_but_s3_internal_error(
     delete_avatar.assert_awaited_once()
     delete_object.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_cleanup_avatar_with_old_key_success(
     db_session: AsyncSession,
@@ -299,6 +312,7 @@ async def test_cleanup_avatar_with_old_key_success(
     delete_avatar.assert_awaited_once()
     delete_object.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_cleanup_avatar_without_old_key_success(
     db_session: AsyncSession,
@@ -317,6 +331,7 @@ async def test_cleanup_avatar_without_old_key_success(
 
 # --- delete ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_success(
     db_session: AsyncSession,
@@ -335,6 +350,7 @@ async def test_delete_success(
 
 # --- join ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_join_but_group_not_found(
     db_session: AsyncSession,
@@ -344,6 +360,7 @@ async def test_join_but_group_not_found(
     with pytest.raises(group_exc.GroupNotFound):
         await service.join('unknown_token', test_user.user_id)
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_join_but_user_already_group_member(
     db_session: AsyncSession,
@@ -354,6 +371,7 @@ async def test_join_but_user_already_group_member(
     with pytest.raises(group_exc.AlreadyGroupMember):
         await service.join(test_group.invite_token, test_user.user_id)
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_join_success(
     db_session: AsyncSession,
@@ -373,6 +391,7 @@ async def test_join_success(
     service = group_module.GroupService(UnitOfWork(db_session))
     await service.join(test_group.invite_token, instance.user_id)
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_join_with_integrity_error(
     db_session: AsyncSession,
@@ -384,6 +403,7 @@ async def test_join_with_integrity_error(
 
 # --- regenerate group token ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_regenerate_group_token_success(
     db_session: AsyncSession,
@@ -397,6 +417,7 @@ async def test_regenerate_group_token_success(
 
 # --- get members ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_members_success(
     db_session: AsyncSession,
@@ -410,6 +431,7 @@ async def test_get_members_success(
 
 # --- update role ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_update_role_but_target_is_not_group_member(
     db_session: AsyncSession,
@@ -420,6 +442,7 @@ async def test_update_role_but_target_is_not_group_member(
     with pytest.raises(group_exc.NotGroupMember):
         await service.update_role(test_group.group_id, test_user.user_id, uuid4(), 'admin')
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_update_role_but_target_id_is_actor_id(
     db_session: AsyncSession,
@@ -430,6 +453,7 @@ async def test_update_role_but_target_id_is_actor_id(
     with pytest.raises(group_exc.NoPermissions):
         await service.update_role(test_group.group_id, test_user.user_id, test_user.user_id, 'admin')
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_update_role_success(
     db_session: AsyncSession,
@@ -454,6 +478,7 @@ async def test_update_role_success(
 
 # --- leave ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_leave_but_owner_cant_leave(
     db_session: AsyncSession,
@@ -464,6 +489,7 @@ async def test_leave_but_owner_cant_leave(
     with pytest.raises(group_exc.OwnerCannotLeave):
         await service.leave(test_group.group_id, test_user.user_id)
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_leave_success(
     db_session: AsyncSession,
@@ -490,6 +516,7 @@ async def test_leave_success(
 
 # --- kick ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_kick_but_target_is_not_group_member(
     db_session: AsyncSession,
@@ -500,6 +527,7 @@ async def test_kick_but_target_is_not_group_member(
     with pytest.raises(group_exc.NotGroupMember):
         await service.kick(test_group.group_id, test_user.user_id, uuid4())
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_kick_but_no_permissions(
     db_session: AsyncSession,
@@ -522,6 +550,7 @@ async def test_kick_but_no_permissions(
     with pytest.raises(group_exc.NoPermissions):
         await service.kick(test_group.group_id, instance.user_id, test_user.user_id)
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_kick_success(
     db_session: AsyncSession,
@@ -547,6 +576,7 @@ async def test_kick_success(
 
 # --- generate avatar upload url ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_generate_avatar_upload_url_success(
     db_session: AsyncSession,
@@ -563,6 +593,7 @@ async def test_generate_avatar_upload_url_success(
 
 # --- set avatar ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_set_avatar_success(
     db_session: AsyncSession,
@@ -579,6 +610,7 @@ async def test_set_avatar_success(
 
 # --- delete avatar ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_avatar(
     db_session: AsyncSession,
@@ -595,6 +627,7 @@ async def test_delete_avatar(
 
 # --- _require_member ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_require_member_but_group_not_found(
     db_session: AsyncSession
@@ -603,6 +636,7 @@ async def test_require_member_but_group_not_found(
     with pytest.raises(group_exc.GroupNotFound):
         await service._require_member(uuid4(), uuid4())
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_require_member_but_user_not_group_member(
     db_session: AsyncSession,
@@ -612,4 +646,41 @@ async def test_require_member_but_user_not_group_member(
     with pytest.raises(group_exc.NotGroupMember):
         await service._require_member(test_group.group_id, uuid4())
 
-# --- ---
+# --- send ---
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_send_success(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    service = group_module.GroupMessageService(UnitOfWork(db_session))
+    res = await service.send(test_group.group_id, 
+        test_user.user_id, 
+        MessageCreate(
+            content = 'message'
+        )
+    )
+    assert isinstance(res, GroupMessage)
+
+# --- get history ---
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_get_history(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    service = group_module.GroupMessageService(UnitOfWork(db_session))
+    message = await service.send(test_group.group_id, 
+        test_user.user_id, 
+        MessageCreate(
+            content = 'message'
+        )
+    )
+    messages = await service.get_history(test_group.group_id, test_user.user_id)
+
+    assert isinstance(messages, list)
+    assert message in messages

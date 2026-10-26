@@ -47,6 +47,7 @@ async def existing_user_2(db_session: AsyncSession) -> User:
 
 # --- create ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('username', 'email', 'excepted_exc'),
@@ -72,6 +73,7 @@ async def test_create_but_integrity_errors(
             password = 'testpass'
         ))
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_create_but_internal_redis_error(
     db_session: AsyncSession,
@@ -89,6 +91,7 @@ async def test_create_but_internal_redis_error(
         ))
     store_verification_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_create_success(
     db_session: AsyncSession,
@@ -116,6 +119,7 @@ async def test_create_success(
 
 # --- get ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_user_but_user_doesnt_exists(
     db_session: AsyncSession,
@@ -124,6 +128,7 @@ async def test_get_user_but_user_doesnt_exists(
     res = await service.get(uuid4())
     assert res is None
 
+@pytest.mark.unit
 @pytest.mark.asyncio 
 async def test_get_user_success(
     db_session: AsyncSession,
@@ -136,6 +141,7 @@ async def test_get_user_success(
 
 # --- get by username ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_by_username_but_user_doesnt_exists(
     db_session: AsyncSession,
@@ -144,6 +150,7 @@ async def test_get_by_username_but_user_doesnt_exists(
     res = await service.get_by_username('testuser')
     assert res is None
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_by_username_success(
     db_session: AsyncSession,
@@ -156,6 +163,7 @@ async def test_get_by_username_success(
 
 # --- update ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_update_but_user_doesnt_exists(
     db_session: AsyncSession
@@ -164,6 +172,7 @@ async def test_update_but_user_doesnt_exists(
     with pytest.raises(user_exc.UserDoesNotExists):
         await service.update(uuid4(), UserUpdate())
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('username', 'email', 'excepted_exc'),
@@ -195,6 +204,7 @@ async def test_update_but_integrity_errors(
     with pytest.raises(excepted_exc):
         await service.update(existing_user_2.user_id, data)
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_update_but_internal_redis_error_is_store_verification_token(
     db_session: AsyncSession,
@@ -210,6 +220,7 @@ async def test_update_but_internal_redis_error_is_store_verification_token(
         await service.update(existing_user.user_id, UserUpdate(email = 'new@mail.com'))
     store_verification_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ('name', 'username', 'email', 'bio', 'city', 'university', 'institute', 'group', 'values'),
@@ -284,6 +295,7 @@ async def test_update_user_success(
 
 # --- generate avatar upload url ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_generate_avatar_upload_url_success(
     db_session: AsyncSession,
@@ -303,6 +315,7 @@ async def test_generate_avatar_upload_url_success(
 
 # --- set avatar ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_set_avatar_but_user_doesnt_exists(
     db_session: AsyncSession
@@ -311,6 +324,7 @@ async def test_set_avatar_but_user_doesnt_exists(
     with pytest.raises(user_exc.UserDoesNotExists):
         await service.set_avatar(uuid4(), 'key')
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_set_avatar_but_delete_avatar__from_redis_error(
     db_session: AsyncSession,
@@ -327,6 +341,7 @@ async def test_set_avatar_but_delete_avatar__from_redis_error(
         await service.set_avatar(existing_user.user_id, 'key')
     delete_avatar.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_set_avatar_but_delete_avatar_from_s3_error(
     db_session: AsyncSession,
@@ -349,6 +364,7 @@ async def test_set_avatar_but_delete_avatar_from_s3_error(
     delete_avatar.assert_awaited_once()
     delete_object.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_set_avatar_success(
     db_session: AsyncSession,
@@ -374,6 +390,7 @@ async def test_set_avatar_success(
 
 # --- delete avatar ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_avatar_but_user_doesnt_exists(
     db_session: AsyncSession
@@ -382,6 +399,7 @@ async def test_delete_avatar_but_user_doesnt_exists(
     with pytest.raises(user_exc.UserDoesNotExists):
         await service.delete_avatar(uuid4())
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_avatar_but_internal_redis_error_while_deleting_avatar(
     db_session: AsyncSession,
@@ -398,6 +416,7 @@ async def test_delete_avatar_but_internal_redis_error_while_deleting_avatar(
         await service.delete_avatar(existing_user.user_id)
     delete_avatar.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_avatar_but_s3_internal_error_while_deleting_object(
     db_session: AsyncSession,
@@ -420,6 +439,7 @@ async def test_delete_avatar_but_s3_internal_error_while_deleting_object(
     delete_avatar.assert_awaited_once()
     delete_object.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_avatar_success(
     db_session: AsyncSession,
@@ -444,6 +464,7 @@ async def test_delete_avatar_success(
 
 # --- update password ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_update_password_but_user_doesnt_exists(
     db_session: AsyncSession
@@ -455,6 +476,7 @@ async def test_update_password_but_user_doesnt_exists(
             new_password = '1234'
         ))
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_update_password_but_invalid_password(
     db_session: AsyncSession,
@@ -467,6 +489,7 @@ async def test_update_password_but_invalid_password(
             new_password = '12345'
         ))
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_update_password_success(
     db_session: AsyncSession,
@@ -492,6 +515,7 @@ async def test_update_password_success(
 
 # --- delete ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_but_user_doesnt_exists(
     db_session: AsyncSession
@@ -501,6 +525,7 @@ async def test_delete_but_user_doesnt_exists(
     with pytest.raises(user_exc.UserDoesNotExists):
         await service.delete(uuid4())
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_but_internal_redis_error_while_delete_avatar(
     db_session: AsyncSession,
@@ -516,6 +541,7 @@ async def test_delete_but_internal_redis_error_while_delete_avatar(
         await service.delete(existing_user.user_id)
     delete_avatar.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_but_internal_s3_error_while_delete_object(
     db_session: AsyncSession,
@@ -539,6 +565,7 @@ async def test_delete_but_internal_s3_error_while_delete_object(
     delete_avatar.assert_awaited_once()
     delete_object.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_delete_success(
     db_session: AsyncSession,
@@ -563,6 +590,7 @@ async def test_delete_success(
 
 # --- invalidate token ---
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_invalidate_token_but_internal_redis_error_while_get(
     db_session: AsyncSession,
@@ -578,6 +606,7 @@ async def test_invalidate_token_but_internal_redis_error_while_get(
         await service._invalidate_token(existing_user.user_id)
     get_refresh_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_invalidate_token_but_token_not_found(
     db_session: AsyncSession,
@@ -595,6 +624,7 @@ async def test_invalidate_token_but_token_not_found(
     assert not res
     get_refresh_token.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_invalidate_token_but_internal_redis_error_while_add_to_blacklist(
     db_session: AsyncSession,
@@ -613,6 +643,7 @@ async def test_invalidate_token_but_internal_redis_error_while_add_to_blacklist(
     get_refresh_token.assert_awaited_once()
     add_to_blacklist.assert_awaited_once()
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_invalidate_token_success(
     db_session: AsyncSession,

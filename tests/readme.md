@@ -16,6 +16,6 @@ Tests in this project are divided into unit, integration, and e2e tests.
 
 To run tests of a specific type, use the following commands:
 ```
-docker compose --profile test exec testapi pytest -m unit|intgration|e2e 
+docker compose --profile test exec testapi pytest -m unit|integration|e2e 
 ```
 
