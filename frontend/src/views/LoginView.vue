@@ -9,8 +9,33 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-const step = ref('credentials')
-const username = ref('')
+const LOGIN_FLOW_KEY = 'fluffy_login_flow'
+
+function loadLoginFlow() {
+  try {
+    const saved = sessionStorage.getItem(LOGIN_FLOW_KEY)
+    if (!saved) return null
+
+    const flow = JSON.parse(saved)
+
+    if (
+      flow?.step !== 'code' ||
+      typeof flow.username !== 'string' ||
+      !flow.username.trim()
+    ) {
+      return null
+    }
+
+    return flow
+  } catch {
+    return null
+  }
+}
+
+const savedFlow = loadLoginFlow()
+
+const step = ref(savedFlow ? 'code' : 'credentials')
+const username = ref(savedFlow?.username ?? '')
 const password = ref('')
 const code = ref('')
 const loading = ref(false)
@@ -29,11 +54,22 @@ onMounted(() => {
 
 async function submitCredentials() {
   if (loading.value) return
+
   error.value = ''
   info.value = ''
   loading.value = true
+
   try {
     await auth.requestLoginCode(username.value.trim(), password.value)
+
+    sessionStorage.setItem(
+      LOGIN_FLOW_KEY,
+      JSON.stringify({
+        step: 'code',
+        username: username.value.trim(),
+      }),
+    )
+
     step.value = 'code'
   } catch (e) {
     error.value = loginErrorMessage(e)
@@ -44,14 +80,23 @@ async function submitCredentials() {
 
 async function submitCode() {
   if (loading.value) return
+
   error.value = ''
   info.value = ''
   loading.value = true
+
   try {
     await auth.confirmLoginCode(username.value.trim(), code.value)
+
+    sessionStorage.removeItem(LOGIN_FLOW_KEY)
+
     const redirect = route.query.redirect
-    const safe = typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')
-    router.push(safe ? redirect : '/app')
+    const safe =
+      typeof redirect === 'string' &&
+      redirect.startsWith('/') &&
+      !redirect.startsWith('//')
+
+    await router.push(safe ? redirect : '/app')
   } catch (e) {
     error.value = codeErrorMessage(e)
   } finally {
@@ -61,9 +106,17 @@ async function submitCode() {
 
 async function resendCode() {
   if (loading.value) return
+
   error.value = ''
   info.value = ''
+
+  if (!password.value) {
+    error.value = 'Для повторной отправки кода вернись назад и введи пароль заново.'
+    return
+  }
+
   loading.value = true
+
   try {
     await auth.requestLoginCode(username.value.trim(), password.value)
     code.value = ''
@@ -76,6 +129,8 @@ async function resendCode() {
 }
 
 function backToCredentials() {
+  sessionStorage.removeItem(LOGIN_FLOW_KEY)
+
   step.value = 'credentials'
   code.value = ''
   error.value = ''
@@ -95,14 +150,33 @@ function backToCredentials() {
 
         <div class="field">
           <label for="username">Логин</label>
-          <input id="username" v-model="username" type="text" autocomplete="username" placeholder="username" required />
-        </div>
-        <div class="field">
-          <label for="password">Пароль</label>
-          <input id="password" v-model="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+          <input
+            id="username"
+            v-model="username"
+            type="text"
+            autocomplete="username"
+            placeholder="username"
+            required
+          />
         </div>
 
-        <button class="btn btn-primary btn-block" type="submit" :disabled="loading || !username.trim() || !password">
+        <div class="field">
+          <label for="password">Пароль</label>
+          <input
+            id="password"
+            v-model="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+
+        <button
+          class="btn btn-primary btn-block"
+          type="submit"
+          :disabled="loading || !username.trim() || !password"
+        >
           {{ loading ? 'Проверяем…' : 'Продолжить' }}
         </button>
 
@@ -114,6 +188,7 @@ function backToCredentials() {
 
       <form v-else @submit.prevent="submitCode">
         <h1>Введи код</h1>
+
         <p class="auth-subtitle">
           Мы отправили 4-значный код на почту, привязанную к аккаунту
           <strong>{{ username.trim() }}</strong>. Он действует 5 минут.
@@ -124,16 +199,46 @@ function backToCredentials() {
 
         <div class="field">
           <label for="code">Код из письма</label>
-          <input id="code" v-model="code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="4" placeholder="0000" autofocus required />
+          <input
+            id="code"
+            v-model="code"
+            class="code-input"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="4"
+            placeholder="0000"
+            autofocus
+            required
+          />
         </div>
 
-        <button class="btn btn-primary btn-block" type="submit" :disabled="loading || !codeIsValid">
+        <button
+          class="btn btn-primary btn-block"
+          type="submit"
+          :disabled="loading || !codeIsValid"
+        >
           {{ loading ? 'Проверяем…' : 'Войти' }}
         </button>
 
         <p class="auth-links">
-          <button class="link-button" type="button" :disabled="loading" @click="backToCredentials">← Назад</button>
-          <button class="link-button" type="button" :disabled="loading" @click="resendCode">Отправить код ещё раз</button>
+          <button
+            class="link-button"
+            type="button"
+            :disabled="loading"
+            @click="backToCredentials"
+          >
+            ← Назад
+          </button>
+
+          <button
+            class="link-button"
+            type="button"
+            :disabled="loading"
+            @click="resendCode"
+          >
+            Отправить код ещё раз
+          </button>
         </p>
       </form>
     </div>

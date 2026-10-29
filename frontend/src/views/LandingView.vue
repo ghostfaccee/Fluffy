@@ -5,19 +5,8 @@ import LogoIcon from '@/components/LogoIcon.vue'
 const year = new Date().getFullYear()
 
 const menuOpen = ref(false)
-const openDropdown = ref(null)
-
-function toggleDropdown(name) {
-  openDropdown.value = openDropdown.value === name ? null : name
-}
-
 function closeMenus() {
-  openDropdown.value = null
   menuOpen.value = false
-}
-
-function onDocumentClick(event) {
-  if (!event.target.closest('.nav-dropdown')) openDropdown.value = null
 }
 
 function onKeydown(event) {
@@ -27,7 +16,6 @@ function onKeydown(event) {
 let observer
 
 onMounted(() => {
-  document.addEventListener('click', onDocumentClick)
   document.addEventListener('keydown', onKeydown)
 
   observer = new IntersectionObserver(
@@ -45,7 +33,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', onDocumentClick)
   document.removeEventListener('keydown', onKeydown)
   observer?.disconnect()
 })
@@ -58,55 +45,11 @@ onBeforeUnmount(() => {
                 <LogoIcon />
                 <span class="logo-name">Fluffy</span>
             </RouterLink>
-            <nav class="nav-links" :class="{ open: menuOpen }" aria-label="Базовая навигация">
-                <div class="nav-dropdown" :class="{ open: openDropdown === 'features' }">
-                    <button class="nav-dropdown-toggle" type="button"
-                        :aria-expanded="openDropdown === 'features'"
-                        @click="toggleDropdown('features')">
-                        Возможности <span class="dropdown-chevron" aria-hidden="true">⌄</span>
-                    </button>
-                    <div class="dropdown-menu">
-                        <a href="#features" @click="closeMenus">Все возможности</a>
-                        <a href="#manifest" @click="closeMenus">Как устроена Fluffy</a>
-                        <a href="#principles" @click="closeMenus">Наши принципы</a>
-                    </div>
-                </div>
-                <div class="nav-dropdown" :class="{ open: openDropdown === 'opensource' }">
-                    <button class="nav-dropdown-toggle" type="button"
-                        :aria-expanded="openDropdown === 'opensource'"
-                        @click="toggleDropdown('opensource')">
-                        Открытый код <span class="dropdown-chevron" aria-hidden="true">⌄</span>
-                    </button>
-                    <div class="dropdown-menu">
-                        <a href="#opensource" @click="closeMenus">Об исходном коде</a>
-                        <a href="#contribute" @click="closeMenus">Как помочь проекту</a>
-                        <a href="https://github.com/" target="_blank" rel="noopener noreferrer" @click="closeMenus">GitHub</a>
-                    </div>
-                </div>
-                <div class="nav-dropdown" :class="{ open: openDropdown === 'about' }">
-                    <button class="nav-dropdown-toggle" type="button"
-                        :aria-expanded="openDropdown === 'about'"
-                        @click="toggleDropdown('about')">
-                        О нас <span class="dropdown-chevron" aria-hidden="true">⌄</span>
-                    </button>
-                    <div class="dropdown-menu">
-                        <a href="#manifest" @click="closeMenus">Философия Fluffy</a>
-                        <a href="#principles" @click="closeMenus">Наши ценности</a>
-                        <a href="#principles" @click="closeMenus">О команде и проекте</a>
-                    </div>
-                </div>
-                <div class="nav-dropdown" :class="{ open: openDropdown === 'project' }">
-                    <button class="nav-dropdown-toggle" type="button"
-                        :aria-expanded="openDropdown === 'project'"
-                        @click="toggleDropdown('project')">
-                        О проекте <span class="dropdown-chevron" aria-hidden="true">⌄</span>
-                    </button>
-                    <div class="dropdown-menu">
-                        <a href="#principles" @click="closeMenus">Что такое Fluffy</a>
-                        <a href="#opensource" @click="closeMenus">Технологии</a>
-                        <a href="#footer" @click="closeMenus">Контакты</a>
-                    </div>
-                </div>
+            <nav class="nav-links" :class="{ open: menuOpen }" aria-label="Основная навигация">
+                <RouterLink to="/docs/features" @click="closeMenus">Возможности</RouterLink>
+                <RouterLink to="/docs/api" @click="closeMenus">Документация API</RouterLink>
+                <RouterLink to="/docs/opensource" @click="closeMenus">Open Source</RouterLink>
+                <RouterLink to="/docs/manifesto" @click="closeMenus">О проекте</RouterLink>
             </nav>
             <div class="nav-actions">
                 <RouterLink to="/login" class="btn btn-secondary">Войти</RouterLink>
@@ -126,11 +69,22 @@ onBeforeUnmount(() => {
                     <span class="gradient-text">в шумной сети.</span>
                 </h1>
                 <p class="hero-description">
-                    Fluffy - не очередной проект. 
-                    Это пространство для общения без лишнего шума.
+                    Fluffy - пространство для общения без лишнего шума.
                     Делись моментами, находи своих людей и сам решай,
                     что заслуживает твоего внимания.
                 </p>
+                <div class="hero-buttons">
+                    <RouterLink to="/register" class="btn btn-primary">
+                        Создать аккаунт
+                    </RouterLink>
+                    <a href="#features" class="btn btn-secondary">
+                        Узнать о Fluffy
+                    </a>
+                </div>
+                <div class="hero-note" aria-label="О проекте">
+                    <span><b aria-hidden="true">✓</b> Открытый исходный код</span>
+                    <span><b aria-hidden="true">✓</b> Без рекламной ленты</span>
+                </div>
             </div>
         </section>
         <div class="announcement">
@@ -151,7 +105,7 @@ onBeforeUnmount(() => {
                         <div class="feature-mark"></div>
                         <h3>Ничего лишнего</h3>
                         <p>
-                            Никаких рекомендаций, трендов и «тебе может понравиться». 
+                            Никаких рекомендаций, трендов и лишнего шума. 
                             Лента строится только из того, на что ты подписался сам.
                         </p>
                     </article>
@@ -168,8 +122,7 @@ onBeforeUnmount(() => {
                         <div class="feature-mark"></div>
                         <h3>Тишина по умолчанию</h3>
                         <p>
-                            Никаких реклам или подписок, спама или рассылок.
-                            Только то, что необходимо.
+                            Отсутствие реклам, подписок, рассылок и спама.
                         </p>
                     </article>
                     <article class="feature-card reveal">
@@ -335,17 +288,13 @@ onBeforeUnmount(() => {
                             <span>FastAPI</span>
                         </div>
                         <div class="repo-row">
-                            <span>Язык backend</span>
-                            <span>Python</span>
-                        </div>
-                        <div class="repo-row">
                             <span>Лицензия</span>
-                            <span>Будет определена</span>
+                            <span>Apache v2.0</span>
                         </div>
                         <div class="repo-row">
                             <span>Статус</span>
                             <span style="color: var(--green-light);">
-                                В разработке
+                                Бета-тестирование
                             </span>
                         </div>
                     </div>
@@ -365,25 +314,23 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="footer-links">
                     <div class="footer-column">
-                        <h4>Проект</h4>
-                        <a href="#principles">О Fluffy</a>
-                        <a href="#manifest">Наши принципы</a>
-                        <a href="#features">Возможности</a>
+                        <h4>Документация</h4>
+                        <RouterLink to="/docs/api">API</RouterLink>
+                        <RouterLink to="/docs/features">Возможности</RouterLink>
+                        <RouterLink to="/docs/principles">Принципы</RouterLink>
+                    </div>
+                    <div class="footer-column">
+                        <h4>О проекте</h4>
+                        <RouterLink to="/docs/manifesto">Манифест</RouterLink>
+                        <RouterLink to="/docs/opensource">Open Source</RouterLink>
+                        <RouterLink to="/docs/credits">Титры</RouterLink>
                     </div>
                     <div class="footer-column">
                         <h4>Сообщество</h4>
-                        <a href="#opensource">Open Source</a>
-                        <a
-                            href="https://github.com/ghostfaccee/Fluffy"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >GitHub</a>
+                        <a href="https://github.com/ghostfaccee/Fluffy" target="_blank" rel="noopener noreferrer">GitHub</a>
                         <a href="mailto:fluffy.social.network@gmail.com">Связаться</a>
-                    </div>
-                    <div class="footer-column">
-                        <h4>Аккаунт</h4>
                         <RouterLink to="/login">Войти</RouterLink>
-                        <RouterLink to="register">Регистрация</RouterLink>
+                        <RouterLink to="/register">Регистрация</RouterLink>
                     </div>
                 </div>
             </div>

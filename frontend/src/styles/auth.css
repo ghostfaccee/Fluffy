@@ -1,0 +1,152 @@
+/* AUTH (вход, регистрация) */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-header {
+    height: 72px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.auth-main {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    padding: 40px 0;
+}
+
+.auth-card {
+    width: min(420px, calc(100% - 36px));
+    padding: 36px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: var(--bg-card);
+}
+
+.auth-card h1 {
+    margin-bottom: 8px;
+    font-size: 26px;
+    font-weight: 650;
+    letter-spacing: -1px;
+}
+
+.auth-subtitle {
+    margin-bottom: 26px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.auth-subtitle strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.field {
+    display: grid;
+    gap: 7px;
+    margin-bottom: 16px;
+}
+
+.field label {
+    color: #c4c9c5;
+    font-size: 12px;
+}
+
+.field input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--bg-soft);
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.field input::placeholder {
+    color: #6f746f;
+}
+
+.field input:focus {
+    outline: none;
+    border-color: var(--green-light);
+}
+
+.field .code-input {
+    width: 100%;
+    height: 54px;
+    padding: 0 14px;
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 12px;
+    text-indent: 12px;
+}
+
+.form-error,
+.form-info {
+    margin-bottom: 16px;
+    padding: 11px 13px;
+    border-radius: 9px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.form-error {
+    border: 1px solid rgba(224, 108, 108, 0.35);
+    background: rgba(224, 108, 108, 0.08);
+    color: #e8a0a0;
+}
+
+.form-info {
+    border: 1px solid rgba(141, 181, 161, 0.35);
+    background: rgba(141, 181, 161, 0.08);
+    color: var(--green-light);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.auth-links a,
+.link-button {
+    color: var(--green-light);
+}
+
+.link-button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.link-button:hover:not(:disabled),
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+.link-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

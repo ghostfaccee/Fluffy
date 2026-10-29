@@ -7,6 +7,8 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'landing', component: LandingView },
+    { path: '/docs/:page', name: 'docs', component: () => import('../views/DocsView.vue'), props: true },
+    { path: '/docs', redirect: '/docs/features' },
     {
       path: '/login',
       name: 'login',

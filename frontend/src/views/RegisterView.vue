@@ -44,7 +44,6 @@ async function submitRegistration() {
       email: email.value.trim(),
       password: password.value,
     }
-    // опциональные — только если заполнены
     for (const [key, refVal] of Object.entries({ bio, city, university, institute, group })) {
       const val = refVal.value.trim()
       if (val) payload[key] = val
@@ -98,15 +97,15 @@ async function submitRegistration() {
         </div>
         <div class="field">
           <label for="university">Университет <span class="label-optional">(опционально)</span></label>
-          <input id="university" v-model="university" type="text" />
+          <input id="university" v-model="university" type="text" placeholder="Какой у тебя ВУЗ"/>
         </div>
         <div class="field">
           <label for="institute">Институт <span class="label-optional">(опционально)</span></label>
-          <input id="institute" v-model="institute" type="text" />
+          <input id="institute" v-model="institute" type="text" placeholder="Где ты учишься"/>
         </div>
         <div class="field">
           <label for="group">Группа <span class="label-optional">(опционально)</span></label>
-          <input id="group" v-model="group" type="text" maxlength="20" />
+          <input id="group" v-model="group" type="text" maxlength="20" placeholder="Твоя учебная группа"/>
         </div>
 
         <button class="btn btn-primary btn-block" type="submit" :disabled="loading || !formValid">

@@ -4,9 +4,11 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { passwordErrorMessage } from '@/api/errors'
 import AppShell from '@/components/AppShell.vue'
+import { useTheme } from '@/composables/useTheme'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { theme, setTheme } = useTheme()
 
 const passwordForm = ref({ old_password: '', new_password: '' })
 const passwordLoading = ref(false)
@@ -59,6 +61,40 @@ async function deleteAccount() {
   <AppShell>
     <div class="container">
       <section class="app-section">
+
+        <div class="settings-card settings-card--appearance">
+          <div class="settings-card-head">
+            <span class="settings-card-label">Внешний вид</span>
+            <h2 class="settings-card-title">Тема оформления</h2>
+            <p class="settings-card-hint">
+              Выбери оформление Fluffy. Настройка сохранится на этом устройстве.
+            </p>
+          </div>
+          <div class="theme-options" role="group" aria-label="Тема оформления">
+            <button
+              class="theme-option"
+              :class="{ 'theme-option--active': theme === 'dark' }"
+              type="button"
+              :aria-pressed="theme === 'dark'"
+              @click="setTheme('dark')"
+            >
+              <span class="theme-preview theme-preview--dark" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="theme-option-copy"><strong>Тёмная</strong><small>Мягкая для глаз</small></span>
+              <span v-if="theme === 'dark'" class="theme-check" aria-hidden="true">✓</span>
+            </button>
+            <button
+              class="theme-option"
+              :class="{ 'theme-option--active': theme === 'light' }"
+              type="button"
+              :aria-pressed="theme === 'light'"
+              @click="setTheme('light')"
+            >
+              <span class="theme-preview theme-preview--light" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="theme-option-copy"><strong>Светлая</strong><small>Чистая и яркая</small></span>
+              <span v-if="theme === 'light'" class="theme-check" aria-hidden="true">✓</span>
+            </button>
+          </div>
+        </div>
 
         <div class="settings-card">
           <div class="settings-card-head">

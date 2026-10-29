@@ -94,13 +94,6 @@ watch(() => current.value.messages.length, () => scrollToBottom())
 <template>
   <AppShell>
     <div class="container">
-      <section class="app-section app-section--hero">
-        <h1 class="app-title app-title--hero">
-          <span class="gradient-text">{{ group?.name || 'Группа' }}</span>
-        </h1>
-        <p v-if="group?.description" class="app-welcome">{{ group.description }}</p>
-      </section>
-
       <div class="groups-actions" style="margin-bottom: 18px;">
         <RouterLink :to="{ name: 'group-members', params: { groupId } }" class="btn btn-secondary">
           Участники
