@@ -30,11 +30,11 @@ jobs:
 
     - name: Show API logs
       run: |
-        docker logs testapi --tail 50
+        docker compose logs testapi --tail 50
         
     - name: Run tests
       run: |
-        docker exec testapi pytest -v
+        docker compose exec testapi pytest -v
         
     - name: Check container is running
       run: |
