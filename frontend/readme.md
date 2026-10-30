@@ -1,27 +1,26 @@
-# frontend
+# Фронтенд
 
-## Quick start
-from this folder
+## Быстрый старт
+В этой папке выполните:
 ```bash
 npm install
 npm run dev
 ```
 
-## Commands
+## Команды
 ```bash
-npm run dev # for development
-npm run build # for production
+npm run dev # для разработки
+npm run build # для сборки (продакшена)
 ```
 
-## Where and what to change
+## Где и что менять
 
-- **New page:** Create a component in `src/views` and register it in `src/router`
-- **Repeating interface elements** in `src/components`
-- **Use** `src/api/client.js` **for requests.**
-- **Styling:** global rules go in `styles/main.css`, followed by `styles/auth.css` and similar files containing styles for specific components.
-- **If you change the backend address** (to something other than `localhost:8000`), you need to update the default address in `vite.config.js` under `server.proxy['/v1'].target`.
+- **Новая страница:** создайте компонент в `src/views` и зарегистрируйте его в `src/router`.
+- **Повторяющиеся элементы интерфейса:** размещайте в `src/components`.
+- **Для запросов** используйте `src/api/client.js`.
+- **Стили:** глобальные правила находятся в `styles/main.css`; также существуют `styles/auth.css` и аналогичные файлы со стилями для конкретных компонентов.
+- **При изменении адреса бэкенда** (если он отличается от `localhost:8000`) обновите адрес по умолчанию в `vite.config.js` — в поле `server.proxy['/v1'].target`.
 
-## Principles
+## Принципы
 
-Keep the structure simple: `views` handle pages, `components` manage reusable parts, `stores` deal with state, `api` covers the network layer, and `styles` handle the look and feel. Only add a new abstraction when it’s truly necessary.
-
+Придерживайтесь простой структуры: `views` отвечают за страницы, `components` — за переиспользуемые элементы, `stores` — за состояние, `api` — за сетевой слой, а `styles` — за внешний вид. Добавляйте новые абстракции только тогда, когда это действительно необходимо.

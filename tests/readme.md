@@ -1,21 +1,20 @@
-# Fluffy | Testing
+# Руководство по запуску тестов
 
-**Before running the tests, it is recommended to launch the corresponding Docker profile.**
+**Перед запуском тестов рекомендуется активировать соответствующий профиль Docker.**
 ```
 docker compose --profile test up -d
 ```
 
-To run the full suite of tests, use the following commands:
+Для запуска полного набора тестов используйте следующие команды:
 ```
 docker compose --profile test exec testapi pytest
-# or (for a detailed output)
+# или (для получения подробного вывода)
 docker compose --profile test exec testapi pytest -v
 ```
 
-Tests in this project are divided into unit, integration, and e2e tests.
+Тесты в этом проекте разделены на модульные (unit), интеграционные (integration) и сквозные (e2e).
 
-To run tests of a specific type, use the following commands:
+Для запуска тестов определенного типа используйте следующие команды:
 ```
-docker compose --profile test exec testapi pytest -m unit|integration|e2e 
+docker compose --profile test exec testapi pytest -m unit|integration|e2e
 ```
-
