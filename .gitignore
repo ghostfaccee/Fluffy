@@ -11,6 +11,7 @@ backup_3.sql
 notes.md
 frontend.md
 bugs-and-fixes.md
+.pytest_cache
 
 # Logs
 logs
