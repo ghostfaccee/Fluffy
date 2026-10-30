@@ -21,12 +21,13 @@ jobs:
         TEST_POSTGRES_USER = ${{ secrets.TEST_POSTGRES_USER }}
         TEST_POSTGRES_PASSWORD = ${{ secrets.TEST_POSTGRES_PASSWORD }}
         TEST_POSTGRES_DB = ${{ secrets.TEST_POSTGRES_DB }}
+        SECRET_JWT_KEY = ${{ secrets.SECRET_JWT_KEY }}
+        SECRET_REFRESH_KEY = ${{ secrets.SECRET_REFRESH_KEY }}
         EOF
       
     - name: Run docker compose
       run: |
         docker compose --profile test up -d --build
-        sleep 60
 
     - name: Show API logs
       run: |
