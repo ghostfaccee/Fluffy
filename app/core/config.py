@@ -9,9 +9,10 @@ class EnvSettings(BaseSettings):
     SECRET_REFRESH_KEY: str
 
     POSTGRES_URL: str
-    RABBITMQ_URL: str
 
     REDIS_URL: str
+
+    RABBITMQ_URL: str | None = None
 
     SMTP_HOST: str | None = None
     SMTP_PORT: int | None = None
