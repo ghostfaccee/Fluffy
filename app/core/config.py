@@ -13,16 +13,16 @@ class EnvSettings(BaseSettings):
 
     REDIS_URL: str
 
-    SMTP_HOST: str
-    SMTP_PORT: int
-    SMTP_USER: str
-    SMTP_PASSWORD: str
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int | None = None
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
 
-    S3_AVATARS_ENDPOINT_URL: str
-    S3_AVATARS_ACCESS_KEY: str
-    S3_AVATARS_SECRET_KEY: str
-    S3_AVATARS_BUCKET_NAME: str
-    S3_AVATARS_REGION: str
+    S3_AVATARS_ENDPOINT_URL: str | None = None
+    S3_AVATARS_ACCESS_KEY: str | None = None
+    S3_AVATARS_SECRET_KEY: str | None = None
+    S3_AVATARS_BUCKET_NAME: str | None = None
+    S3_AVATARS_REGION: str | None = None
     model_config = ConfigDict(env_file = '.env', case_sensitive = True, extra = 'ignore')
 
 env_settings = EnvSettings()
