@@ -1,9 +1,9 @@
-
+import asyncio
 import json
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import Any
 from collections.abc import Callable
-from functools import wraps
+from functools import wraps, partial
 
 
 from app.core import logger, RedisClient, yaml_settings
@@ -90,6 +90,79 @@ class CachingService:
             return False
     
     @classmethod
+    async def get_or_set(
+        cls,
+        key: str,
+        factory: Callable,
+        ttl: int | None = None,
+        lock_timeout: int = 10,
+        wait_timeout: int = 2,
+        wait_interval: float = 0.05
+    ) -> Any:
+        '''
+        Get value from cache or compute it via factory with thundering herd protection.
+        Only one caller computes the value; others wait for it to appear in cache.
+        args:
+            * key - cache key
+            * factory - async callable that computes the value on cache miss
+            * ttl - lifetime (in seconds)
+            * lock_timeout - how long the lock lives (should exceed max factory time)
+            * wait_timeout - how long waiters poll before falling back
+            * wait_interval - poll interval for waiters
+        '''
+        if not cls._enabled:
+            return await factory()
+
+        cached = await cls.get(key)
+        if cached is not None:
+            return cached
+
+        redis = await RedisClient.get_client()
+        lock_key = f'lock:{key}'
+        token = uuid4().hex
+        got_lock = await redis.set(lock_key, token, nx=True, ex=lock_timeout)
+
+        if got_lock:
+            try:
+                cached = await cls.get(key)
+                if cached is not None:
+                    return cached
+                res = await factory()
+                if res is not None:
+                    await cls.set(key, res, ttl)
+                return res
+            finally:
+                await cls._unlock(redis, lock_key, token)
+
+        # Lock is held by someone else — wait for the winner to populate the cache
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + wait_timeout
+        while loop.time() < deadline:
+            await asyncio.sleep(wait_interval)
+            cached = await cls.get(key)
+            if cached is not None:
+                return cached
+
+        # Still nothing: try to take the lock once more without waiting
+        token = uuid4().hex
+        got_lock = await redis.set(lock_key, token, nx=True, ex=lock_timeout)
+        if got_lock:
+            try:
+                cached = await cls.get(key)
+                if cached is not None:
+                    return cached
+                res = await factory()
+                if res is not None:
+                    await cls.set(key, res, ttl)
+                return res
+            finally:
+                await cls._unlock(redis, lock_key, token)
+
+        # Could not take the lock — serve without caching rather than stampede
+        logger.warning(f'Cache lock wait timeout for key={key}, serving without cache')
+        return await factory()
+    
+    @classmethod
     async def delete(cls, key: str) -> bool:
         '''
         Delete data by key
@@ -99,7 +172,7 @@ class CachingService:
         try:
             redis = await RedisClient.get_client()
             result = await redis.delete(key)
-            return result >= 0
+            return result > 0
         except Exception as e:
             logger.error(f'Cache delete error: {e}')
             return False
@@ -113,6 +186,7 @@ class CachingService:
             deleted = 0
             async for key in redis.scan_iter(match = pattern, count = 200):
                 deleted += await redis.delete(key)
+            logger.info(f'Cache deleted {deleted} keys by pattern={pattern}')
             return deleted
         except Exception as e:
             logger.error(f'Cache delete by pattern error: {e}')
@@ -124,7 +198,10 @@ class CachingService:
         ttl: int | None = None, 
         namespace: str = '', 
         user_id_field: str = '', 
-        extra_fields: list | None = None
+        extra_fields: list | None = None,
+        use_lock: bool = False,
+        lock_timeout: int = 10,
+        wait_timeout: int = 2
     ) -> Callable:
         '''
         Decorator for function caching
@@ -153,6 +230,14 @@ class CachingService:
                     user_id = user_id,
                     extra = extra
                 )
+                if use_lock:
+                    return await cls.get_or_set(
+                        key,
+                        factory = partial(func, *args, **kwargs),
+                        ttl = ttl,
+                        lock_timeout = lock_timeout,
+                        wait_timeout = wait_timeout
+                    )
                 cached_data = await cls.get(key)
                 if cached_data is not None:
                     return cached_data
@@ -162,3 +247,20 @@ class CachingService:
                 return res
             return wrapper
         return decorator
+
+    @staticmethod
+    async def _unlock(redis, lock_key: str, token: str) -> None:
+        '''
+        Atomically release the lock only if it still belongs to us.
+        '''
+        lua = '''
+        if redis.call("get", KEYS[1]) == ARGV[1] then
+            return redis.call("del", KEYS[1])
+        else
+            return 0
+        end
+        '''
+        try:
+            await redis.eval(lua, 1, lock_key, token)
+        except Exception as e:
+            logger.error(f'Cache unlock error: {e}')
