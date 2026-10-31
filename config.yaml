@@ -1,6 +1,8 @@
 DEBUG: true
 SLOW_REQUEST_THRESHOLD: 3.5
 
+CACHING_DEFAULT_TTL: 300
+
 VERIFICATION_LINK: http://localhost:5173/verify-email
 LOGIN_CODE_LINK: http://127.0.0.1:8000/v1/auth/login/verify
 

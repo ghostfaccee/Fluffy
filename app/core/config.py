@@ -34,6 +34,7 @@ class YamlSettings(BaseModel):
     JWT_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
     ALGORITHM: str
+    CACHING_DEFAULT_TTL: int
 
     DEBUG: bool
     SLOW_REQUEST_THRESHOLD: float
