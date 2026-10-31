@@ -39,7 +39,6 @@ class YamlSettings(BaseModel):
     DEBUG: bool
     SLOW_REQUEST_THRESHOLD: float
     VERIFICATION_LINK: str
-    LOGIN_CODE_LINK: str
     VERIFICATION_TOKEN_EXPIRE_MINUTES: int
     LOGIN_CODE_EXPIRE_MINUTES: int
 

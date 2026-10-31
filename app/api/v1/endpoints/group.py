@@ -12,6 +12,7 @@ from app.dependencies import get_group_message_service, get_group_service, get_c
 from app.services import GroupMessageService, GroupService
 from app.utils.responses import build_group_response, build_group_message_response
 from app.middleware import RateLimit
+from app.infrastructure import CachingService
 
 router = APIRouter(prefix = '/groups', tags = ['groups'])
 limiter = RateLimit.get_limiter()
@@ -37,6 +38,12 @@ async def join_group(request: Request, invite_token: str, current_user_uuid: UUI
     return await build_group_response(group)
 
 @router.get('/{group_id}', response_model = GroupResponse, status_code = status.HTTP_200_OK)
+@CachingService.cached(ttl = 30, namespace = 'groups', user_id_field = 'current_user_uuid', extra_fields = ['group_id'])
+# When implementing caching, we include the group ID in the extra data; otherwise,
+#  if a user belongs to more than one group, a scenario could arise where
+#  the response for "Group A" gets cached, but then—when "Group B" is
+#  requested—the cache returns the data for "Group A" instead,
+#  leading to incorrect information being displayed.
 @limiter.limit('5/minute')
 async def get_group(request: Request, group_id: str, current_user_uuid: UUID = Depends(get_current_user_uuid), service: GroupService = Depends(get_group_service)) -> GroupResponse:
     group = await service.get(UUID(group_id), current_user_uuid)

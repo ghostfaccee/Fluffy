@@ -179,6 +179,9 @@ class CachingService:
 
     @classmethod
     async def delete_by_pattern(cls, pattern: str) -> int:
+        '''
+        Delete data by pattern
+        '''
         if not cls._enabled:
             return 0
         try:
@@ -193,7 +196,7 @@ class CachingService:
             return 0
     
     @classmethod
-    async def cached(
+    def cached(
         cls, 
         ttl: int | None = None, 
         namespace: str = '', 
@@ -210,6 +213,9 @@ class CachingService:
             * namespace - namespace (for groupings)
             * user_id_field - the argument name containing user_id; if not specified, it uses a shared cache for all users. Always use user_id_field for authorized endpoints.
             * extra_fields - a list of names of additional arguments required to be added to the key. This is perfect for endpoints with parameters (for example: extra_fields = ['username'] for the endpoint /v1/users/{username})
+            * use_lock - Designed to address herd-related issues. Disabled by default; should be enabled for demanding tasks.
+            * lock_timeout - lock lifetime
+            * wait_timeout - time for waiters to poll the cache
         '''
         def decorator(func: Callable) -> Callable:
             @wraps(func)

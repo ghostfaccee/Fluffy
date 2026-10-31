@@ -16,7 +16,9 @@ from collections.abc import AsyncGenerator
 from app.middleware import RateLimit
 from app.core import Base
 from app.core.database import get_db
+from app.infrastructure import CachingService
 
+CachingService.disable()
 RateLimit.disable_redis()
 
 from app.main import app

@@ -2,7 +2,7 @@ import aiosmtplib
 import asyncio
 from email.mime.text import MIMEText
 
-from app.core import env_settings, yaml_settings, celery_app
+from app.core import env_settings, celery_app
 
 @celery_app.task(
     name = 'login.send_code',
@@ -17,8 +17,7 @@ def send_code(self, to_email: str, code: str, username: str) -> None:
         raise self.retry(exc = e)
 
 async def _send_login_code(to_email: str, code: str, username: str) -> None:
-    link = f'{yaml_settings.LOGIN_CODE_LINK}'
-    msg = MIMEText(f'Привет! Твой код для входа в аккаунт: {code}. Ссылка: {link}/{username}.')
+    msg = MIMEText(f'Привет! Твой код для входа в аккаунт: {code}.')
     msg['Subject'] = 'Вход в аккаунт'
     msg['From'] = env_settings.SMTP_USER
     msg['To'] = to_email

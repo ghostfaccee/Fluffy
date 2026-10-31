@@ -11,6 +11,7 @@ from app.dependencies import get_user_service, get_current_user_uuid
 from app.services import UserService
 from app.utils import build_user_response
 from app.middleware import RateLimit
+from app.infrastructure import CachingService
 
 router = APIRouter(prefix = '/users', tags = ['users'])
 limiter = RateLimit.get_limiter()
@@ -21,6 +22,7 @@ async def register(request: Request, data: UserRegister, service: UserService = 
     return await service.create(data)
 
 @router.get('/me', response_model = UserResponse, status_code = status.HTTP_200_OK)
+@CachingService.cached(ttl = 30, namespace = 'users', user_id_field = 'current_user_uuid')
 @limiter.limit('5/minute')
 async def get_me(request: Request, current_user_uuid: UUID = Depends(get_current_user_uuid), service: UserService = Depends(get_user_service)) -> UserResponse:
     user = await service.get(current_user_uuid)
