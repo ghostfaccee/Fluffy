@@ -103,6 +103,20 @@ class CachingService:
         except Exception as e:
             logger.error(f'Cache delete error: {e}')
             return False
+
+    @classmethod
+    async def delete_by_pattern(cls, pattern: str) -> int:
+        if not cls._enabled:
+            return 0
+        try:
+            redis = await RedisClient.get_client()
+            deleted = 0
+            async for key in redis.scan_iter(match = pattern, count = 200):
+                deleted += await redis.delete(key)
+            return deleted
+        except Exception as e:
+            logger.error(f'Cache delete by pattern error: {e}')
+            return 0
     
     @classmethod
     async def cached(
