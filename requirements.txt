@@ -49,7 +49,7 @@ packaging==26.3
 pluggy==1.7.0
 prompt_toolkit==3.0.53
 propcache==0.5.4
-pyasn1==0.6.4
+pyasn1==0.6.5
 pycparser==3.0
 pydantic==2.13.5
 pydantic-settings==2.15.0
