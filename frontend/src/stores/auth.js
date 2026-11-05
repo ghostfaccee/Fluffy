@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { api, setTokens, clearTokens, hasRefreshToken } from '@/api/client'
+import { api, setTokens, clearTokens, hasRefreshToken, hasUsableAccessToken } from '@/api/client'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -64,18 +64,17 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async restoreSession() {
-      if (!hasRefreshToken()) return
+      if (!hasRefreshToken() && !hasUsableAccessToken()) return
       try {
-        const tokens = await api('/auth/refresh', {
-          method: 'POST',
-          auth: false,
-          body: { refresh_token: localStorage.getItem('refresh_token') },
-        })
-        setTokens(tokens)
+        // api() refreshes only when the cached access token is missing or near expiry.
+        // A still-valid token survives a page reload via sessionStorage.
         this.user = await api('/users/me')
-      } catch {
-        clearTokens()
-        this.user = null
+      } catch (error) {
+        // A rate limit or network outage is temporary: never destroy the session.
+        if (error?.status !== 429 && error?.status !== 0) {
+          clearTokens()
+          this.user = null
+        }
       }
     },
 

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { getAccessToken } from '@/api/client'
 
 const SUBPROTOCOL = 'fluffy'
@@ -16,6 +16,7 @@ export const useWsStore = defineStore('ws', () => {
   let reconnectTimer = null
   let reconnectAttempts = 0
   let manuallyClosed = false
+  let stableTimer = null
 
   function wsUrl() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -30,15 +31,17 @@ export const useWsStore = defineStore('ws', () => {
     const token = getAccessToken()
     if (!token) return
 
-    socket = new WebSocket(wsUrl(), [SUBPROTOCOL, `${BEARER_PREFIX}${token}`])
+    const currentSocket = new WebSocket(wsUrl(), [SUBPROTOCOL, `${BEARER_PREFIX}${token}`])
+    socket = currentSocket
 
-    socket.addEventListener('open', () => {
+    currentSocket.addEventListener('open', () => {
       connected.value = true
-      reconnectAttempts = 0
+      if (stableTimer) clearTimeout(stableTimer)
+      stableTimer = setTimeout(() => { reconnectAttempts = 0 }, 10_000)
       startPing()
     })
 
-    socket.addEventListener('message', (event) => {
+    currentSocket.addEventListener('message', (event) => {
       let data
       try {
         data = JSON.parse(event.data)
@@ -56,27 +59,32 @@ export const useWsStore = defineStore('ws', () => {
       }
     })
 
-    socket.addEventListener('close', () => {
+    currentSocket.addEventListener('close', () => {
+      if (socket !== currentSocket) return
       connected.value = false
       stopPing()
+      if (stableTimer) { clearTimeout(stableTimer); stableTimer = null }
+      socket = null
       if (!manuallyClosed) scheduleReconnect()
     })
 
-    socket.addEventListener('error', () => {
-      try { socket.close() } catch {}
+    currentSocket.addEventListener('error', () => {
+      try { currentSocket.close() } catch {}
     })
   }
 
   function disconnect() {
     manuallyClosed = true
     stopPing()
+    if (stableTimer) { clearTimeout(stableTimer); stableTimer = null }
     if (reconnectTimer) {
       clearTimeout(reconnectTimer)
       reconnectTimer = null
     }
     if (socket) {
-      try { socket.close() } catch {}
+      const currentSocket = socket
       socket = null
+      try { currentSocket.close() } catch {}
     }
     connected.value = false
   }
