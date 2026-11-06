@@ -16,6 +16,8 @@ from app.core import Base, env_settings
 config.set_main_option('sqlalchemy.url', env_settings.POSTGRES_URL)
 
 from app.model import User
+from app.model import Message
+from app.model import Group, GroupMember, GroupMessage
 target_metadata = Base.metadata
 # ===========
 

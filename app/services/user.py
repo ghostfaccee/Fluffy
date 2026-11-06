@@ -19,6 +19,7 @@ class UserService:
     
     async def create(self, data: UserRegister) -> User:
         hashed_password = hash_password(data.password)
+        check_user = await self.uow.user.get_by_username(data.username)
         user = User(
             name = data.name,
             username = data.username,
@@ -40,10 +41,12 @@ class UserService:
         except IntegrityError as e:
             await self.uow.rollback()
             msg = str(e.orig).lower()
-            if 'username' in msg:
-                raise user_exc.UsernameAlreadyTaken()
-            if 'email' in msg:
+            if 'ix_users_email' in msg:
+                if check_user:
+                    raise user_exc.UsernameAlreadyTaken()
                 raise user_exc.EmailAlreadyTaken()
+            if 'ix_users_username' in msg:
+                raise user_exc.UsernameAlreadyTaken()
             raise user_exc.UserAlreadyExists()
         else:
             verification_token = secrets.token_urlsafe(32)
@@ -63,6 +66,7 @@ class UserService:
         user = await self.uow.user.get(user_id)
         if user is None:
             raise user_exc.UserDoesNotExists()
+        old_username = user.username
         update_data = data.model_dump(exclude_unset = True)
         state = 'email' in update_data and update_data['email'] != user.email
         if state:
@@ -74,9 +78,13 @@ class UserService:
         except IntegrityError as e:
             await self.uow.rollback()
             msg = str(e.orig).lower()
-            if 'username' in msg:
+            if 'ix_users_username' in msg:
                 raise user_exc.UsernameAlreadyTaken()
-            if 'email' in msg:
+            if 'ix_users_email' in msg:
+                new_username = data.username
+                if new_username is not None and new_username != old_username:
+                    if await self.uow.user.get_by_username(new_username):
+                        raise user_exc.UsernameAlreadyTaken()
                 raise user_exc.EmailAlreadyTaken()
             raise user_exc.UserAlreadyExists()
         else:
@@ -103,7 +111,7 @@ class UserService:
         await self.uow.commit()
         status = await AvatarUrlCacheService.delete_avatar(user_id)
         if not status:
-            raise s3_storage_exc.S3InternalError()
+            raise redis_exc.InternalRedisError()
         if old_key:
             status = await s3_avatars.delete_object(old_key)
             if not status:
@@ -119,7 +127,7 @@ class UserService:
         await self.uow.commit()
         status = await AvatarUrlCacheService.delete_avatar(user_id)
         if not status:
-            raise s3_storage_exc.S3InternalError()
+            raise redis_exc.InternalRedisError()
         if old_key:
             status = await s3_avatars.delete_object(old_key)
             if not status:
@@ -146,7 +154,7 @@ class UserService:
         await self.uow.commit()
         status = await AvatarUrlCacheService.delete_avatar(user_id)
         if not status:
-            raise s3_storage_exc.S3InternalError()
+            raise redis_exc.InternalRedisError()
         if avatar_key:
             status = await s3_avatars.delete_object(avatar_key)
             if not status:

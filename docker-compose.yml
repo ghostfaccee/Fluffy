@@ -113,6 +113,19 @@ services:
     restart: unless-stopped
     profiles:
       - test
+  
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: fluffy-nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    profiles:
+      - prod
 
 volumes:
   fluffy_data:
