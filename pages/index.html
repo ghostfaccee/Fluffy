@@ -2,78 +2,478 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#d4d8dd">
-  <meta name="description" content="Fluffy - open source social network.">
-  <title>Fluffy - Главная</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#191a1b">
+  <meta name="description" content="Fluffy - социальная сеть с открытым исходным кодом. Узнайте о проекте, его устройстве и технологиях.">
+  <title>Fluffy - о проекте</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <div class="site-shell">
-    <header class="site-header">
-      <nav class="nav" aria-label="Навигация">
-        <a href="index.html" aria-current="page">Главная</a>
-        <a href="about/index.html" >О проекте</a>
-        <a href="team/index.html" >Команда</a>
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="Fluffy — на главную">
+        <img src="assets/logo.svg" alt="" class="brand-logo">
+        <span>Fluffy</span>
+      </a>
+
+      <nav class="nav" aria-label="Основная навигация">
+        <a href="#about">О проекте</a>
+        <a href="#features">Возможности</a>
+        <a href="#start">Запуск</a>
+        <a href="#resources">Материалы</a>
       </nav>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему" title="Переключить тему">
-        <span class="moon" aria-hidden="true">◐</span>
-        <span class="sun" aria-hidden="true">☼</span>
-      </button>
-    </header>
-    
-<main class="hero">
-  <div class="hero-grid">
-    <section>
-      <div class="eyebrow"><span class="status-dot" aria-hidden="true"></span>В разработке</div>
-      <h1>Fluffy<span>.</span></h1>
-      <p class="hero-lead">Создаём пространство, где будет уютно. Социальная сеть для людей, которым важны открытость, спокойствие и живые темы.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="team/index.html">Присоединиться к команде <span aria-hidden="true">→</span></a>
-        <a class="btn btn-secondary" href="about/index.html">Узнать о проекте</a>
+
+      <a class="header-link" href="https://github.com/ghostfaccee/Fluffy" target="_blank" rel="noopener noreferrer">
+        GitHub <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-glow hero-glow-one"></div>
+      <div class="hero-glow hero-glow-two"></div>
+
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <div class="eyebrow">
+            <span class="status-dot"></span>
+            Социальная сеть с открытым исходным кодом
+          </div>
+
+          <h1>
+            Знакомьтесь,<br>
+            это <span class="gradient-text">Fluffy.</span>
+          </h1>
+
+          <p class="hero-description">
+            Fluffy - проект социальной сети, который развивается как открытая
+            программная платформа. Мы создаём основу для общения и взаимодействия
+            пользователей, уделяя внимание устройству приложения, его развитию
+            и возможности изучать исходный код.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button button-primary" href="https://github.com/ghostfaccee/Fluffy" target="_blank" rel="noopener noreferrer">
+              Открыть репозиторий <span aria-hidden="true">↗</span>
+            </a>
+            <a class="button button-secondary" href="#about">
+              Подробнее о проекте
+            </a>
+          </div>
+
+          <div class="hero-facts">
+            <div class="hero-fact">
+              <span class="fact-value">Open Source</span>
+              <span class="fact-label">Открытый исходный код</span>
+            </div>
+            <div class="hero-fact">
+              <span class="fact-value">FastAPI</span>
+              <span class="fact-label">Серверная часть</span>
+            </div>
+            <div class="hero-fact">
+              <span class="fact-value">Vue.js</span>
+              <span class="fact-label">Пользовательский интерфейс</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-visual" aria-label="Информация о Fluffy">
+          <div class="visual-top">
+            <div class="visual-logo-wrap">
+              <img src="assets/logo.svg" alt="Логотип Fluffy" class="visual-logo">
+            </div>
+            <span class="vis
+            Это не просто странual-status"><i></i> В разработке</span>
+          </div>
+
+          <div class="visual-title">
+            <span class="visual-caption">Проект Fluffy</span>
+            <h2>Пространство<br>для общения.</h2>
+            <p>
+              Социальная сеть, которую можно тестировать,
+              изучать и развивать вместе.
+            </p>
+          </div>
+
+          <div class="visual-bottom">
+            <span>Исходный код</span>
+            <span class="visual-bottom-mark">Доступен на GitHub ↗</span>
+          </div>
+          <div class="visual-orbit orbit-one"></div>
+          <div class="visual-orbit orbit-two"></div>
+        </aside>
       </div>
     </section>
-    <aside class="hero-card" aria-label="Визитка">
-      <div class="mock-window">
-        <div class="mock-top"><i></i><i></i><i></i></div>
-        <div class="mock-title">пространство без шума</div>
-        <div class="mock-line"></div>
-        <div class="mock-line short"></div>
-        <div class="mock-card">
-          <strong>Тишина по умолчанию</strong>
-          <span>Только то, что вы сами захотели увидеть.</span>
+
+    <section class="section" id="about">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">О проекте</span>
+          <h2>Что такое Fluffy?</h2>
+          <p>
+            Это не просто сайт-одностраничник. Это проект социальной сети,
+            в которой бекенд, фронтенд и инфраструктура взаимодействуют вместе.
+          </p>
         </div>
-        <div class="mock-card">
-          <strong>Открытый проект</strong>
-          <span>Код можно смотреть, обсуждать, улучшать и создавать свои форки.</span>
+
+        <div class="about-layout">
+          <div class="about-main">
+            <p>
+              Основная идея проекта - создать собственную социальную платформу
+              и последовательно развивать её как самостоятельную систему.
+              В основе Fluffy лежит клиент-серверная архитектура: пользователь
+              взаимодействует с веб-интерфейсом, интерфейс обращается к API,
+              а серверная часть отвечает за обработку запросов и работу с данными.
+            </p>
+            <p>
+              Проект распространяется с открытым исходным кодом. Это позволяет
+              знакомиться с реализацией, разбираться в структуре приложения,
+              находить ошибки, предлагать улучшения и создавать собственные
+              изменения на основе репозитория.
+            </p>
+            <p>
+              Проект постоянно находится в разработке. Поэтому опубликованный код и
+              технические материалы стоит рассматривать как отражение текущего
+              состояния проекта, а не как обещание окончательного набора
+              возможностей или завершённого продукта.
+            </p>
+          </div>
+
+          <aside class="about-note">
+            <div class="note-icon">✳</div>
+            <h3>Открытая разработка</h3>
+            <p>
+              Репозиторий - центральное место проекта. Здесь находятся исходники,
+              настройки окружения, миграции базы данных, тесты и инструкции
+              для разработчиков.
+            </p>
+            <a class="text-link" href="https://github.com/ghostfaccee/Fluffy" target="_blank" rel="noopener noreferrer">
+              Перейти к исходному коду <span aria-hidden="true">↗</span>
+            </a>
+          </aside>
         </div>
-        <div class="mock-line tiny"></div>
       </div>
-    </aside>
-  </div>
-</main>
-    <footer class="site-footer">
-      <span>2026 Fluffy · Made with love by ghostfaccee</span>
-      <div class="footer-links">
-        <a href="index.html">Главная</a>
-        <a href="about/index.html">О проекте</a>
-        <a href="team/index.html">Набор команды</a>
+    </section>
+
+    <section class="section section-soft" id="features">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">Устройство проекта</span>
+          <h2>Из чего состоит Fluffy</h2>
+          <p>
+            За пользовательским интерфейсом находится несколько взаимосвязанных
+            частей. Каждая отвечает за свою область работы, а вместе они
+            образуют приложение.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card">
+            <div class="feature-icon">01</div>
+            <h3>Пользовательская часть</h3>
+            <p>
+              Веб-интерфейс - точка взаимодействия человека с социальной сетью.
+              Он отвечает за отображение страниц, элементов управления и
+              передаёт запросы серверу через API. Клиентская часть построена
+              на Vue.js, а для разработки и сборки используется Vite.
+            </p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">02</div>
+            <h3>Серверная часть</h3>
+            <p>
+              Backend предоставляет API и обрабатывает запросы клиентского
+              приложения. Он написан на Python с использованием FastAPI.
+              Это отдельная часть системы, которую можно запускать и
+              проверять независимо от процесса разработки интерфейса.
+            </p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">03</div>
+            <h3>Хранение и работа с данными</h3>
+            <p>
+              PostgreSQL используется как основная база данных, а Redis
+              входит в инфраструктуру проекта. Для изменения структуры
+              базы предусмотрены миграции Alembic - история изменений
+              схемы хранится в репозитории.
+            </p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">04</div>
+            <h3>Окружение и инфраструктура</h3>
+            <p>
+              Docker Compose помогает запускать компоненты проекта совместно.
+              nginx используется в схеме запуска веб-сайта, а настройки
+              окружения разделены между конфигурационным файлом и переменными
+              среды.
+            </p>
+          </article>
+        </div>
       </div>
-    </footer>
-  </div>
-  <script>
-    (() => {
-      const root = document.documentElement;
-      const toggle = document.getElementById('themeToggle');
-      const saved = localStorage.getItem('fluffy-theme');
-      const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const setTheme = (dark, persist = true) => {
-        root.classList.toggle('dark', dark);
-        if (persist) localStorage.setItem('fluffy-theme', dark ? 'dark' : 'light');
-      };
-      setTheme(saved ? saved === 'dark' : preferred, false);
-      toggle.addEventListener('click', () => setTheme(!root.classList.contains('dark')));
-    })();
-  </script>
+    </section>
+
+    <section class="section section-soft" id="start">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">Для разработчиков</span>
+          <h2>Как запустить проект</h2>
+          <p>
+            Основной способ запуска описан в README репозитория. Ниже -
+            краткая последовательность действий, которая поможет подготовить
+            окружение и поднять приложение локально.
+          </p>
+        </div>
+
+        <div class="requirements">
+          <div class="requirements-heading">
+            <h3>Что понадобится</h3>
+            <p>Перед началом убедитесь, что необходимые инструменты установлены.</p>
+          </div>
+          <div class="requirement-list">
+            <div class="requirement">
+              <span class="requirement-check">✓</span>
+              <div><strong>Python</strong><span>Рекомендуется версия 3.12 и выше</span></div>
+            </div>
+            <div class="requirement">
+              <span class="requirement-check">✓</span>
+              <div><strong>Node.js</strong><span>Версия ^22.18.0 или >=24.12.0</span></div>
+            </div>
+            <div class="requirement">
+              <span class="requirement-check">✓</span>
+              <div><strong>Docker Compose</strong><span>Для запуска сервисов проекта</span></div>
+            </div>
+            <div class="requirement">
+              <span class="requirement-check">✓</span>
+              <div><strong>SMTP и S3</strong><span>Учётные данные SMTP и S3-совместимое хранилище</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="steps">
+          <article class="step-card">
+            <div class="step-number">01</div>
+            <div class="step-content">
+              <h3>Подготовьте конфигурацию</h3>
+              <p>
+                Скопируйте пример переменных окружения. В файле <i>.env</i> нужно
+                заполнить необходимые значения для подключений и секретные
+                параметры. Не добавляйте этот файл в систему контроля версий, так как он хранит
+                конфиденциальные данные.
+              </p>
+              <pre><code>cp .env.example .env</code></pre>
+              <p class="step-hint">
+                Общие настройки приложения находятся в <i>config.yaml</i>,
+                а описание переменных окружения - в <i>.env.example</i>.
+              </p>
+            </div>
+          </article>
+
+          <article class="step-card">
+            <div class="step-number">02</div>
+            <div class="step-content">
+              <h3>Запустите сервисы</h3>
+              <p>
+                Docker Compose содержит профили <i>prod</i> и <i>test</i>.
+                Для обычного запуска проекта используется профиль <i>prod</i>.
+              </p>
+              <pre><code>docker compose --profile prod up --build -d</code></pre>
+              <p class="step-hint">
+                Команда собирает необходимые образы и запускает контейнеры
+                в фоновом режиме.
+              </p>
+            </div>
+          </article>
+
+          <article class="step-card">
+            <div class="step-number">03</div>
+            <div class="step-content">
+              <h3>Примените миграции</h3>
+              <p>
+                После запуска сервисов примените миграции базы данных,
+                чтобы привести её структуру к актуальному состоянию.
+              </p>
+              <pre><code>docker compose --profile prod exec api alembic upgrade head</code></pre>
+              <p class="step-hint">
+                История ревизий находится в <i>migrations/versions/</i>.
+                Перед изменением схемы ознакомьтесь с руководством по миграциям.
+              </p>
+            </div>
+          </article>
+
+          <article class="step-card">
+            <div class="step-number">04</div>
+            <div class="step-content">
+              <h3>Откройте приложение</h3>
+              <p>
+                После успешного запуска веб-сайт и API будут доступны
+                по локальным адресам:
+              </p>
+              <div class="local-addresses">
+                <a href="http://localhost:8080" target="_blank" rel="noopener noreferrer">
+                  <span>Веб-сайт</span><code>localhost:8080 ↗</code>
+                </a>
+                <a href="http://localhost:8000" target="_blank" rel="noopener noreferrer">
+                  <span>API</span><code>localhost:8000 ↗</code>
+                </a>
+                <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer">
+                  <span>Swagger UI</span><code>localhost:8000/docs ↗</code>
+                </a>
+                <a href="http://localhost:8000/redoc" target="_blank" rel="noopener noreferrer">
+                  <span>ReDoc</span><code>localhost:8000/redoc ↗</code>
+                </a>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="development-note">
+          <div class="development-note-icon">⌘</div>
+          <div>
+            <h3>Разработка клиентской части</h3>
+            <p>
+              Если backend уже запущен и вы хотите отдельно работать над
+              интерфейсом, перейдите в директорию <i>frontend</i>, установите
+              зависимости и запустите Vite. Адрес локального сервера
+              разработки появится в терминале.
+            </p>
+            <pre><code>cd frontend
+npm ci
+npm run dev</code></pre>
+          </div>
+        </div>
+
+        <p class="important-note">
+          Обратите внимание: профили Docker Compose предназначены для работы
+          и тестирования проекта и сами по себе не являются готовой
+          конфигурацией для полноценного промышленного развёртывания.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="resources">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">Материалы</span>
+          <h2>Всё важное - в репозитории</h2>
+          <p>
+            Здесь собраны основные точки входа в исходный код и технические
+            материалы. Если вы хотите разобраться в проекте глубже,
+            лучше всего начать с README.
+          </p>
+        </div>
+
+        <div class="resource-grid">
+          <a class="resource-card resource-main" href="https://github.com/ghostfaccee/Fluffy" target="_blank" rel="noopener noreferrer">
+            <div class="resource-card-top">
+              <span class="resource-icon">⌘</span>
+              <span class="resource-arrow">↗</span>
+            </div>
+            <h3>Исходный код</h3>
+            <p>
+              Главная страница репозитория: структура проекта, файлы,
+              история изменений и другие материалы разработки.
+            </p>
+            <span class="resource-link">github.com/ghostfaccee/Fluffy</span>
+          </a>
+
+          <a class="resource-card" href="https://github.com/ghostfaccee/Fluffy/blob/main/README.md" target="_blank" rel="noopener noreferrer">
+            <div class="resource-card-top">
+              <span class="resource-icon">≡</span>
+              <span class="resource-arrow">↗</span>
+            </div>
+            <h3>README</h3>
+            <p>
+              Основное описание проекта, предварительные требования,
+              настройка окружения и инструкции по запуску.
+            </p>
+            <span class="resource-link">Руководство проекта</span>
+          </a>
+
+          <a class="resource-card" href="https://github.com/ghostfaccee/Fluffy/tree/main/tests" target="_blank" rel="noopener noreferrer">
+            <div class="resource-card-top">
+              <span class="resource-icon">✓</span>
+              <span class="resource-arrow">↗</span>
+            </div>
+            <h3>Тестирование</h3>
+            <p>
+              Материалы и инструкции, связанные с запуском тестов
+              и проверкой серверной части.
+            </p>
+            <span class="resource-link">tests/readme.md</span>
+          </a>
+
+          <a class="resource-card" href="https://github.com/ghostfaccee/Fluffy/tree/main/migrations" target="_blank" rel="noopener noreferrer">
+            <div class="resource-card-top">
+              <span class="resource-icon">↻</span>
+              <span class="resource-arrow">↗</span>
+            </div>
+            <h3>Миграции базы данных</h3>
+            <p>
+              Руководство по работе с миграциями и изменениями
+              структуры базы данных.
+            </p>
+            <span class="resource-link">migrations/readme.md</span>
+          </a>
+
+          <a class="resource-card" href="https://github.com/ghostfaccee/Fluffy/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+            <div class="resource-card-top">
+              <span class="resource-icon">§</span>
+              <span class="resource-arrow">↗</span>
+            </div>
+            <h3>Лицензия</h3>
+            <p>
+              Условия распространения исходного кода проекта.
+              Fluffy использует лицензию Apache 2.0.
+            </p>
+            <span class="resource-link">Apache License 2.0</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="contact-section">
+      <div class="container contact-inner">
+        <div>
+          <span class="section-kicker">Связь</span>
+          <h2>Есть вопросы или идеи?</h2>
+          <p>
+            Если вы нашли ошибку, хотите предложить улучшение или обсудить
+            проект, можно связаться с автором по электронной почте.
+          </p>
+        </div>
+
+        <div class="contact-links">
+          <a href="mailto:fluffy.social.network@gmail.com">
+            <span>Вопросы по проекту</span>
+            <strong>fluffy.social.network@gmail.com</strong>
+            <span class="contact-arrow">↗</span>
+          </a>
+          <a href="mailto:ghostface.host@gmail.com">
+            <span>Разрешения на использование материалов</span>
+            <strong>ghostface.host@gmail.com</strong>
+            <span class="contact-arrow">↗</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <a class="brand footer-brand" href="#top">
+        <img src="assets/logo.svg" alt="" class="brand-logo">
+        <span>Fluffy</span>
+      </a>
+      <p>Социальная сеть с открытым исходным кодом.</p>
+      <a href="https://github.com/ghostfaccee/Fluffy" target="_blank" rel="noopener noreferrer">
+        GitHub <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+  </footer>
 </body>
 </html>
