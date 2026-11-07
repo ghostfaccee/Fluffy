@@ -49,4 +49,4 @@ class GroupAvatarSetRequest(BaseModel):
     key: str
 
 class GroupMemberRoleUpdate(BaseModel):
-    role: str = Field(..., pattern = '^(admin|member)')
+    role: str = Field(..., pattern = '^(admin|member)$')

@@ -9,6 +9,7 @@ from app.schemas import GroupCreate, GroupUpdate, GroupAvatarUploadUrlResponse, 
 from app.exceptions import group as group_exc
 from app.exceptions import redis as redis_exc
 from app.exceptions import s3_storage as s3_storage_exc
+from app.core import logger
 from app.infrastructure import GroupAvatarUrlCacheService, s3_avatars, PubSubService
 
 ROLE_RANK = {'member': 0, 'admin': 1, 'owner': 2}

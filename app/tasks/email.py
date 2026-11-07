@@ -1,5 +1,6 @@
 import aiosmtplib
 import asyncio
+from uuid import UUID
 from email.mime.text import MIMEText
 
 from app.core import env_settings, yaml_settings, celery_app
