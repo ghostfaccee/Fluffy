@@ -88,6 +88,11 @@ class GroupService:
     
     def _avatar_prefix(self, group_id: UUID) -> str:
         return f'avatars/group/{group_id}/'
+    
+    def _validate_group_avatar_key(self, group_id: UUID, key: str) -> None:
+        prefix = f'avatars/group/{group_id}/'
+        if not key.startswith(prefix):
+            raise group_exc.InvalidAvatarKey()
 
     # === invite ===
 
@@ -169,6 +174,7 @@ class GroupService:
     async def set_avatar(self, group_id: UUID, user_id: UUID, key: str) -> Group:
         group, member = await self._get_group_and_member(group_id, user_id)
         self._require_role(member, 'admin')
+        self._validate_group_avatar_key(group_id, key)
         old_key = group.avatar_key
         group.avatar_key = key
         await self.uow.commit()
