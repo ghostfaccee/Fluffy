@@ -24,6 +24,7 @@ function saveCachedGroups(list) {
 export const useGroupStore = defineStore('group', () => {
   const groups = ref(loadCachedGroups())
   const chats = ref({})
+  const historyRequests = new Map()
   const members = ref({})
 
   function persist() {
@@ -158,21 +159,33 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function loadChat(groupId, { limit = 30, offset = 0 } = {}) {
+    const requestKey = `${groupId}:${limit}:${offset}`
+    const existingRequest = historyRequests.get(requestKey)
+    if (existingRequest) return existingRequest
+
     const chat = chats.value[groupId] || { messages: [], loading: false, hasMore: true }
     chat.loading = true
     chats.value[groupId] = chat
-    try {
-      const list = await api(
-        `/groups/${encodeURIComponent(groupId)}/messages?limit=${limit}&offset=${offset}`
-      )
-      const messages = Array.isArray(list) ? [...list].reverse() : []
-      if (offset === 0) chat.messages = messages
-      else chat.messages = [...messages, ...chat.messages]
-      chat.hasMore = list.length === limit
-    } finally {
-      chat.loading = false
-    }
-    return chat
+
+    const request = (async () => {
+      try {
+        const list = await api(
+          `/groups/${encodeURIComponent(groupId)}/messages?limit=${limit}&offset=${offset}`
+        )
+        const safeList = Array.isArray(list) ? list : []
+        const messages = [...safeList].reverse()
+        if (offset === 0) chat.messages = messages
+        else chat.messages = [...messages, ...chat.messages]
+        chat.hasMore = safeList.length === limit
+      } finally {
+        chat.loading = false
+        historyRequests.delete(requestKey)
+      }
+      return chat
+    })()
+
+    historyRequests.set(requestKey, request)
+    return request
   }
 
   async function sendMessage(groupId, content) {

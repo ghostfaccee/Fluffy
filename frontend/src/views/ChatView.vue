@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
+import { useWsStore } from '@/stores/ws'
 import AppShell from '@/components/AppShell.vue'
 import ChatListItem from '@/components/ChatListItem.vue'
 import MessageBubble from '@/components/MessageBubble.vue'
@@ -10,6 +11,7 @@ import MessageBubble from '@/components/MessageBubble.vue'
 const route = useRoute()
 const chat = useChatStore()
 const auth = useAuthStore()
+const ws = useWsStore()
 
 const text = ref('')
 const sending = ref(false)
@@ -54,14 +56,6 @@ async function openChat(id) {
   }
 }
 
-async function refresh() {
-  if (document.hidden) return
-  const id = userId.value
-  if (!id) return
-  try {
-    await chat.loadChat(id)
-  } catch {}
-}
 
 async function send() {
   const content = text.value.trim()
@@ -86,20 +80,30 @@ function onKeydown(e) {
   }
 }
 
-let intervalId = null
-function onVisibility() {
-  if (!document.hidden) refresh()
+let fallbackIntervalId = null
+let unsubscribeReconnect = null
+
+function syncCurrentChat() {
+  const id = userId.value
+  if (!id || document.hidden) return
+  chat.loadChat(id).catch(() => {})
 }
 
 onMounted(() => {
   openChat(userId.value)
-  intervalId = setInterval(refresh, 5000)
-  document.addEventListener('visibilitychange', onVisibility)
+
+  // WebSocket delivers new messages. Only poll as a slow fallback while it is offline.
+  fallbackIntervalId = setInterval(() => {
+    if (!ws.connected) syncCurrentChat()
+  }, 30000)
+
+  // A reconnect may have happened after messages were missed while offline.
+  unsubscribeReconnect = ws.on('connected', syncCurrentChat)
 })
 
 onBeforeUnmount(() => {
-  if (intervalId) clearInterval(intervalId)
-  document.removeEventListener('visibilitychange', onVisibility)
+  if (fallbackIntervalId) clearInterval(fallbackIntervalId)
+  if (unsubscribeReconnect) unsubscribeReconnect()
 })
 
 watch(() => route.params.userId, (id) => openChat(id))

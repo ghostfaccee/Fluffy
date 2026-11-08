@@ -27,6 +27,9 @@ export const useChatStore = defineStore('chat', () => {
 
   const conversations = ref(loadConversations())
   const chats = ref({})
+  const historyRequests = new Map()
+  const readRequests = new Map()
+  const lastReadAt = new Map()
 
   const visibleConversations = computed(() =>
     conversations.value.filter((c) => c.user_id !== auth.user?.user_id)
@@ -89,19 +92,31 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   async function loadChat(userId, { limit = 30, offset = 0 } = {}) {
+    const requestKey = `${userId}:${limit}:${offset}`
+    const existingRequest = historyRequests.get(requestKey)
+    if (existingRequest) return existingRequest
+
     const chat = chats.value[userId] || { messages: [], loading: false, hasMore: true }
     chat.loading = true
     chats.value[userId] = chat
-    try {
-      const list = await api(`/messages/${encodeURIComponent(userId)}?limit=${limit}&offset=${offset}`)
-      const messages = Array.isArray(list) ? [...list].reverse() : []
-      if (offset === 0) chat.messages = messages
-      else chat.messages = [...messages, ...chat.messages]
-      chat.hasMore = list.length === limit
-    } finally {
-      chat.loading = false
-    }
-    return chat
+
+    const request = (async () => {
+      try {
+        const list = await api(`/messages/${encodeURIComponent(userId)}?limit=${limit}&offset=${offset}`)
+        const safeList = Array.isArray(list) ? list : []
+        const messages = [...safeList].reverse()
+        if (offset === 0) chat.messages = messages
+        else chat.messages = [...messages, ...chat.messages]
+        chat.hasMore = safeList.length === limit
+      } finally {
+        chat.loading = false
+        historyRequests.delete(requestKey)
+      }
+      return chat
+    })()
+
+    historyRequests.set(requestKey, request)
+    return request
   }
 
   async function sendMessage(receiverId, content) {
@@ -121,10 +136,30 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   async function markRead(senderId) {
-    try {
-      await api(`/messages/${encodeURIComponent(senderId)}/read`, { method: 'POST' })
+    const inFlight = readRequests.get(senderId)
+    if (inFlight) return inFlight
+
+    // Coalesce repeated WS notifications: do not POST read-state for every message.
+    const lastSent = lastReadAt.get(senderId) || 0
+    if (Date.now() - lastSent < 10000) {
       markConversationRead(senderId)
-    } catch {}
+      return
+    }
+
+    const request = (async () => {
+      try {
+        await api(`/messages/${encodeURIComponent(senderId)}/read`, { method: 'POST' })
+        lastReadAt.set(senderId, Date.now())
+        markConversationRead(senderId)
+      } catch {
+        // A later open/message event can retry the read receipt.
+      } finally {
+        readRequests.delete(senderId)
+      }
+    })()
+
+    readRequests.set(senderId, request)
+    return request
   }
 
   function handleIncoming(payload) {
