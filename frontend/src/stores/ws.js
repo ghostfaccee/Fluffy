@@ -36,6 +36,12 @@ export const useWsStore = defineStore('ws', () => {
 
     currentSocket.addEventListener('open', () => {
       connected.value = true
+      const set = listeners.get('connected')
+      if (set) {
+        for (const fn of set) {
+          try { fn() } catch (e) { console.error('WS listener error:', e) }
+        }
+      }
       if (stableTimer) clearTimeout(stableTimer)
       stableTimer = setTimeout(() => { reconnectAttempts = 0 }, 10_000)
       startPing()

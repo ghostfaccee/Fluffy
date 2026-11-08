@@ -326,6 +326,16 @@ async def test_set_avatar_but_user_doesnt_exists(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+async def test_set_someone_elses_avatar(
+    db_session: AsyncSession,
+    existing_user: User
+) -> None:
+    service = user_module.UserService(UnitOfWork(db_session))
+    with pytest.raises(user_exc.InvalidAvatarKey):
+        await service.set_avatar(existing_user.user_id, f'avatars/{uuid4()}/')
+
+@pytest.mark.unit
+@pytest.mark.asyncio
 async def test_set_avatar_but_delete_avatar__from_redis_error(
     db_session: AsyncSession,
     existing_user: User,
@@ -338,7 +348,7 @@ async def test_set_avatar_but_delete_avatar__from_redis_error(
     service = user_module.UserService(UnitOfWork(db_session))
 
     with pytest.raises(redis_exc.InternalRedisError):
-        await service.set_avatar(existing_user.user_id, 'key')
+        await service.set_avatar(existing_user.user_id, f'avatars/{existing_user.user_id}/')
     delete_avatar.assert_awaited_once()
 
 @pytest.mark.unit
@@ -360,7 +370,7 @@ async def test_set_avatar_but_delete_avatar_from_s3_error(
     service = user_module.UserService(UnitOfWork(db_session))
 
     with pytest.raises(s3_storage_exc.S3InternalError):
-        await service.set_avatar(existing_user.user_id, 'key')
+        await service.set_avatar(existing_user.user_id, f'avatars/{existing_user.user_id}/')
     delete_avatar.assert_awaited_once()
     delete_object.assert_awaited_once()
 
@@ -382,7 +392,7 @@ async def test_set_avatar_success(
 
     service = user_module.UserService(UnitOfWork(db_session))
 
-    res = await service.set_avatar(existing_user.user_id, 'key')
+    res = await service.set_avatar(existing_user.user_id, f'avatars/{existing_user.user_id}/')
 
     assert isinstance(res, User)
     delete_avatar.assert_awaited_once()
@@ -664,3 +674,24 @@ async def test_invalidate_token_success(
     assert res
     get_refresh_token.assert_awaited_once()
     add_to_blacklist.assert_awaited_once()
+
+# --- _validate_avatar_key ---
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_validate_avatar_key_success(
+    db_session: AsyncSession,
+    existing_user: User
+) -> None:
+    service = user_module.UserService(UnitOfWork(db_session))
+    await service._validate_avatar_key(existing_user.user_id, f'avatars/{existing_user.user_id}')
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_validate_avatar_key_success(
+    db_session: AsyncSession,
+    existing_user: User
+) -> None:
+    service = user_module.UserService(UnitOfWork(db_session))
+    with pytest.raises(user_exc.InvalidAvatarKey):
+        await service._validate_avatar_key(existing_user.user_id, f'avatars/{uuid4()}')

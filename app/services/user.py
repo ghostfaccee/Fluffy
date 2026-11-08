@@ -106,6 +106,7 @@ class UserService:
         user = await self.uow.user.get(user_id)
         if user is None:
             raise user_exc.UserDoesNotExists()
+        self._validate_avatar_key(user_id, key)
         old_key = user.avatar_key
         user.avatar_key = key
         await self.uow.commit()
@@ -170,3 +171,8 @@ class UserService:
         if status is TokenServiceReturnValues.ERROR:
             raise redis_exc.InternalRedisError()
         return True
+
+    def _validate_avatar_key(self, user_id: UUID, key: str) -> None:
+        prefix = f'avatars/{user_id}/'
+        if not key.startswith(prefix):
+            raise user_exc.InvalidAvatarKey()

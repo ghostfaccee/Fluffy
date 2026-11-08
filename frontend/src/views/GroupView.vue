@@ -3,12 +3,14 @@ import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGroupStore } from '@/stores/group'
 import { useAuthStore } from '@/stores/auth'
+import { useWsStore } from '@/stores/ws'
 import AppShell from '@/components/AppShell.vue'
 import GroupAvatar from '@/components/GroupAvatar.vue'
 import GroupListItem from '@/components/GroupListItem.vue'
 
 const route = useRoute()
 const groupStore = useGroupStore()
+const ws = useWsStore()
 const auth = useAuthStore()
 
 const text = ref('')
@@ -39,10 +41,6 @@ async function openGroup(id) {
   }
 }
 
-async function refresh() {
-  if (document.hidden) return
-  try { await groupStore.loadChat(groupId.value) } catch {}
-}
 
 async function send() {
   const content = text.value.trim()
@@ -73,18 +71,30 @@ function timeOf(iso) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-let intervalId = null
-function onVisibility() { if (!document.hidden) refresh() }
+let fallbackIntervalId = null
+let unsubscribeReconnect = null
+
+function syncCurrentGroup() {
+  const id = groupId.value
+  if (!id || document.hidden) return
+  groupStore.loadChat(id).catch(() => {})
+}
 
 onMounted(() => {
   openGroup(groupId.value)
-  intervalId = setInterval(refresh, 5000)
-  document.addEventListener('visibilitychange', onVisibility)
+
+  // WebSocket delivers new messages. Only poll as a slow fallback while it is offline.
+  fallbackIntervalId = setInterval(() => {
+    if (!ws.connected) syncCurrentGroup()
+  }, 30000)
+
+  // Restore messages that may have arrived while the socket was disconnected.
+  unsubscribeReconnect = ws.on('connected', syncCurrentGroup)
 })
 
 onBeforeUnmount(() => {
-  if (intervalId) clearInterval(intervalId)
-  document.removeEventListener('visibilitychange', onVisibility)
+  if (fallbackIntervalId) clearInterval(fallbackIntervalId)
+  if (unsubscribeReconnect) unsubscribeReconnect()
 })
 
 watch(() => route.params.groupId, (id) => openGroup(id))

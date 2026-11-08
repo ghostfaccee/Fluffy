@@ -20,4 +20,8 @@ class EmailAlreadyTaken(HTTPException):
 
 class UserAlreadyExists(HTTPException):
     def __init__(self):
-        super().__init__(status.HTTP_409_CONFLICT, f'User already exists')
+        super().__init__(status.HTTP_409_CONFLICT, 'User already exists')
+
+class InvalidAvatarKey(HTTPException):
+    def __init__(self):
+        super().__init__(status.HTTP_400_BAD_REQUEST, 'This is someone elses avatar key. The user attempted to claim someone elses avatar key for themselves.')

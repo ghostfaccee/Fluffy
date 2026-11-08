@@ -329,6 +329,26 @@ async def test_cleanup_avatar_without_old_key_success(
 
     delete_avatar.assert_awaited_once()
 
+# --- _validate_group_avatar_key ---
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__validate_group_avatar_key_success(
+    db_session: AsyncSession,
+    test_group: Group
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    service._validate_group_avatar_key(test_group.group_id, f'avatars/group/{test_group.group_id}/')
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__validate_group_avatar_key_but_another_key(
+    db_session: AsyncSession
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.InvalidAvatarKey):
+        service._validate_group_avatar_key(uuid4(), f'avatars/group/{uuid4()}/')
+
 # --- delete ---
 
 @pytest.mark.unit
@@ -605,8 +625,19 @@ async def test_set_avatar_success(
     monkeypatch.setattr(group_module.GroupService, '_cleanup_avatar', cleanup_avatar)
 
     service = group_module.GroupService(UnitOfWork(db_session))
-    res = await service.set_avatar(test_group.group_id, test_user.user_id, 'key')
+    res = await service.set_avatar(test_group.group_id, test_user.user_id, f'avatars/group/{test_group.group_id}/')
     assert isinstance(res, Group)
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_set_avatar_but_another_key(
+    db_session: AsyncSession,
+    test_user: User,
+    test_group: Group
+) -> None:
+    service = group_module.GroupService(UnitOfWork(db_session))
+    with pytest.raises(group_exc.InvalidAvatarKey):
+        await service.set_avatar(test_group.group_id, test_user.user_id, f'avatars/group/{uuid4()}/')
 
 # --- delete avatar ---
 

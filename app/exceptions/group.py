@@ -20,3 +20,6 @@ class OwnerCannotLeave(HTTPException):
     def __init__(self):
         super().__init__(status.HTTP_409_CONFLICT, 'Owner cannot leave')
 
+class InvalidAvatarKey(HTTPException):
+    def __init__(self):
+        super().__init__(status.HTTP_400_BAD_REQUEST, 'This is a key belonging to a different group. The user attempted to assign an avatar key from another group to their own group.')
