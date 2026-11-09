@@ -6,6 +6,7 @@ class UnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.user = UserRepository(session)
+        self.post = PostRepository(session)
         self.message = MessageRepository(session)
         self.group = GroupRepository(session)
         self.group_member = GroupMemberRepository(session)
