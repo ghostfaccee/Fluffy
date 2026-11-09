@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repository import UserRepository, MessageRepository
 from app.repository import GroupMemberRepository, GroupMessageRepository, GroupRepository
+from app.repository import PostRepository
 
 class UnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
