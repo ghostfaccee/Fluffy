@@ -24,7 +24,7 @@ class PostService:
         await self.uow.commit()
         return post
     
-    async def get_user_posts(self, username: str, limit: int, offset: int) -> list[Post]:
+    async def get_user_posts(self, username: str, limit: int = 20, offset: int = 0) -> list[Post]:
         author = await self.uow.user.get_by_username(username)
         if author is None:
             raise user_exc.UserDoesNotExists()
@@ -34,6 +34,7 @@ class PostService:
         user = await self.uow.user.get(user_id)
         if user is None:
             raise user_exc.UserDoesNotExists()
+        # It doesn’t matter to us at all which user it is; the main thing is that they exist.
         post = await self.uow.post.get_with_author(post_id)
         if post is None:
             raise post_exc.PostDoesNotExists()
@@ -69,4 +70,3 @@ class PostService:
     async def _is_author(self, user: User, post: Post) -> None:
         if user.user_id != post.author_id:
             raise post_exc.AccessDenied()
-    
