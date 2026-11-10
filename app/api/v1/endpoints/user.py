@@ -6,10 +6,10 @@ from fastapi import Request, APIRouter, Depends, status
 
 from app.model import User
 from app.exceptions import user as user_exc
-from app.schemas import UserResponse, UserRegister, UserUpdate, PasswordUpdate, AvatarUploadResponse, AvatarUploadRequest, AvatarSetRequest
-from app.dependencies import get_user_service, get_current_user_uuid
-from app.services import UserService
-from app.utils import build_user_response
+from app.schemas import UserResponse, UserRegister, UserUpdate, PasswordUpdate, AvatarUploadResponse, AvatarUploadRequest, AvatarSetRequest, PostResponse
+from app.dependencies import get_user_service, get_current_user_uuid, get_post_service
+from app.services import UserService, PostService
+from app.utils.responses import build_user_response, build_post_response
 from app.middleware import RateLimit
 from app.infrastructure import CachingService
 
@@ -71,3 +71,11 @@ async def update_my_password(request: Request, data: PasswordUpdate, current_use
 @limiter.limit('10/minute')
 async def delete_me(request: Request, current_user_uuid: UUID = Depends(get_current_user_uuid), service: UserService = Depends(get_user_service)) -> None:
     await service.delete(current_user_uuid)
+
+# A user's posts belong to them, which is why the user's feed of posts can be found here.
+
+@router.get('/{username}/posts', response_model = list[PostResponse], status_code = status.HTTP_200_OK)
+@limiter.limit('25/minute')
+async def user_posts(request: Request, username: str, limit: int = 20, offset: int = 0, current_user_uuid: UUID = Depends(get_current_user_uuid), service: PostService = Depends(get_post_service)) -> list[PostResponse]:
+    posts = await service.get_user_posts(username, limit, offset)
+    return [await build_post_response(p) for p in posts]

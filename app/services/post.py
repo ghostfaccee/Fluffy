@@ -24,11 +24,11 @@ class PostService:
         await self.uow.commit()
         return post
     
-    async def get_user_posts(self, author_id: UUID, limit: int, offset: int) -> list[Post]:
-        author = await self.uow.user.get(author_id)
+    async def get_user_posts(self, username: str, limit: int, offset: int) -> list[Post]:
+        author = await self.uow.user.get_by_username(username)
         if author is None:
             raise user_exc.UserDoesNotExists()
-        return await self.uow.post.get_user_posts(author_id, limit, offset)
+        return await self.uow.post.get_user_posts(author.user_id, limit, offset)
     
     async def get(self, user_id: UUID, post_id: UUID) -> Post:
         user = await self.uow.user.get(user_id)
