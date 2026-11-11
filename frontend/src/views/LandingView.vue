@@ -343,3 +343,63 @@ onBeforeUnmount(() => {
         </div>
     </footer>
 </template>
+<style scoped>
+/* Общая стеклянная карточка блока Open Source */
+.opensource .opensource-grid {
+    box-sizing: border-box;
+    padding: clamp(22px, 4vw, 44px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+
+    /* Запасной вариант для браузеров без color-mix */
+    background: var(--bg-card);
+    background: color-mix(
+        in srgb,
+        var(--bg-card) 80%,
+        transparent
+    );
+
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.07);
+}
+
+/* Текстовая часть без дополнительной вложенной карточки */
+.opensource .opensource-content {
+    min-width: 0;
+    background: transparent;
+}
+
+/* Карточка репозитория остаётся внутри общей поверхности */
+.opensource .repository-card {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 800px) {
+    .opensource .opensource-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 28px;
+        padding: 24px 20px;
+        border-radius: 18px;
+    }
+}
+/* Секция пропускает общий рисунок страницы */
+section#opensource.opensource {
+    background: transparent !important;
+}
+
+/* Карточка слегка приглушает рисунок, а не перекрывает его */
+section#opensource .opensource-grid {
+    background: color-mix(
+        in srgb,
+        var(--bg-card) 65%,
+        transparent
+    );
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+</style>

@@ -5,6 +5,8 @@ import { useAuthStore } from '@/stores/auth'
 import { passwordErrorMessage } from '@/api/errors'
 import AppShell from '@/components/AppShell.vue'
 import { useTheme } from '@/composables/useTheme'
+import AccentPicker from '@/features/settings/components/AccentPicker.vue'
+
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -61,6 +63,8 @@ async function deleteAccount() {
   <AppShell>
     <div class="container">
       <section class="app-section">
+
+        <AccentPicker />
 
         <div class="settings-card settings-card--appearance">
           <div class="settings-card-head">

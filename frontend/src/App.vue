@@ -1,3 +1,111 @@
+<script setup>
+import { useAccent } from '@/composables/useAccent'
+
+useAccent()
+</script>
+
 <template>
-  <RouterView />
+  <div class="fl-root">
+    <RouterView />
+  </div>
 </template>
+
+<style>
+:root {
+  --accent: #42c99a;
+  --on-accent: #111318;
+}
+
+.fl-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+}
+
+/* Неподвижная основа фона. */
+.fl-root::before {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: var(--bg);
+  content: "";
+  pointer-events: none;
+}
+
+/* Один рисунок на весь экран — без повторений и стыков. */
+.fl-root::after {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='480' viewBox='0 0 640 480'%3E%3Cg fill='none' stroke='%23858b96' stroke-width='1'%3E%3Cpath d='M-100 90C30-50 180 0 240 100S420 210 510 90 690-20 740 90M-100 115C30-25 165 22 220 120S420 240 530 115 690 5 740 115M-100 140C30 0 150 44 200 140S420 270 550 140 690 30 740 140M-100 165C30 25 135 66 180 160S420 300 570 165 690 55 740 165M-100 190C30 50 120 88 160 180S420 330 590 190 690 80 740 190M-100 215C30 75 105 110 140 200S420 360 610 215 690 105 740 215M-100 240C30 100 90 132 120 220S420 390 630 240 690 130 740 240M-100 265C30 125 75 154 100 240S420 420 650 265 690 155 740 265M-100 290C30 150 60 176 80 260S420 450 670 290 690 180 740 290M-100 315C30 175 45 198 60 280S420 480 690 315 690 205 740 315M-100 340C30 200 30 220 40 300S420 510 710 340 690 230 740 340M-100 365C30 225 15 242 20 320S420 540 730 365 690 255 740 365'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.2;
+  content: "";
+  pointer-events: none;
+}
+
+html[data-theme='light'] .fl-root::after {
+  opacity: 0.26;
+}
+
+/* Оболочка не должна закрывать общий рисунок. */
+.fl-root .fl-shell.fl-shell {
+  --fluffy-accent: var(--accent);
+  --fluffy-on-accent: var(--on-accent);
+  background: transparent !important;
+}
+
+.profile-posts.profile-posts {
+  --fluffy-accent: var(--accent);
+  --fluffy-on-accent: var(--on-accent);
+}
+
+/* Акцент оставляем на кнопках. */
+.fl-root .btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.fl-root .btn-primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+
+.fl-shell .fl-badge {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Никакой цветной заливки или полоски у разделов. */
+.fl-root .fl-shell .fl-nav__item.is-active {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  color: var(--text);
+  font-weight: 650;
+}
+
+.fl-root .fl-shell .fl-nav__item.is-active::before,
+.fl-root .fl-shell .fl-nav__item.is-active::after {
+  display: none !important;
+}
+
+.fl-shell .fl-brand__dot,
+.fl-shell .fl-page-heading__mark {
+  color: var(--text);
+}
+
+.fl-shell .fl-mobile-dot {
+  background: var(--accent);
+  border: 1px solid var(--text);
+}
+
+/* Убираем цветную подсветку карточек на главной. */
+.fl-root .home-link:hover {
+  border-color: var(--border);
+  box-shadow: none;
+}
+</style>

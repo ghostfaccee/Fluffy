@@ -1427,3 +1427,529 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 :root[data-theme="light"] .me-meta dd { color: #465660; }
 :root[data-theme="light"] .shell-footer,
 :root[data-theme="light"] .app-footer { border-color: var(--border); color: var(--muted); }
+
+
+/* ==========================================================
+   Fluffy — спокойные карточки, блюр и читаемые настройки
+   ========================================================== */
+
+/* Поверхности для тёмной темы.
+   Непрозрачная версия — запасной вариант без поддержки blur. */
+.fl-root {
+    --fl-glass-solid: #25282a;
+    --fl-glass-fill: rgba(37, 40, 42, 0.82);
+    --fl-card-shadow: 0 8px 26px rgba(0, 0, 0, 0.08);
+    --fl-neutral-outline: rgba(220, 228, 233, 0.38);
+}
+
+html[data-theme="light"] .fl-root {
+    --fl-glass-solid: #ffffff;
+    --fl-glass-fill: rgba(255, 255, 255, 0.84);
+    --fl-card-shadow: 0 8px 26px rgba(30, 45, 55, 0.045);
+    --fl-neutral-outline: rgba(45, 60, 72, 0.38);
+}
+
+/* Убираем звезду рядом с названием страницы. */
+.fl-root .fl-shell .fl-page-heading__mark {
+    display: none;
+}
+
+/* ==========================================================
+   Навигация: отдельные карточки без цветной подсветки
+   ========================================================== */
+
+.fl-root .fl-shell .fl-nav {
+    gap: 8px;
+}
+
+.fl-root .fl-shell .fl-nav .fl-nav__item {
+    box-sizing: border-box;
+    min-height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card);
+    background-image: none;
+    color: var(--muted);
+    box-shadow: var(--fl-card-shadow);
+    transition:
+        border-color 150ms ease,
+        color 150ms ease;
+}
+
+/* Перекрывает прежнее правило с !important из App.vue. */
+.fl-root .fl-shell .fl-nav .fl-nav__item.is-active {
+    border-color: var(--fl-neutral-outline) !important;
+    background: var(--bg-card) !important;
+    background-image: none !important;
+    box-shadow: var(--fl-card-shadow) !important;
+    color: var(--text);
+    font-weight: 650;
+}
+
+.fl-root .fl-shell .fl-nav .fl-nav__item:hover {
+    border-color: var(--fl-neutral-outline);
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+.fl-root .fl-shell .fl-nav .fl-nav__item::before,
+.fl-root .fl-shell .fl-nav .fl-nav__item::after {
+    display: none !important;
+}
+
+/* Текст под навигацией тоже не лежит прямо на линиях. */
+.fl-root .fl-shell .fl-sidebar__bottom {
+    gap: 12px;
+    padding: 14px;
+    margin-top: auto;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--fl-glass-solid);
+    box-shadow: var(--fl-card-shadow);
+}
+
+/* ==========================================================
+   Заголовки и карточки с аватаром
+   ========================================================== */
+
+.fl-root .fl-shell .fl-page-heading {
+    box-sizing: border-box;
+    padding: 18px 22px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--fl-glass-solid);
+    box-shadow: var(--fl-card-shadow);
+}
+
+/* Карточка аватара в профиле и аккаунт в шапке. */
+.fl-root .app-profile-avatar,
+.fl-root .fl-shell .fl-account {
+    border: 1px solid var(--border);
+    background: var(--fl-glass-solid);
+    box-shadow: var(--fl-card-shadow);
+}
+
+.fl-root .fl-shell .fl-account {
+    padding: 6px 10px 6px 6px;
+    border-radius: 14px;
+    color: var(--text);
+}
+
+/* Размытие включается только там, где браузер его поддерживает.
+   Оно размывает фон за карточкой, а не аватар и текст внутри. */
+@supports ((backdrop-filter: blur(18px)) or
+           (-webkit-backdrop-filter: blur(18px))) {
+    .fl-root .app-profile-avatar,
+    .fl-root .fl-shell .fl-account,
+    .fl-root .fl-shell .fl-page-heading,
+    .fl-root .fl-shell .fl-sidebar__bottom {
+        background: var(--fl-glass-fill);
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
+    }
+}
+
+/* Длинные тексты и данные профиля — на плотных поверхностях. */
+.fl-root .app-profile-info,
+.fl-root .user-card {
+    border-color: var(--border);
+    background: var(--bg-card);
+    box-shadow: var(--fl-card-shadow);
+}
+
+/* Убираем старое зелёное свечение внутри карточки профиля. */
+.fl-root .user-card::before {
+    display: none;
+}
+
+.fl-root .me-bio,
+.fl-root .user-card-bio,
+.fl-root .me-meta dd,
+.fl-root .user-card-meta dd {
+    color: var(--text);
+}
+
+/* Главная: описание больше не лежит прямо на фоне.
+   Не затрагиваем сетку карточек ниже. */
+.fl-root .home-page__title {
+    margin-bottom: 0;
+    padding: 20px 22px 8px;
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+    background: var(--bg-card);
+}
+
+.fl-root .home-page__description {
+    box-sizing: border-box;
+    max-width: none;
+    margin-top: 0;
+    padding: 0 22px 20px;
+    border: 1px solid var(--border);
+    border-top: 0;
+    border-radius: 0 0 16px 16px;
+    background: var(--bg-card);
+}
+
+/* Старые приветственные блоки тоже получают плотную подложку. */
+.fl-root .app-section--hero,
+.fl-root .home-note {
+    border-color: var(--border);
+    background: var(--bg-card);
+}
+
+.fl-root .app-section--hero::before,
+.fl-root .app-section--hero::after {
+    display: none;
+}
+
+/* ==========================================================
+   Обычные карточки настроек
+   ========================================================== */
+
+.fl-root .settings-card {
+    border-color: var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+/* ==========================================================
+   Светлые warning / danger в ОБЕИХ темах
+   Локальные переменные обеспечивают читаемость вложенных полей.
+   ========================================================== */
+
+.fl-root .settings-card.settings-card--warning,
+.fl-root .settings-card.settings-card--danger {
+    color-scheme: light;
+    --text: #292d35;
+    --muted: #626773;
+    --bg: #ffffff;
+    --bg-soft: #ffffff;
+    --bg-card: #ffffff;
+    --border: rgba(55, 63, 75, 0.18);
+
+    color: var(--text);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.045);
+}
+
+.fl-root .settings-card.settings-card--warning {
+    border-color: #e6cea0;
+    background: #fff7e8;
+}
+
+.fl-root .settings-card.settings-card--danger {
+    border-color: #eac2c9;
+    background: #fff0f2;
+}
+
+/* Сохраняем метки Warning zone и Danger zone. */
+.fl-root .settings-card.settings-card--warning .settings-card-label {
+    background: #f4e3bf;
+    color: #795315;
+}
+
+.fl-root .settings-card.settings-card--danger .settings-card-label {
+    background: #f6d8df;
+    color: #96364c;
+}
+
+.fl-root .settings-card.settings-card--warning .settings-card-title,
+.fl-root .settings-card.settings-card--danger .settings-card-title,
+.fl-root .settings-card.settings-card--warning .field label,
+.fl-root .settings-card.settings-card--danger .field label {
+    color: #292d35;
+}
+
+.fl-root .settings-card.settings-card--warning .settings-card-hint,
+.fl-root .settings-card.settings-card--danger .settings-card-hint {
+    color: #626773;
+}
+
+/* Поля остаются светлыми даже при общей тёмной теме. */
+.fl-root .settings-card.settings-card--warning .field input,
+.fl-root .settings-card.settings-card--danger .field input {
+    border-color: rgba(55, 63, 75, 0.22);
+    background: #ffffff;
+    color: #292d35;
+    caret-color: #292d35;
+}
+
+.fl-root .settings-card.settings-card--warning .field input:focus,
+.fl-root .settings-card.settings-card--danger .field input:focus {
+    border-color: #6a7280;
+    box-shadow: 0 0 0 3px rgba(70, 80, 95, 0.12);
+}
+
+.fl-root .settings-card.settings-card--warning .btn-secondary,
+.fl-root .settings-card.settings-card--danger .btn-secondary {
+    border-color: rgba(55, 63, 75, 0.22);
+    background: #ffffff;
+    color: #292d35;
+    box-shadow: none;
+}
+
+.fl-root .settings-card.settings-card--warning .btn-secondary:hover:not(:disabled),
+.fl-root .settings-card.settings-card--danger .btn-secondary:hover:not(:disabled) {
+    border-color: rgba(55, 63, 75, 0.38);
+    background: #f1f3f5;
+}
+
+/* Кнопка удаления и сообщения — контрастные на розовой карточке. */
+.fl-root .settings-card.settings-card--danger .btn-danger {
+    border-color: #bb5267;
+    background: #ffffff;
+    color: #9c2f46;
+}
+
+.fl-root .settings-card.settings-card--danger .btn-danger:hover:not(:disabled) {
+    border-color: #9c2f46;
+    background: #f8dce3;
+    color: #802138;
+}
+
+.fl-root .settings-card.settings-card--danger .settings-confirm,
+.fl-root .settings-card.settings-card--danger .form-error,
+.fl-root .settings-card.settings-card--warning .form-error {
+    color: #a02d43;
+}
+
+.fl-root .settings-card.settings-card--warning .form-info {
+    color: #23643f;
+}
+
+.fl-root .settings-card.settings-card--warning :is(button, input):focus-visible,
+.fl-root .settings-card.settings-card--danger :is(button, input):focus-visible {
+    outline-color: #505b6a;
+}
+
+/* ==========================================================
+   Телефон
+   ========================================================== */
+
+@media (max-width: 700px) {
+    .fl-root .fl-shell .fl-nav {
+        gap: 4px;
+    }
+
+    .fl-root .fl-shell .fl-nav .fl-nav__item {
+        min-height: 50px;
+        padding: 6px 2px;
+        border-radius: 10px;
+        box-shadow: none;
+    }
+
+    .fl-root .fl-shell .fl-nav .fl-nav__item.is-active {
+        box-shadow: none !important;
+    }
+
+    .fl-root .fl-shell .fl-page-heading {
+        padding: 15px 17px;
+        border-radius: 14px;
+    }
+
+    .fl-root .fl-shell .fl-account {
+        padding: 4px;
+        border-radius: 12px;
+    }
+
+    .fl-root .fl-shell .fl-sidebar__bottom {
+        display: none;
+    }
+}
+
+
+/* Финальные правки оформления */
+
+/* 1. Пароль и удаление: обычные карточки под текущую тему.
+   Цветные метки Warning / Danger сохраняются. */
+
+.fl-root .settings-card.settings-card--warning,
+.fl-root .settings-card.settings-card--danger {
+    --text: inherit;
+    --muted: inherit;
+    --bg: inherit;
+    --bg-soft: inherit;
+    --bg-card: inherit;
+    --border: inherit;
+
+    color-scheme: inherit;
+    border-color: var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    box-shadow: var(--fl-card-shadow);
+}
+
+.fl-root .settings-card.settings-card--warning .settings-card-title,
+.fl-root .settings-card.settings-card--danger .settings-card-title,
+.fl-root .settings-card.settings-card--warning .field label,
+.fl-root .settings-card.settings-card--danger .field label {
+    color: var(--text);
+}
+
+.fl-root .settings-card.settings-card--warning .settings-card-hint,
+.fl-root .settings-card.settings-card--danger .settings-card-hint {
+    color: var(--muted);
+}
+
+.fl-root .settings-card.settings-card--warning .field input,
+.fl-root .settings-card.settings-card--danger .field input {
+    border-color: var(--border);
+    background: var(--bg-soft);
+    color: var(--text);
+    caret-color: var(--text);
+}
+
+.fl-root .settings-card.settings-card--warning .field input:focus,
+.fl-root .settings-card.settings-card--danger .field input:focus {
+    border-color: var(--accent);
+    box-shadow: none;
+}
+
+.fl-root .settings-card.settings-card--warning .btn-secondary,
+.fl-root .settings-card.settings-card--danger .btn-secondary {
+    border-color: var(--border);
+    background: var(--bg-soft);
+    color: var(--text);
+    box-shadow: none;
+}
+
+.fl-root .settings-card.settings-card--warning .btn-secondary:hover:not(:disabled),
+.fl-root .settings-card.settings-card--danger .btn-secondary:hover:not(:disabled) {
+    border-color: var(--muted);
+    background: var(--bg-soft);
+    color: var(--text);
+}
+
+.fl-root .settings-card.settings-card--danger .btn-danger {
+    border-color: #d46a80;
+    background: transparent;
+    color: #ed91a4;
+}
+
+.fl-root .settings-card.settings-card--danger .btn-danger:hover:not(:disabled) {
+    border-color: #ed91a4;
+    background: rgba(212, 106, 128, 0.12);
+    color: #ffb2c2;
+}
+
+.fl-root .settings-card.settings-card--danger .settings-confirm,
+.fl-root .settings-card.settings-card--danger .form-error,
+.fl-root .settings-card.settings-card--warning .form-error {
+    color: #ed91a4;
+}
+
+.fl-root .settings-card.settings-card--warning .form-info {
+    color: #7bd5a2;
+}
+
+html[data-theme="light"] .fl-root .settings-card--danger .btn-danger,
+html[data-theme="light"] .fl-root .settings-card--danger .settings-confirm,
+html[data-theme="light"] .fl-root .settings-card--danger .form-error,
+html[data-theme="light"] .fl-root .settings-card--warning .form-error {
+    color: #a02d43;
+}
+
+html[data-theme="light"] .fl-root .settings-card--danger .btn-danger:hover:not(:disabled) {
+    border-color: #a02d43;
+    background: rgba(160, 45, 67, 0.08);
+    color: #802138;
+}
+
+html[data-theme="light"] .fl-root .settings-card--warning .form-info {
+    color: #23643f;
+}
+
+.fl-root .settings-card.settings-card--warning :is(button, input):focus-visible,
+.fl-root .settings-card.settings-card--danger :is(button, input):focus-visible {
+    outline-color: var(--text);
+}
+
+/* 2. Главная: заголовок и описание без разрыва.
+   Две части визуально образуют одну карточку. */
+
+.fl-root .home-page__title {
+    display: block;
+    margin: 0;
+    padding: 20px 22px 8px;
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+    background: var(--bg-card);
+}
+
+.fl-root .home-page__description {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0 0 24px;
+    padding: 0 22px 20px;
+    border: 1px solid var(--border);
+    border-top: 0;
+    border-radius: 0 0 16px 16px;
+    background: var(--bg-card);
+    box-sizing: border-box;
+}
+
+/* 3. Все разделы навигации — на одной большой карточке. */
+
+.fl-root .fl-shell .fl-nav {
+    gap: 4px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg-card);
+    box-shadow: var(--fl-card-shadow);
+}
+
+.fl-root .fl-shell .fl-nav .fl-nav__item,
+.fl-root .fl-shell .fl-nav .fl-nav__item.is-active {
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+.fl-root .fl-shell .fl-nav .fl-nav__item {
+    color: var(--muted);
+}
+
+.fl-root .fl-shell .fl-nav .fl-nav__item.is-active {
+    color: var(--text);
+    font-weight: 700;
+}
+
+.fl-root .fl-shell .fl-nav .fl-nav__item:hover {
+    color: var(--text);
+}
+
+/* На телефоне общая карточка остаётся компактной. */
+@media (max-width: 700px) {
+    .fl-root .fl-shell .fl-nav {
+        gap: 2px;
+        padding: 4px;
+        border-radius: 14px;
+        box-shadow: none;
+    }
+}
+
+/* Главная: обычный заголовок и текст без карточки */
+.fl-root .home-page__title,
+.fl-root .home-page__description {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.fl-root .home-page__title {
+    margin: 0 0 10px;
+}
+
+.fl-root .home-page__description {
+    width: auto;
+    max-width: 540px;
+    margin: 0 0 24px;
+}

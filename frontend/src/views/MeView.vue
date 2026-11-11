@@ -6,6 +6,7 @@ import { profileErrorMessage } from '@/api/errors'
 import AppShell from '@/components/AppShell.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import UserCard from '@/components/UserCard.vue'
+import ProfilePosts from '@/features/posts/components/ProfilePosts.vue'
 
 const auth = useAuthStore()
 const { uploading, error: avatarError, upload, remove } = useAvatarUpload()
@@ -173,6 +174,12 @@ async function saveProfile() {
           </div>
         </div>
       </section>
-    </div>
-  </AppShell>
+
+    <ProfilePosts
+      v-if="user?.username"
+      :key="user.username"
+      :username="user.username"
+    />
+  </div>
+</AppShell>
 </template>

@@ -119,19 +119,52 @@ export const useChatStore = defineStore('chat', () => {
     return request
   }
 
-  async function sendMessage(receiverId, content) {
+    async function sendMessage(receiverId, content) {
     const msg = await api(`/messages/${encodeURIComponent(receiverId)}`, {
       method: 'POST',
       body: { content },
     })
-    const chat = chats.value[receiverId] || { messages: [], loading: false, hasMore: true }
-    chat.messages.push(msg)
+
+    const chat = chats.value[receiverId] || {
+      messages: [],
+      loading: false,
+      hasMore: true,
+    }
+
+    const alreadyExists =
+      msg.message_id != null &&
+      chat.messages.some((item) => item.message_id === msg.message_id)
+
+    if (!alreadyExists) {
+      chat.messages.push(msg)
+    }
+
     chats.value[receiverId] = chat
 
-    upsertConversation(msg.sender, {
-      lastMessage: msg.content,
-      lastMessageAt: msg.created_at,
-    })
+    // Диалог создаём с получателем, а не с отправителем.
+    const existing = conversations.value.find(
+      (item) => String(item.user_id) === String(receiverId),
+    )
+
+    const receiver =
+      msg.receiver &&
+      String(msg.receiver.user_id) === String(receiverId)
+        ? msg.receiver
+        : null
+
+    upsertConversation(
+      {
+        user_id: receiverId,
+        username: receiver?.username || existing?.username || null,
+        name: receiver?.name || existing?.name || null,
+        avatar_url: receiver?.avatar_url || existing?.avatar_url || null,
+      },
+      {
+        lastMessage: msg.content ?? content,
+        lastMessageAt: msg.created_at || new Date().toISOString(),
+      },
+    )
+
     return msg
   }
 

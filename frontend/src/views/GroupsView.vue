@@ -84,12 +84,10 @@ onMounted(loadGroups)
 <template>
   <AppShell>
     <div class="container">
-      <section class="app-section app-section--hero">
-        <h1 class="app-title app-title--hero">
-          <span class="gradient-text">Группы</span>
-        </h1>
-        <p class="app-welcome">Создавай группы, приглашай друзей и общайся вместе.</p>
-      </section>
+      <p class="groups-description">
+        Создавай группы, приглашай друзей и общайся вместе.
+      </p>
+
 
       <div class="groups-actions">
         <button class="btn btn-primary" type="button" @click="showCreate = !showCreate">
@@ -154,3 +152,19 @@ onMounted(loadGroups)
     </div>
   </AppShell>
 </template>
+
+<style scoped>
+.groups-description {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.groups-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+</style>

@@ -59,25 +59,34 @@ onMounted(load)
 <template>
   <AppShell>
     <div class="container">
-      <section class="app-section app-section--hero">
-        <span class="eyebrow"><span class="status-dot"></span>Участники</span>
-        <h1 class="app-title app-title--hero">
-          <span class="gradient-text">Участники группы.</span>
-        </h1>
-      </section>
-
       <div class="groups-actions" style="margin-bottom: 18px;">
-        <RouterLink :to="{ name: 'group', params: { groupId } }" class="btn btn-secondary">
+        <RouterLink
+          :to="{ name: 'group', params: { groupId } }"
+          class="btn btn-secondary"
+        >
           ← К чату
         </RouterLink>
       </div>
 
       <section class="app-section">
-        <p v-if="loading" class="app-hint">Загружаем…</p>
-        <p v-else-if="error" class="form-error" role="alert">{{ error }}</p>
-        <p v-else-if="!members.length" class="app-hint">Участников нет.</p>
+        <p v-if="loading" class="app-hint">
+          Загружаем…
+        </p>
+
+        <p v-else-if="error" class="form-error" role="alert">
+          {{ error }}
+        </p>
+
+        <p v-else-if="!members.length" class="app-hint">
+          Участников нет.
+        </p>
+
         <div v-else class="members-list">
-          <div v-for="m in members" :key="m.user_id" class="member-row">
+          <div
+            v-for="m in members"
+            :key="m.user_id"
+            class="member-row"
+          >
             <div class="member-body">
               <div class="member-name">{{ m.user_id }}</div>
               <div class="member-role">{{ m.role }}</div>
@@ -85,16 +94,27 @@ onMounted(load)
 
             <div class="app-profile-actions">
               <button
-                v-if="isOwner && m.role !== 'owner' && m.user_id !== auth.user?.user_id"
+                v-if="
+                  isOwner &&
+                  m.role !== 'owner' &&
+                  m.user_id !== auth.user?.user_id
+                "
                 class="btn btn-secondary btn-small"
                 type="button"
                 @click="changeRole(m.user_id, m.role)"
               >
-                {{ m.role === 'admin' ? 'Понизить до участника' : 'Повысить до админа' }}
+                {{
+                  m.role === 'admin'
+                    ? 'Понизить до участника'
+                    : 'Повысить до админа'
+                }}
               </button>
 
               <button
-                v-if="m.role !== 'owner' && m.user_id !== auth.user?.user_id"
+                v-if="
+                  m.role !== 'owner' &&
+                  m.user_id !== auth.user?.user_id
+                "
                 class="btn btn-secondary btn-small"
                 type="button"
                 @click="kick(m.user_id)"
