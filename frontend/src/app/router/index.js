@@ -1,89 +1,101 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LandingView from '../views/LandingView.vue'
+import LandingView from '@/views/LandingView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { hasRefreshToken } from '@/api/client'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'landing', component: LandingView },
-    { path: '/docs/:page', name: 'docs', component: () => import('../views/DocsView.vue'), props: true },
-    { path: '/docs', redirect: '/docs/features' },
+    {
+      path: '/',
+      name: 'landing',
+      component: LandingView,
+    },
+    {
+      path: '/docs/:page',
+      name: 'docs',
+      component: () => import('@/views/DocsView.vue'),
+      props: true,
+    },
+    {
+      path: '/docs',
+      redirect: '/docs/features',
+    },
     {
       path: '/login',
       name: 'login',
-      component: () => import('../views/LoginView.vue'),
+      component: () => import('@/views/LoginView.vue'),
       meta: { guestOnly: true },
     },
     {
       path: '/register',
       name: 'register',
-      component: () => import('../views/RegisterView.vue'),
+      component: () => import('@/views/RegisterView.vue'),
       meta: { guestOnly: true },
     },
     {
       path: '/verify-email',
       name: 'verify-email',
-      component: () => import('../views/VerifyEmailView.vue'),
+      component: () => import('@/views/VerifyEmailView.vue'),
     },
     {
       path: '/app',
       name: 'app',
-      component: () => import('../views/AppView.vue'),
+      component: () => import('@/views/AppView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/me',
       name: 'me',
-      component: () => import('../views/MeView.vue'),
+      component: () => import('@/views/MeView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('../views/SettingsView.vue'),
+      component: () => import('@/views/SettingsView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/users/:username',
       name: 'user',
-      component: () => import('../views/UserProfileView.vue'),
+      component: () => import('@/views/UserProfileView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/chats',
       name: 'chats',
-      component: () => import('../views/ChatsView.vue'),
+      component: () => import('@/modules/chat/pages/ChatsView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/chats/:userId',
       name: 'chat',
-      component: () => import('../views/ChatView.vue'),
+      component: () => import('@/modules/chat/pages/ChatView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/groups',
       name: 'groups',
-      component: () => import('../views/GroupsView.vue'),
+      component: () => import('@/modules/groups/pages/GroupsView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/groups/:groupId',
       name: 'group',
-      component: () => import('../views/GroupView.vue'),
+      component: () => import('@/modules/groups/pages/GroupView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/groups/:groupId/members',
       name: 'group-members',
-      component: () => import('../views/GroupMembersView.vue'),
+      component: () => import('@/modules/groups/pages/GroupMembersView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/groups/:groupId/settings',
       name: 'group-settings',
-      component: () => import('../views/GroupSettingsView.vue'),
+      component: () => import('@/views/GroupSettingsView.vue'),
       meta: { requiresAuth: true },
     },
   ],
@@ -91,12 +103,18 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
+
   if (!auth.user && hasRefreshToken()) {
     await auth.restoreSession()
   }
+
   if (to.meta.requiresAuth && !auth.user) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+    return {
+      name: 'login',
+      query: { redirect: to.fullPath },
+    }
   }
+
   if (to.meta.guestOnly && auth.user) {
     return { name: 'app' }
   }

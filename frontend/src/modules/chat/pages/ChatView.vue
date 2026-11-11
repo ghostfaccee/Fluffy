@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import { useChatStore } from '@/stores/chat'
+import { useChatStore } from '@/modules/chat/stores/chat'
 import { useAuthStore } from '@/stores/auth'
 import { useWsStore } from '@/stores/ws'
 import AppShell from '@/components/AppShell.vue'
@@ -19,14 +19,27 @@ const error = ref('')
 const messagesEl = ref(null)
 
 const userId = computed(() => route.params.userId)
-const current = computed(() => chat.chats[userId.value] || { messages: [], loading: false, hasMore: true })
+
+const current = computed(() =>
+  chat.chats[userId.value] || {
+    messages: [],
+    loading: false,
+    hasMore: true,
+  },
+)
+
 const conversations = computed(() => chat.visibleConversations)
 
-const currentConv = computed(() => conversations.value.find((c) => c.user_id === userId.value))
+const currentConv = computed(() =>
+  conversations.value.find((conversation) => conversation.user_id === userId.value),
+)
 
 async function scrollToBottom() {
   await nextTick()
-  if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+
+  if (messagesEl.value) {
+    messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+  }
 }
 
 async function openChat(id) {
@@ -42,7 +55,7 @@ async function openChat(id) {
   try {
     await chat.loadChat(id)
 
-    // За время загрузки пользователь мог открыть другой диалог.
+    // Не обновляем интерфейс, если пользователь уже открыл другой чат.
     if (String(userId.value) !== String(id)) return
 
     const messages = chat.chats[id]?.messages || []
@@ -52,8 +65,7 @@ async function openChat(id) {
       (conversation) => String(conversation.user_id) === String(id),
     )
 
-    // Ищем данные именно собеседника, независимо от того,
-    // кто отправил последнее сообщение.
+    // Данные собеседника могут находиться как в sender, так и в receiver.
     let otherUser = null
 
     for (const message of messages) {
@@ -95,22 +107,23 @@ async function openChat(id) {
 
     await chat.markRead(id)
     await scrollToBottom()
-  } catch (e) {
+  } catch (cause) {
     if (String(userId.value) !== String(id)) return
 
     error.value =
-      e?.status === 404
+      cause?.status === 404
         ? 'Пользователь не найден.'
         : 'Не удалось загрузить историю.'
   }
 }
 
-
 async function send() {
   const content = text.value.trim()
   if (!content || sending.value) return
+
   sending.value = true
   error.value = ''
+
   try {
     await chat.sendMessage(userId.value, content)
     text.value = ''
@@ -122,9 +135,9 @@ async function send() {
   }
 }
 
-function onKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
+function onKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault()
     send()
   }
 }
@@ -135,18 +148,19 @@ let unsubscribeReconnect = null
 function syncCurrentChat() {
   const id = userId.value
   if (!id || document.hidden) return
+
   chat.loadChat(id).catch(() => {})
 }
 
 onMounted(() => {
   openChat(userId.value)
 
-  // WebSocket delivers new messages. Only poll as a slow fallback while it is offline.
+  // Основной канал — WebSocket. Опрос нужен только при потере соединения.
   fallbackIntervalId = setInterval(() => {
     if (!ws.connected) syncCurrentChat()
   }, 30000)
 
-  // A reconnect may have happened after messages were missed while offline.
+  // После переподключения загружаем пропущенные сообщения.
   unsubscribeReconnect = ws.on('connected', syncCurrentChat)
 })
 
@@ -155,8 +169,15 @@ onBeforeUnmount(() => {
   if (unsubscribeReconnect) unsubscribeReconnect()
 })
 
-watch(() => route.params.userId, (id) => openChat(id))
-watch(() => current.value.messages.length, () => scrollToBottom())
+watch(
+  () => route.params.userId,
+  (id) => openChat(id),
+)
+
+watch(
+  () => current.value.messages.length,
+  () => scrollToBottom(),
+)
 </script>
 
 <template>
@@ -196,6 +217,7 @@ watch(() => current.value.messages.length, () => scrollToBottom())
             <strong>
               {{ currentConv?.name || currentConv?.username || 'Переписка' }}
             </strong>
+
             <span v-if="currentConv?.username">
               @{{ currentConv.username }}
             </span>
@@ -270,252 +292,5 @@ watch(() => current.value.messages.length, () => scrollToBottom())
     </div>
   </AppShell>
 </template>
-<style scoped>
-.messenger {
-  display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
-  height: min(740px, calc(100dvh - 190px));
-  min-height: 380px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--bg-card);
-}
 
-.messenger__sidebar {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  border-right: 1px solid var(--border);
-}
-
-.messenger__sidebar-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 66px;
-  padding: 0 18px;
-  border-bottom: 1px solid var(--border);
-}
-
-.messenger__sidebar-head strong {
-  font-size: 14px;
-}
-
-.messenger__sidebar-head span {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.messenger__dialogs {
-  min-height: 0;
-  overflow-y: auto;
-  padding: 8px;
-}
-
-.messenger__dialogs :deep(a) {
-  border-radius: 10px;
-}
-
-.messenger__panel {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-.messenger__head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-  min-height: 66px;
-  padding: 10px 20px;
-  border-bottom: 1px solid var(--border);
-}
-
-.messenger__person {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.messenger__person strong {
-  overflow: hidden;
-  color: var(--text);
-  font-size: 14px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.messenger__person span,
-.messenger__connection {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.messenger__connection {
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-.messenger__back {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  color: var(--text);
-}
-
-.messenger__messages {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 20px;
-  background: color-mix(in srgb, var(--bg) 45%, transparent);
-  scrollbar-width: thin;
-}
-
-.messenger__empty {
-  display: grid;
-  align-content: center;
-  min-height: 100%;
-  padding: 30px 0;
-  text-align: center;
-}
-
-.messenger__empty strong {
-  font-size: 17px;
-  font-weight: 600;
-}
-
-.messenger__empty p,
-.messenger__hint {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.messenger__hint {
-  padding: 12px;
-}
-
-.messenger__composer {
-  flex-shrink: 0;
-  padding: 14px 18px 10px;
-  border-top: 1px solid var(--border);
-}
-
-.messenger__input-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-}
-
-.messenger__textarea {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 48px;
-  max-height: 140px;
-  resize: vertical;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.messenger__textarea::placeholder {
-  color: var(--muted);
-}
-
-.messenger__send {
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 2px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: 25px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.messenger__send:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.messenger__keyboard {
-  display: block;
-  margin-top: 7px;
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.messenger__error {
-  margin: 0 0 10px;
-  color: var(--text);
-  font-size: 12px;
-}
-
-.messenger :is(button, textarea, a):focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 3px;
-}
-
-@media (max-width: 1100px) {
-  .messenger {
-    grid-template-columns: 200px minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 850px) {
-  .messenger {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .messenger__sidebar {
-    display: none;
-  }
-
-  .messenger__back {
-    display: inline-flex;
-  }
-}
-
-@media (max-width: 700px) {
-  .messenger {
-    height: calc(100dvh - 235px - env(safe-area-inset-bottom));
-    min-height: 300px;
-    border-radius: 12px;
-  }
-
-  .messenger__head {
-    min-height: 58px;
-    padding: 8px 12px;
-  }
-
-  .messenger__messages {
-    padding: 14px 10px;
-  }
-
-  .messenger__composer {
-    padding: 10px;
-  }
-
-  .messenger__keyboard,
-  .messenger__connection {
-    display: none;
-  }
-}
-</style>
+<style scoped src="../styles/chat.css"></style>

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useGroupStore } from '@/stores/group'
+import { useGroupStore } from '@/modules/groups/stores/group'
 import AppShell from '@/components/AppShell.vue'
 import GroupListItem from '@/components/GroupListItem.vue'
 
@@ -27,6 +27,7 @@ const groups = computed(() => groupStore.groups)
 async function loadGroups() {
   loading.value = true
   error.value = ''
+
   try {
     await groupStore.fetchGroups()
   } catch {
@@ -38,21 +39,33 @@ async function loadGroups() {
 
 async function submitCreate() {
   if (createLoading.value) return
+
   createError.value = ''
+
   const name = createName.value.trim()
   if (!name) return
+
   createLoading.value = true
+
   try {
     const group = await groupStore.createGroup({
       name,
       description: createDescription.value.trim() || null,
     })
+
     showCreate.value = false
     createName.value = ''
     createDescription.value = ''
-    router.push({ name: 'group', params: { groupId: group.group_id } })
-  } catch (e) {
-    createError.value = e?.status === 422 ? 'Проверь название и описание.' : 'Не удалось создать группу.'
+
+    router.push({
+      name: 'group',
+      params: { groupId: group.group_id },
+    })
+  } catch (cause) {
+    createError.value =
+      cause?.status === 422
+        ? 'Проверь название и описание.'
+        : 'Не удалось создать группу.'
   } finally {
     createLoading.value = false
   }
@@ -60,19 +73,32 @@ async function submitCreate() {
 
 async function submitJoin() {
   if (joinLoading.value) return
+
   joinError.value = ''
+
   const token = joinToken.value.trim()
   if (!token) return
+
   joinLoading.value = true
+
   try {
     const group = await groupStore.joinByToken(token)
+
     showJoin.value = false
     joinToken.value = ''
-    router.push({ name: 'group', params: { groupId: group.group_id } })
-  } catch (e) {
-    if (e?.status === 404) joinError.value = 'Такой группы нет.'
-    else if (e?.status === 409) joinError.value = 'Ты уже участник.'
-    else joinError.value = 'Не удалось войти.'
+
+    router.push({
+      name: 'group',
+      params: { groupId: group.group_id },
+    })
+  } catch (cause) {
+    if (cause?.status === 404) {
+      joinError.value = 'Такой группы нет.'
+    } else if (cause?.status === 409) {
+      joinError.value = 'Ты уже участник.'
+    } else {
+      joinError.value = 'Не удалось войти.'
+    }
   } finally {
     joinLoading.value = false
   }
@@ -88,64 +114,141 @@ onMounted(loadGroups)
         Создавай группы, приглашай друзей и общайся вместе.
       </p>
 
-
       <div class="groups-actions">
-        <button class="btn btn-primary" type="button" @click="showCreate = !showCreate">
+        <button
+          class="btn btn-primary"
+          type="button"
+          @click="showCreate = !showCreate"
+        >
           Создать группу
         </button>
-        <button class="btn btn-secondary" type="button" @click="showJoin = !showJoin">
+
+        <button
+          class="btn btn-secondary"
+          type="button"
+          @click="showJoin = !showJoin"
+        >
           Войти по инвайту
         </button>
       </div>
 
-      <form v-if="showCreate" class="settings-card" @submit.prevent="submitCreate">
+      <form
+        v-if="showCreate"
+        class="settings-card"
+        @submit.prevent="submitCreate"
+      >
         <h2 class="settings-card-title">Новая группа</h2>
-        <p v-if="createError" class="form-error" role="alert">{{ createError }}</p>
+
+        <p v-if="createError" class="form-error" role="alert">
+          {{ createError }}
+        </p>
+
         <div class="field">
           <label for="g-name">Название</label>
-          <input id="g-name" v-model="createName" type="text" minlength="1" maxlength="40" required />
+          <input
+            id="g-name"
+            v-model="createName"
+            type="text"
+            minlength="1"
+            maxlength="40"
+            required
+          />
         </div>
+
         <div class="field">
-          <label for="g-desc">Описание <span class="label-optional">(опционально)</span></label>
-          <input id="g-desc" v-model="createDescription" type="text" maxlength="200" />
+          <label for="g-desc">
+            Описание
+            <span class="label-optional">(опционально)</span>
+          </label>
+
+          <input
+            id="g-desc"
+            v-model="createDescription"
+            type="text"
+            maxlength="200"
+          />
         </div>
+
         <div class="settings-actions">
-          <button class="btn btn-primary" type="submit" :disabled="createLoading || !createName.trim()">
+          <button
+            class="btn btn-primary"
+            type="submit"
+            :disabled="createLoading || !createName.trim()"
+          >
             {{ createLoading ? 'Создаём…' : 'Создать' }}
           </button>
-          <button class="btn btn-secondary" type="button" @click="showCreate = false">Отмена</button>
+
+          <button
+            class="btn btn-secondary"
+            type="button"
+            @click="showCreate = false"
+          >
+            Отмена
+          </button>
         </div>
       </form>
 
-      <form v-if="showJoin" class="settings-card" @submit.prevent="submitJoin">
+      <form
+        v-if="showJoin"
+        class="settings-card"
+        @submit.prevent="submitJoin"
+      >
         <h2 class="settings-card-title">Войти по инвайту</h2>
-        <p v-if="joinError" class="form-error" role="alert">{{ joinError }}</p>
+
+        <p v-if="joinError" class="form-error" role="alert">
+          {{ joinError }}
+        </p>
+
         <div class="field">
           <label for="g-token">Инвайт-токен</label>
-          <input id="g-token" v-model="joinToken" type="text" required />
+          <input
+            id="g-token"
+            v-model="joinToken"
+            type="text"
+            required
+          />
         </div>
+
         <div class="settings-actions">
-          <button class="btn btn-primary" type="submit" :disabled="joinLoading || !joinToken.trim()">
+          <button
+            class="btn btn-primary"
+            type="submit"
+            :disabled="joinLoading || !joinToken.trim()"
+          >
             {{ joinLoading ? 'Входим…' : 'Войти' }}
           </button>
-          <button class="btn btn-secondary" type="button" @click="showJoin = false">Отмена</button>
+
+          <button
+            class="btn btn-secondary"
+            type="button"
+            @click="showJoin = false"
+          >
+            Отмена
+          </button>
         </div>
       </form>
 
       <section class="app-section">
-        <p v-if="loading" class="app-hint">Загружаем…</p>
-        <p v-else-if="error" class="form-error" role="alert">{{ error }}</p>
+        <p v-if="loading" class="app-hint">
+          Загружаем…
+        </p>
+
+        <p v-else-if="error" class="form-error" role="alert">
+          {{ error }}
+        </p>
+
         <p v-else-if="!groups.length" class="app-hint">
           Пока нет групп. Создай свою или войди по инвайту.
         </p>
+
         <div v-else class="groups-grid">
           <RouterLink
-            v-for="g in groups"
-            :key="g.group_id"
-            :to="{ name: 'group', params: { groupId: g.group_id } }"
+            v-for="group in groups"
+            :key="group.group_id"
+            :to="{ name: 'group', params: { groupId: group.group_id } }"
             class="group-tile"
           >
-            <GroupListItem :group="g" />
+            <GroupListItem :group="group" />
           </RouterLink>
         </div>
       </section>
@@ -153,18 +256,4 @@ onMounted(loadGroups)
   </AppShell>
 </template>
 
-<style scoped>
-.groups-description {
-  margin: 0 0 18px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.groups-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-</style>
+<style scoped src="../styles/groups.css"></style>

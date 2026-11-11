@@ -1,0 +1,13 @@
+.groups-description {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.groups-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}

@@ -1,16 +1,3 @@
-<script setup>
-import { useAccent } from '@/composables/useAccent'
-
-useAccent()
-</script>
-
-<template>
-  <div class="fl-root">
-    <RouterView />
-  </div>
-</template>
-
-<style>
 :root {
   --accent: #42c99a;
   --on-accent: #111318;
@@ -22,7 +9,7 @@ useAccent()
   min-height: 100dvh;
 }
 
-/* Неподвижная основа фона. */
+/* Неподвижная основа общего фона. */
 .fl-root::before {
   position: fixed;
   inset: 0;
@@ -32,7 +19,7 @@ useAccent()
   pointer-events: none;
 }
 
-/* Один рисунок на весь экран — без повторений и стыков. */
+/* Единый рисунок без повторений и стыков. */
 .fl-root::after {
   position: fixed;
   inset: 0;
@@ -50,7 +37,7 @@ html[data-theme='light'] .fl-root::after {
   opacity: 0.26;
 }
 
-/* Оболочка не должна закрывать общий рисунок. */
+/* Оболочка пропускает общий рисунок. */
 .fl-root .fl-shell.fl-shell {
   --fluffy-accent: var(--accent);
   --fluffy-on-accent: var(--on-accent);
@@ -62,7 +49,7 @@ html[data-theme='light'] .fl-root::after {
   --fluffy-on-accent: var(--on-accent);
 }
 
-/* Акцент оставляем на кнопках. */
+/* Основные акцентные элементы. */
 .fl-root .btn-primary {
   background: var(--accent);
   color: var(--on-accent);
@@ -78,7 +65,7 @@ html[data-theme='light'] .fl-root::after {
   color: var(--on-accent);
 }
 
-/* Никакой цветной заливки или полоски у разделов. */
+/* Активный раздел без цветной заливки и полоски. */
 .fl-root .fl-shell .fl-nav__item.is-active {
   background: transparent !important;
   background-image: none !important;
@@ -103,9 +90,8 @@ html[data-theme='light'] .fl-root::after {
   border: 1px solid var(--text);
 }
 
-/* Убираем цветную подсветку карточек на главной. */
+/* Ссылки главной без цветного свечения. */
 .fl-root .home-link:hover {
   border-color: var(--border);
   box-shadow: none;
 }
-</style>
