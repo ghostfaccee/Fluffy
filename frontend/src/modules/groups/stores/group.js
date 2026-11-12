@@ -23,7 +23,11 @@ function saveCachedGroups(list) {
 }
 
 function sameId(first, second) {
-  return first != null && second != null && String(first) === String(second)
+  return (
+    first != null &&
+    second != null &&
+    String(first) === String(second)
+  )
 }
 
 export const useGroupStore = defineStore('group', () => {
@@ -32,8 +36,6 @@ export const useGroupStore = defineStore('group', () => {
   const members = ref({})
 
   const historyRequests = new Map()
-
-  // Объединяем запросы восстановления отправителей для одной группы.
   const senderSyncRequests = new Map()
   const pendingSenderSync = new Set()
 
@@ -42,20 +44,27 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   function upsertGroup(group) {
-    let item = groups.value.find((entry) => entry.group_id === group.group_id)
+    const existing = groups.value.find(
+      (entry) => sameId(entry.group_id, group.group_id),
+    )
 
-    if (!item) {
-      groups.value.unshift({ ...group })
+    if (existing) {
+      Object.assign(existing, group)
     } else {
-      Object.assign(item, group)
+      groups.value.unshift({ ...group })
     }
 
     persist()
-    return item
+
+    return groups.value.find(
+      (entry) => sameId(entry.group_id, group.group_id),
+    )
   }
 
   function removeGroup(groupId) {
-    groups.value = groups.value.filter((group) => group.group_id !== groupId)
+    groups.value = groups.value.filter(
+      (group) => !sameId(group.group_id, groupId),
+    )
 
     persist()
 
@@ -74,7 +83,9 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function fetchGroup(groupId) {
-    const group = await api(`/groups/${encodeURIComponent(groupId)}`)
+    const group = await api(
+      `/groups/${encodeURIComponent(groupId)}`,
+    )
 
     upsertGroup(group)
     return group
@@ -94,10 +105,13 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function updateGroup(groupId, data) {
-    const group = await api(`/groups/${encodeURIComponent(groupId)}`, {
-      method: 'PATCH',
-      body: data,
-    })
+    const group = await api(
+      `/groups/${encodeURIComponent(groupId)}`,
+      {
+        method: 'PATCH',
+        body: data,
+      },
+    )
 
     upsertGroup(group)
     return group
@@ -112,9 +126,12 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function joinByToken(token) {
-    const group = await api(`/groups/join/${encodeURIComponent(token)}`, {
-      method: 'POST',
-    })
+    const group = await api(
+      `/groups/join/${encodeURIComponent(token)}`,
+      {
+        method: 'POST',
+      },
+    )
 
     upsertGroup(group)
     return group
@@ -133,9 +150,12 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function leaveGroup(groupId) {
-    await api(`/groups/${encodeURIComponent(groupId)}/members/me`, {
-      method: 'DELETE',
-    })
+    await api(
+      `/groups/${encodeURIComponent(groupId)}/members/me`,
+      {
+        method: 'DELETE',
+      },
+    )
 
     removeGroup(groupId)
   }
@@ -150,7 +170,7 @@ export const useGroupStore = defineStore('group', () => {
 
     if (members.value[groupId]) {
       members.value[groupId] = members.value[groupId].filter(
-        (member) => member.user_id !== userId,
+        (member) => !sameId(member.user_id, userId),
       )
     }
   }
@@ -164,14 +184,12 @@ export const useGroupStore = defineStore('group', () => {
       },
     )
 
-    if (members.value[groupId]) {
-      const member = members.value[groupId].find(
-        (entry) => entry.user_id === userId,
-      )
+    const member = members.value[groupId]?.find(
+      (entry) => sameId(entry.user_id, userId),
+    )
 
-      if (member) {
-        member.role = result?.role || role
-      }
+    if (member) {
+      member.role = result?.role || role
     }
 
     return result
@@ -211,12 +229,15 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function deleteAvatar(groupId) {
-    await api(`/groups/${encodeURIComponent(groupId)}/avatar`, {
-      method: 'DELETE',
-    })
+    await api(
+      `/groups/${encodeURIComponent(groupId)}/avatar`,
+      {
+        method: 'DELETE',
+      },
+    )
 
     const group = groups.value.find(
-      (entry) => entry.group_id === groupId,
+      (entry) => sameId(entry.group_id, groupId),
     )
 
     if (group) {
@@ -225,74 +246,34 @@ export const useGroupStore = defineStore('group', () => {
     }
   }
 
-  async function loadChat(groupId, { limit = 30, offset = 0 } = {}) {
-    const requestKey = `${groupId}:${limit}:${offset}`
-    const existingRequest = historyRequests.get(requestKey)
-
-    if (existingRequest) return existingRequest
-
-    const chat = chats.value[groupId] || {
-      messages: [],
-      loading: false,
-      hasMore: true,
-    }
-
-    chat.loading = true
-    chats.value[groupId] = chat
-
-    const request = (async () => {
-      try {
-        const list = await api(
-          `/groups/${encodeURIComponent(groupId)}/messages?limit=${limit}&offset=${offset}`,
-        )
-
-        const safeList = Array.isArray(list) ? list : []
-        const messages = [...safeList].reverse()
-
-        if (offset === 0) {
-          chat.messages = messages
-        } else {
-          chat.messages = [...messages, ...chat.messages]
-        }
-
-        chat.hasMore = safeList.length === limit
-      } finally {
-        chat.loading = false
-        historyRequests.delete(requestKey)
-      }
-
-      return chat
-    })()
-
-    historyRequests.set(requestKey, request)
-
-    return request
+  function hasSenderProfile(sender) {
+    return Boolean(sender && (sender.username || sender.name))
   }
 
-  function upsertMessage(chat, message) {
-    const existing = chat.messages.find(
-      (entry) => sameId(entry.message_id, message.message_id),
-    )
-
-    if (!existing) {
-      chat.messages.push(message)
-      return
+  function ensureChat(groupId) {
+    if (!chats.value[groupId]) {
+      chats.value[groupId] = {
+        messages: [],
+        loading: false,
+        hasMore: true,
+      }
     }
 
-    // Событие без отправителя не должно стирать уже загруженный профиль.
-    const sender = message.sender || existing.sender || null
-
-    Object.assign(existing, message, { sender })
+    // Все дальнейшие изменения идут через реактивный объект.
+    return chats.value[groupId]
   }
 
   function findKnownSender(chat, senderId) {
-    for (let index = chat.messages.length - 1; index >= 0; index -= 1) {
+    for (
+      let index = chat.messages.length - 1;
+      index >= 0;
+      index -= 1
+    ) {
       const message = chat.messages[index]
 
       if (
         sameId(message.sender_id, senderId) &&
-        message.sender &&
-        (message.sender.username || message.sender.name)
+        hasSenderProfile(message.sender)
       ) {
         return message.sender
       }
@@ -301,8 +282,117 @@ export const useGroupStore = defineStore('group', () => {
     return null
   }
 
-  function hasSenderProfile(sender) {
-    return Boolean(sender && (sender.username || sender.name))
+  function upsertMessage(chat, message) {
+    const existing = chat.messages.find(
+      (entry) => sameId(entry.message_id, message.message_id),
+    )
+
+    const sender = hasSenderProfile(message.sender)
+      ? message.sender
+      : (
+          hasSenderProfile(existing?.sender)
+            ? existing.sender
+            : findKnownSender(chat, message.sender_id)
+        )
+
+    if (existing) {
+      Object.assign(existing, message, {
+        sender: sender || null,
+      })
+
+      return existing
+    }
+
+    chat.messages.push({
+      ...message,
+      sender: sender || null,
+    })
+
+    return chat.messages[chat.messages.length - 1]
+  }
+
+  async function loadChat(
+    groupId,
+    { limit = 30, offset = 0 } = {},
+  ) {
+    const requestKey = `${groupId}:${limit}:${offset}`
+    const existingRequest = historyRequests.get(requestKey)
+
+    if (existingRequest) return existingRequest
+
+    const chat = ensureChat(groupId)
+    chat.loading = true
+
+    const request = (async () => {
+      try {
+        const list = await api(
+          `/groups/${encodeURIComponent(groupId)}/messages?limit=${limit}&offset=${offset}`,
+        )
+
+        // За время запроса пользователь мог покинуть группу.
+        if (chats.value[groupId] !== chat) return chat
+
+        const safeList = Array.isArray(list) ? list : []
+
+        // Объединяем историю с сообщениями, полученными по WS,
+        // а не заменяем весь массив.
+        for (const message of [...safeList].reverse()) {
+          upsertMessage(chat, message)
+        }
+
+        const profiles = new Map()
+
+        for (const message of chat.messages) {
+          if (
+            message.sender_id != null &&
+            hasSenderProfile(message.sender)
+          ) {
+            profiles.set(
+              String(message.sender_id),
+              message.sender,
+            )
+          }
+        }
+
+        // Профиль из REST дополняет сообщения того же автора,
+        // которые пришли по WS без sender.
+        for (const message of chat.messages) {
+          if (
+            message.sender_id != null &&
+            !hasSenderProfile(message.sender)
+          ) {
+            const sender = profiles.get(
+              String(message.sender_id),
+            )
+
+            if (sender) {
+              message.sender = sender
+            }
+          }
+        }
+
+        chat.messages.sort((first, second) => {
+          const firstTime =
+            Date.parse(first.created_at || '') || 0
+
+          const secondTime =
+            Date.parse(second.created_at || '') || 0
+
+          return firstTime - secondTime
+        })
+
+        chat.hasMore = safeList.length === limit
+
+        return chat
+      } finally {
+        chat.loading = false
+        historyRequests.delete(requestKey)
+      }
+    })()
+
+    historyRequests.set(requestKey, request)
+
+    return request
   }
 
   function syncMissingSenders(groupId) {
@@ -310,33 +400,33 @@ export const useGroupStore = defineStore('group', () => {
 
     pendingSenderSync.add(key)
 
-    if (senderSyncRequests.has(key)) {
-      return senderSyncRequests.get(key)
-    }
+    const existingRequest = senderSyncRequests.get(key)
+
+    if (existingRequest) return existingRequest
 
     const request = (async () => {
       try {
         while (pendingSenderSync.has(key)) {
           pendingSenderSync.delete(key)
 
-          if (!chats.value[groupId]) break
+          const chat = chats.value[groupId]
+          if (!chat) break
 
-          // Если история уже грузилась до нового события,
-          // ждём её, затем запрашиваем актуальную версию.
-          const historyKey = `${groupId}:30:0`
-          const currentRequest = historyRequests.get(historyKey)
+          // Старый запрос мог начаться до входящего сообщения.
+          // Сначала ждём его, затем запрашиваем свежую историю.
+          const currentRequest = historyRequests.get(
+            `${groupId}:30:0`,
+          )
 
           if (currentRequest) {
             await currentRequest
           }
 
-          if (!chats.value[groupId]) break
+          if (chats.value[groupId] !== chat) break
 
           await loadChat(groupId)
         }
       } catch (cause) {
-        // Само сообщение уже отображается.
-        // Ошибка подгрузки профиля не должна ломать WS-обработчик.
         console.error(
           'Не удалось загрузить отправителей сообщений группы:',
           cause,
@@ -361,14 +451,9 @@ export const useGroupStore = defineStore('group', () => {
       },
     )
 
-    const chat = chats.value[groupId] || {
-      messages: [],
-      loading: false,
-      hasMore: true,
-    }
+    const chat = ensureChat(groupId)
 
     upsertMessage(chat, message)
-    chats.value[groupId] = chat
 
     return message
   }
@@ -384,7 +469,7 @@ export const useGroupStore = defineStore('group', () => {
       ? payload.sender
       : findKnownSender(chat, payload.sender_id)
 
-    upsertMessage(chat, {
+    const message = upsertMessage(chat, {
       message_id: payload.message_id,
       group_id: groupId,
       sender_id: payload.sender_id,
@@ -393,7 +478,7 @@ export const useGroupStore = defineStore('group', () => {
       sender,
     })
 
-    if (!hasSenderProfile(sender)) {
+    if (!hasSenderProfile(message.sender)) {
       void syncMissingSenders(groupId)
     }
   }
