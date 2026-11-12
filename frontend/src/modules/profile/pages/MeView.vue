@@ -6,7 +6,7 @@ import UserCard from '@/modules/profile/components/UserCard.vue'
 import { profileErrorMessage } from '@/api/errors'
 import AppShell from '@/components/AppShell.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
-import ProfilePosts from '@/features/posts/components/ProfilePosts.vue'
+import ProfilePosts from '@/modules/posts/components/ProfilePosts.vue'
 
 const auth = useAuthStore()
 const { uploading, error: avatarError, upload, remove } = useAvatarUpload()

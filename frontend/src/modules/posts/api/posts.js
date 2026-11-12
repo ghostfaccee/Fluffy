@@ -1,4 +1,4 @@
-import { api } from '../../../api/client'
+import { api } from '@/api/client'
 
 function postPath(id) {
   if (!id) throw new TypeError('Не указан ID публикации')
