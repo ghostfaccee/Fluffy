@@ -2,7 +2,7 @@
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useChatStore } from '@/stores/chat'
+import { useChatStore } from '@/modules/chat/stores/chat'
 import AppShell from '@/components/AppShell.vue'
 import UserCard from '@/components/UserCard.vue'
 import ProfilePosts from '@/features/posts/components/ProfilePosts.vue'

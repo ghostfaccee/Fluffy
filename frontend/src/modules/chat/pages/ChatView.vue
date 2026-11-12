@@ -12,8 +12,8 @@ import { useChatStore } from '@/modules/chat/stores/chat'
 import { useAuthStore } from '@/stores/auth'
 import { useWsStore } from '@/stores/ws'
 import AppShell from '@/components/AppShell.vue'
-import ChatListItem from '@/components/ChatListItem.vue'
-import MessageBubble from '@/components/MessageBubble.vue'
+import ChatListItem from '@/modules/chat/components/ChatListItem.vue'
+import MessageBubble from '@/modules/chat/components/MessageBubble.vue'
 
 const route = useRoute()
 const chat = useChatStore()

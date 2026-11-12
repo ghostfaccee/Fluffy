@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from '@/components/UserAvatar.vue'
-import DoubleCheckIcon from '@/components/DoubleCheckIcon.vue'
+import DoubleCheckIcon from '@/modules/chat/components/DoubleCheckIcon.vue'
 
 const props = defineProps({
   message: { type: Object, required: true },

@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useGroupStore } from '@/modules/groups/stores/group'
 import { useGroupAvatarUpload } from '@/modules/groups/composables/useGroupAvatarUpload'
 import AppShell from '@/components/AppShell.vue'
-import GroupAvatar from '@/components/GroupAvatar.vue'
+import GroupAvatar from '@/modules/groups/components/GroupAvatar.vue'
 
 const route = useRoute()
 const router = useRouter()

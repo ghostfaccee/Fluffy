@@ -1,10 +1,10 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useWsStore } from '@/stores/ws'
-import { useChatStore } from '@/stores/chat'
-import { useGroupStore } from '@/stores/group'
+import { useChatStore } from '@/modules/chat/stores/chat'
+import { useMessagingRealtime } from '@/app/composables/useMessagingRealtime.js'
 import LogoIcon from '@/components/LogoIcon.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import AppIcon from '@/shared/ui/AppIcon.vue'
@@ -12,9 +12,10 @@ import AppIcon from '@/shared/ui/AppIcon.vue'
 const auth = useAuthStore()
 const ws = useWsStore()
 const chat = useChatStore()
-const groups = useGroupStore()
 const route = useRoute()
 const router = useRouter()
+
+useMessagingRealtime()
 
 const searchQuery = ref('')
 const loggingOut = ref(false)
@@ -25,7 +26,12 @@ const user = computed(() => auth.user)
 const unreadTotal = computed(() =>
   chat.conversations.reduce((sum, conversation) => {
     const unread = Number(conversation.unread)
-    return sum + (Number.isFinite(unread) ? Math.max(0, unread) : 0)
+
+    return sum + (
+      Number.isFinite(unread)
+        ? Math.max(0, unread)
+        : 0
+    )
   }, 0),
 )
 
@@ -38,20 +44,38 @@ const navigation = [
 ]
 
 const title = computed(() => {
-  if (route.name === 'user') return 'Профиль пользователя'
-  if (['chat', 'chats'].includes(route.name)) return 'Сообщения'
-  if (String(route.name).startsWith('group')) return 'Группы'
-  return navigation.find((item) => item.name === route.name)?.label || 'Fluffy'
+  if (route.name === 'user') {
+    return 'Профиль пользователя'
+  }
+
+  if (['chat', 'chats'].includes(route.name)) {
+    return 'Сообщения'
+  }
+
+  if (String(route.name).startsWith('group')) {
+    return 'Группы'
+  }
+
+  return navigation.find(
+    (item) => item.name === route.name,
+  )?.label || 'Fluffy'
 })
 
 function isActive(name) {
-  if (name === 'chats') return ['chats', 'chat'].includes(route.name)
-  if (name === 'groups') return String(route.name).startsWith('group')
+  if (name === 'chats') {
+    return ['chats', 'chat'].includes(route.name)
+  }
+
+  if (name === 'groups') {
+    return String(route.name).startsWith('group')
+  }
+
   return route.name === name
 }
 
 async function onSearch() {
   const username = searchQuery.value.trim().replace(/^@/, '')
+
   if (!username) return
 
   searchError.value = ''
@@ -60,16 +84,22 @@ async function onSearch() {
     if (username === user.value?.username) {
       await router.push({ name: 'me' })
     } else {
-      await router.push({ name: 'user', params: { username } })
+      await router.push({
+        name: 'user',
+        params: { username },
+      })
     }
+
     searchQuery.value = ''
   } catch {
-    searchError.value = 'Не удалось открыть профиль. Попробуйте ещё раз.'
+    searchError.value =
+      'Не удалось открыть профиль. Попробуйте ещё раз.'
   }
 }
 
 async function logout() {
   if (loggingOut.value) return
+
   loggingOut.value = true
 
   try {
@@ -80,39 +110,28 @@ async function logout() {
     loggingOut.value = false
   }
 }
-
-let unsubscribeMessage
-let unsubscribeGroup
-
-onMounted(() => {
-  unsubscribeMessage = ws.on('new_message', (payload) => {
-    chat.handleIncoming(payload)
-  })
-
-  unsubscribeGroup = ws.on('new_group_message', (payload) => {
-    groups.handleIncoming(payload)
-  })
-
-  ws.connect()
-})
-
-onBeforeUnmount(() => {
-  unsubscribeMessage?.()
-  unsubscribeGroup?.()
-})
 </script>
 
 <template>
   <div class="fl-shell">
     <header class="fl-header">
       <div class="fl-header__inner">
-        <RouterLink :to="{ name: 'app' }" class="fl-brand" aria-label="Fluffy — главная">
+        <RouterLink
+          :to="{ name: 'app' }"
+          class="fl-brand"
+          aria-label="Fluffy — главная"
+        >
           <LogoIcon />
           <span>Fluffy<span class="fl-brand__dot">.</span></span>
         </RouterLink>
 
-        <form class="fl-search" role="search" @submit.prevent="onSearch">
+        <form
+          class="fl-search"
+          role="search"
+          @submit.prevent="onSearch"
+        >
           <AppIcon name="search" :size="19" />
+
           <input
             v-model="searchQuery"
             type="search"
@@ -122,24 +141,41 @@ onBeforeUnmount(() => {
             maxlength="100"
             @input="searchError = ''"
           />
-          <button type="submit" aria-label="Найти пользователя">
+
+          <button
+            type="submit"
+            aria-label="Найти пользователя"
+          >
             <AppIcon name="arrow" :size="18" />
           </button>
-          <span v-if="searchError" class="fl-search__error" role="alert">
+
+          <span
+            v-if="searchError"
+            class="fl-search__error"
+            role="alert"
+          >
             {{ searchError }}
           </span>
         </form>
 
-        <RouterLink :to="{ name: 'me' }" class="fl-account">
+        <RouterLink
+          :to="{ name: 'me' }"
+          class="fl-account"
+        >
           <UserAvatar :user="user" :size="36" />
-          <span>{{ user?.name || user?.username || 'Мой профиль' }}</span>
+          <span>
+            {{ user?.name || user?.username || 'Мой профиль' }}
+          </span>
         </RouterLink>
       </div>
     </header>
 
     <div class="fl-layout">
       <aside class="fl-sidebar">
-        <nav class="fl-nav" aria-label="Основная навигация">
+        <nav
+          class="fl-nav"
+          aria-label="Основная навигация"
+        >
           <RouterLink
             v-for="item in navigation"
             :key="item.name"
@@ -150,15 +186,25 @@ onBeforeUnmount(() => {
           >
             <span class="fl-nav__icon">
               <AppIcon :name="item.icon" />
+
               <span
                 v-if="item.name === 'chats' && unreadTotal"
                 class="fl-mobile-dot"
                 aria-hidden="true"
               />
             </span>
-            <span class="fl-nav__label">{{ item.label }}</span>
-            <span v-if="item.name === 'chats' && unreadTotal" class="fl-badge">
-              <span class="fl-sr-only">Непрочитанных сообщений: </span>
+
+            <span class="fl-nav__label">
+              {{ item.label }}
+            </span>
+
+            <span
+              v-if="item.name === 'chats' && unreadTotal"
+              class="fl-badge"
+            >
+              <span class="fl-sr-only">
+                Непрочитанных сообщений:
+              </span>
               {{ unreadTotal > 99 ? '99+' : unreadTotal }}
             </span>
           </RouterLink>
@@ -174,7 +220,11 @@ onBeforeUnmount(() => {
             <AppIcon name="logout" :size="20" />
             {{ loggingOut ? 'Выходим…' : 'Выйти из аккаунта' }}
           </button>
-          <RouterLink to="/docs/features" class="fl-help">
+
+          <RouterLink
+            to="/docs/features"
+            class="fl-help"
+          >
             О проекте и возможностях
           </RouterLink>
         </div>
@@ -186,8 +236,15 @@ onBeforeUnmount(() => {
             <span class="fl-eyebrow">ВАШЕ ПРОСТРАНСТВО</span>
             <h1>{{ title }}</h1>
           </div>
-          <span class="fl-page-heading__mark" aria-hidden="true">✦</span>
+
+          <span
+            class="fl-page-heading__mark"
+            aria-hidden="true"
+          >
+            &#10022;
+          </span>
         </div>
+
         <slot />
       </main>
     </div>
@@ -361,7 +418,11 @@ onBeforeUnmount(() => {
 }
 
 .fl-nav__item.is-active {
-  background: color-mix(in srgb, var(--fluffy-accent) 12%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--fluffy-accent) 12%,
+    transparent
+  );
   color: var(--fluffy-accent);
 }
 
@@ -638,7 +699,6 @@ onBeforeUnmount(() => {
   gap: 20px;
 }
 
-
 .fl-content :deep(.app-profile-info) {
   min-width: 0;
 }
@@ -664,5 +724,4 @@ onBeforeUnmount(() => {
     gap: 16px;
   }
 }
-
 </style>

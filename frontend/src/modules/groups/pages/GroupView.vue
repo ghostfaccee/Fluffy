@@ -5,8 +5,8 @@ import { useGroupStore } from '@/modules/groups/stores/group'
 import { useAuthStore } from '@/stores/auth'
 import { useWsStore } from '@/stores/ws'
 import AppShell from '@/components/AppShell.vue'
-import GroupAvatar from '@/components/GroupAvatar.vue'
-import GroupListItem from '@/components/GroupListItem.vue'
+import GroupAvatar from '@/modules/groups/components/GroupAvatar.vue'
+import GroupListItem from '@/modules/groups/components/GroupListItem.vue'
 
 const route = useRoute()
 const groupStore = useGroupStore()
