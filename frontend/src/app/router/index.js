@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LandingView from '@/views/LandingView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { hasRefreshToken } from '@/api/client'
+
+import { landingRoutes } from '@/modules/landing/routes'
+import { docsRoutes } from '@/modules/docs/routes'
 import { authRoutes } from '@/modules/auth/routes'
 import { homeRoutes } from '@/modules/home/routes'
 import { chatRoutes } from '@/modules/chat/routes'
@@ -13,22 +15,8 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
 
   routes: [
-    {
-      path: '/',
-      name: 'landing',
-      component: LandingView,
-    },
-    {
-      path: '/docs/:page',
-      name: 'docs',
-      component: () => import('@/views/DocsView.vue'),
-      props: true,
-    },
-    {
-      path: '/docs',
-      redirect: '/docs/features',
-    },
-
+    ...landingRoutes,
+    ...docsRoutes,
     ...authRoutes,
     ...homeRoutes,
     ...chatRoutes,
