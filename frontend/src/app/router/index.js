@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LandingView from '@/views/LandingView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { hasRefreshToken } from '@/api/client'
+import { chatRoutes } from '@/modules/chat/routes'
 import { groupRoutes } from '@/modules/groups/routes'
 
 const router = createRouter({
@@ -75,23 +76,8 @@ const router = createRouter({
         requiresAuth: true,
       },
     },
-    {
-      path: '/chats',
-      name: 'chats',
-      component: () => import('@/modules/chat/pages/ChatsView.vue'),
-      meta: {
-        requiresAuth: true,
-      },
-    },
-    {
-      path: '/chats/:userId',
-      name: 'chat',
-      component: () => import('@/modules/chat/pages/ChatView.vue'),
-      meta: {
-        requiresAuth: true,
-      },
-    },
 
+    ...chatRoutes,
     ...groupRoutes,
   ],
 })

@@ -1,5 +1,12 @@
 <script setup>
-import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import {
+  ref,
+  computed,
+  watch,
+  nextTick,
+  onMounted,
+  onBeforeUnmount,
+} from 'vue'
 import { useRoute } from 'vue-router'
 import { useChatStore } from '@/modules/chat/stores/chat'
 import { useAuthStore } from '@/stores/auth'
@@ -31,8 +38,25 @@ const current = computed(() =>
 const conversations = computed(() => chat.visibleConversations)
 
 const currentConv = computed(() =>
-  conversations.value.find((conversation) => conversation.user_id === userId.value),
+  conversations.value.find(
+    (conversation) =>
+      String(conversation.user_id) === String(userId.value),
+  ),
 )
+
+let mounted = false
+let syncIntervalId = null
+let unsubscribeReconnect = null
+let stopRouteWatch = null
+
+function isCurrentVisible(id) {
+  return (
+    mounted &&
+    route.name === 'chat' &&
+    String(userId.value) === String(id) &&
+    !document.hidden
+  )
+}
 
 async function scrollToBottom() {
   await nextTick()
@@ -42,8 +66,27 @@ async function scrollToBottom() {
   }
 }
 
+async function readVisibleChat() {
+  const id = userId.value
+
+  if (!id || !isCurrentVisible(id)) return
+
+  // Сначала даем Vue отрисовать загруженные сообщения.
+  await nextTick()
+
+  if (!isCurrentVisible(id)) return
+
+  try {
+    await chat.markRead(id)
+  } catch (cause) {
+    // Счетчик не сбрасывается при неудачном запросе.
+    // Повтор произойдет при синхронизации или возврате во вкладку.
+    console.error('Failed to mark messages as read:', cause)
+  }
+}
+
 async function openChat(id) {
-  if (!id) return
+  if (!id || !mounted) return
 
   if (String(id) === String(auth.user?.user_id)) {
     error.value = 'Нельзя открыть чат с самим собой.'
@@ -55,60 +98,12 @@ async function openChat(id) {
   try {
     await chat.loadChat(id)
 
-    // Не обновляем интерфейс, если пользователь уже открыл другой чат.
-    if (String(userId.value) !== String(id)) return
+    if (!mounted || String(userId.value) !== String(id)) return
 
-    const messages = chat.chats[id]?.messages || []
-    const last = messages[messages.length - 1]
-
-    const existing = chat.visibleConversations.find(
-      (conversation) => String(conversation.user_id) === String(id),
-    )
-
-    // Данные собеседника могут находиться как в sender, так и в receiver.
-    let otherUser = null
-
-    for (const message of messages) {
-      if (
-        message.sender &&
-        String(message.sender.user_id) === String(id)
-      ) {
-        otherUser = message.sender
-        break
-      }
-
-      if (
-        message.receiver &&
-        String(message.receiver.user_id) === String(id)
-      ) {
-        otherUser = message.receiver
-        break
-      }
-    }
-
-    if (messages.length || existing) {
-      const extra = last
-        ? {
-            lastMessage: last.content,
-            lastMessageAt: last.created_at,
-          }
-        : {}
-
-      chat.upsertConversation(
-        {
-          user_id: id,
-          username: otherUser?.username || existing?.username || null,
-          name: otherUser?.name || existing?.name || null,
-          avatar_url: otherUser?.avatar_url || existing?.avatar_url || null,
-        },
-        extra,
-      )
-    }
-
-    await chat.markRead(id)
     await scrollToBottom()
+    await readVisibleChat()
   } catch (cause) {
-    if (String(userId.value) !== String(id)) return
+    if (!mounted || String(userId.value) !== String(id)) return
 
     error.value =
       cause?.status === 404
@@ -117,66 +112,128 @@ async function openChat(id) {
   }
 }
 
+async function syncCurrentChat() {
+  const id = userId.value
+
+  if (!id || !isCurrentVisible(id)) return
+
+  try {
+    await chat.loadChat(id)
+
+    if (!isCurrentVisible(id)) return
+
+    await readVisibleChat()
+  } catch (cause) {
+    console.error('Failed to synchronize chat:', cause)
+  }
+}
+
 async function send() {
   const content = text.value.trim()
+  const receiverId = userId.value
+
   if (!content || sending.value) return
 
   sending.value = true
   error.value = ''
 
   try {
-    await chat.sendMessage(userId.value, content)
-    text.value = ''
-    await scrollToBottom()
+    await chat.sendMessage(receiverId, content)
+
+    if (
+      mounted &&
+      String(userId.value) === String(receiverId)
+    ) {
+      text.value = ''
+      await scrollToBottom()
+    }
   } catch {
-    error.value = 'Не удалось отправить сообщение.'
+    if (String(userId.value) === String(receiverId)) {
+      error.value = 'Не удалось отправить сообщение.'
+    }
   } finally {
     sending.value = false
   }
 }
 
 function onKeydown(event) {
-  if (event.key === 'Enter' && !event.shiftKey) {
+  if (
+    event.key === 'Enter' &&
+    !event.shiftKey &&
+    !event.isComposing
+  ) {
     event.preventDefault()
-    send()
+    void send()
   }
 }
 
-let fallbackIntervalId = null
-let unsubscribeReconnect = null
+function onVisibilityChange() {
+  if (!document.hidden) {
+    void syncCurrentChat()
+  }
+}
 
-function syncCurrentChat() {
-  const id = userId.value
-  if (!id || document.hidden) return
-
-  chat.loadChat(id).catch(() => {})
+function onWindowFocus() {
+  void syncCurrentChat()
 }
 
 onMounted(() => {
-  openChat(userId.value)
+  mounted = true
 
-  // Основной канал — WebSocket. Опрос нужен только при потере соединения.
-  fallbackIntervalId = setInterval(() => {
-    if (!ws.connected) syncCurrentChat()
-  }, 30000)
+  unsubscribeReconnect = ws.on('connected', () => {
+    void syncCurrentChat()
+  })
 
-  // После переподключения загружаем пропущенные сообщения.
-  unsubscribeReconnect = ws.on('connected', syncCurrentChat)
+  document.addEventListener(
+    'visibilitychange',
+    onVisibilityChange,
+  )
+
+  window.addEventListener('focus', onWindowFocus)
+
+  stopRouteWatch = watch(
+    () => route.params.userId,
+    (id) => {
+      text.value = ''
+      void openChat(id)
+    },
+    { immediate: true },
+  )
+
+  // Сервер не присылает WS-событие о прочтении.
+  // Сверяем историю и галочки только в видимом диалоге.
+  syncIntervalId = window.setInterval(() => {
+    void syncCurrentChat()
+  }, 10000)
 })
 
 onBeforeUnmount(() => {
-  if (fallbackIntervalId) clearInterval(fallbackIntervalId)
-  if (unsubscribeReconnect) unsubscribeReconnect()
+  mounted = false
+
+  stopRouteWatch?.()
+  unsubscribeReconnect?.()
+
+  if (syncIntervalId != null) {
+    window.clearInterval(syncIntervalId)
+  }
+
+  document.removeEventListener(
+    'visibilitychange',
+    onVisibilityChange,
+  )
+
+  window.removeEventListener('focus', onWindowFocus)
 })
 
 watch(
-  () => route.params.userId,
-  (id) => openChat(id),
-)
-
-watch(
   () => current.value.messages.length,
-  () => scrollToBottom(),
+  async () => {
+    if (!mounted) return
+
+    await scrollToBottom()
+    await readVisibleChat()
+  },
+  { flush: 'post' },
 )
 </script>
 
@@ -190,7 +247,10 @@ watch(
         </header>
 
         <div class="messenger__dialogs">
-          <p v-if="!conversations.length" class="messenger__hint">
+          <p
+            v-if="!conversations.length"
+            class="messenger__hint"
+          >
             Здесь появятся ваши переписки.
           </p>
 
@@ -198,19 +258,22 @@ watch(
             v-for="conversation in conversations"
             :key="conversation.user_id"
             :conversation="conversation"
-            :active="conversation.user_id === userId"
+            :active="String(conversation.user_id) === String(userId)"
           />
         </div>
       </aside>
 
-      <section class="messenger__panel" aria-label="Переписка">
+      <section
+        class="messenger__panel"
+        aria-label="Переписка"
+      >
         <header class="messenger__head">
           <RouterLink
             :to="{ name: 'chats' }"
             class="messenger__back"
             aria-label="Вернуться к диалогам"
           >
-            ←
+            Назад
           </RouterLink>
 
           <div class="messenger__person">
@@ -224,7 +287,7 @@ watch(
           </div>
 
           <span class="messenger__connection">
-            {{ ws.connected ? 'На связи' : 'Подключение…' }}
+            {{ ws.connected ? 'На связи' : 'Подключение...' }}
           </span>
         </header>
 
@@ -239,7 +302,7 @@ watch(
             class="messenger__hint"
             role="status"
           >
-            Загружаем переписку…
+            Загружаем переписку...
           </p>
 
           <div
@@ -257,8 +320,15 @@ watch(
           />
         </div>
 
-        <form class="messenger__composer" @submit.prevent="send">
-          <p v-if="error" class="messenger__error" role="alert">
+        <form
+          class="messenger__composer"
+          @submit.prevent="send"
+        >
+          <p
+            v-if="error"
+            class="messenger__error"
+            role="alert"
+          >
             {{ error }}
           </p>
 
@@ -267,7 +337,7 @@ watch(
               v-model="text"
               class="messenger__textarea"
               rows="2"
-              placeholder="Написать сообщение…"
+              placeholder="Написать сообщение..."
               aria-label="Текст сообщения"
               maxlength="4000"
               :disabled="sending"
@@ -280,7 +350,7 @@ watch(
               :disabled="sending || !text.trim()"
               :aria-label="sending ? 'Отправляем сообщение' : 'Отправить сообщение'"
             >
-              {{ sending ? '…' : '↑' }}
+              {{ sending ? '...' : '↑' }}
             </button>
           </div>
 

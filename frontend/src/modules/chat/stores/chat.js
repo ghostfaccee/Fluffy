@@ -5,12 +5,21 @@ import { useAuthStore } from '@/stores/auth'
 
 const CONV_KEY = 'fluffy.conversations'
 
+function sameId(first, second) {
+  return (
+    first != null &&
+    second != null &&
+    String(first) === String(second)
+  )
+}
+
 function loadConversations() {
   try {
     const raw = localStorage.getItem(CONV_KEY)
     if (!raw) return []
-    const arr = JSON.parse(raw)
-    return Array.isArray(arr) ? arr : []
+
+    const list = JSON.parse(raw)
+    return Array.isArray(list) ? list : []
   } catch {
     return []
   }
@@ -22,30 +31,66 @@ function saveConversations(list) {
   } catch {}
 }
 
+function messageTime(message) {
+  return Date.parse(message.created_at || '') || 0
+}
+
 export const useChatStore = defineStore('chat', () => {
   const auth = useAuthStore()
 
   const conversations = ref(loadConversations())
   const chats = ref({})
+
   const historyRequests = new Map()
   const readRequests = new Map()
-  const lastReadAt = new Map()
+  const pendingReadRequests = new Set()
 
   const visibleConversations = computed(() =>
-    conversations.value.filter((c) => c.user_id !== auth.user?.user_id)
+    conversations.value.filter(
+      (conversation) =>
+        !sameId(conversation.user_id, auth.user?.user_id),
+    ),
   )
 
   function persist() {
     saveConversations(conversations.value)
   }
 
-  function upsertConversation(user, extra = {}) {
-    if (!user || !user.user_id) return null
-    if (user.user_id === auth.user?.user_id) return null
+  function findConversation(userId) {
+    return conversations.value.find(
+      (conversation) => sameId(conversation.user_id, userId),
+    )
+  }
 
-    let item = conversations.value.find((c) => c.user_id === user.user_id)
+  function sortConversations() {
+    conversations.value.sort((first, second) => {
+      const firstTime = Date.parse(first.lastMessageAt || '') || 0
+      const secondTime = Date.parse(second.lastMessageAt || '') || 0
+
+      return secondTime - firstTime
+    })
+  }
+
+  function ensureChat(userId) {
+    if (!chats.value[userId]) {
+      chats.value[userId] = {
+        messages: [],
+        loading: false,
+        hasMore: true,
+      }
+    }
+
+    return chats.value[userId]
+  }
+
+  function upsertConversation(user, extra = {}) {
+    if (!user?.user_id) return null
+    if (sameId(user.user_id, auth.user?.user_id)) return null
+
+    let item = findConversation(user.user_id)
+
     if (!item) {
-      item = {
+      conversations.value.unshift({
         user_id: user.user_id,
         username: user.username || null,
         name: user.name || null,
@@ -53,190 +98,348 @@ export const useChatStore = defineStore('chat', () => {
         lastMessage: '',
         lastMessageAt: null,
         unread: 0,
-      }
-      conversations.value.unshift(item)
+      })
+
+      item = findConversation(user.user_id)
     } else {
-      item.username = user.username || item.username
-      item.name = user.name || item.name
-      item.avatar_url = user.avatar_url || item.avatar_url
+      if (user.username != null) item.username = user.username
+      if (user.name != null) item.name = user.name
+
+      if (
+        Object.prototype.hasOwnProperty.call(user, 'avatar_url') &&
+        user.avatar_url !== undefined
+      ) {
+        item.avatar_url = user.avatar_url
+      }
     }
+
     Object.assign(item, extra)
-    conversations.value.sort((a, b) => {
-      const ta = a.lastMessageAt ? Date.parse(a.lastMessageAt) : 0
-      const tb = b.lastMessageAt ? Date.parse(b.lastMessageAt) : 0
-      return tb - ta
-    })
+
+    sortConversations()
     persist()
+
     return item
   }
 
   function removeConversation(userId) {
-    conversations.value = conversations.value.filter((c) => c.user_id !== userId)
+    conversations.value = conversations.value.filter(
+      (conversation) => !sameId(conversation.user_id, userId),
+    )
+
     persist()
   }
 
   function markConversationRead(userId) {
-    const c = conversations.value.find((x) => x.user_id === userId)
-    if (c) {
-      c.unread = 0
+    const conversation = findConversation(userId)
+
+    if (conversation) {
+      conversation.unread = 0
       persist()
     }
   }
 
   function incrementUnread(userId) {
-    const c = conversations.value.find((x) => x.user_id === userId)
-    if (c) {
-      c.unread = (c.unread || 0) + 1
+    const conversation = findConversation(userId)
+
+    if (conversation) {
+      conversation.unread = (Number(conversation.unread) || 0) + 1
       persist()
     }
   }
 
-  async function loadChat(userId, { limit = 30, offset = 0 } = {}) {
+  function upsertMessage(chat, message) {
+    const existing = chat.messages.find(
+      (entry) => sameId(entry.message_id, message.message_id),
+    )
+
+    if (!existing) {
+      chat.messages.push({ ...message })
+      return chat.messages[chat.messages.length - 1]
+    }
+
+    const wasRead = existing.is_read === true
+    const sender = message.sender || existing.sender || null
+    const receiver = message.receiver || existing.receiver
+
+    Object.assign(existing, message)
+
+    existing.sender = sender
+
+    if (receiver) {
+      existing.receiver = receiver
+    }
+
+    // Запоздавший ответ истории не должен отменять прочтение.
+    existing.is_read = wasRead || message.is_read === true
+
+    return existing
+  }
+
+  function updateConversationFromHistory(userId, chat) {
+    const existing = findConversation(userId)
+    let otherUser = null
+
+    for (let index = chat.messages.length - 1; index >= 0; index -= 1) {
+      const message = chat.messages[index]
+
+      if (sameId(message.sender?.user_id, userId)) {
+        otherUser = message.sender
+        break
+      }
+
+      if (sameId(message.receiver?.user_id, userId)) {
+        otherUser = message.receiver
+        break
+      }
+    }
+
+    if (!chat.messages.length && !existing) return
+
+    const last = chat.messages[chat.messages.length - 1]
+    const extra = {}
+
+    if (last) {
+      const existingTime =
+        Date.parse(existing?.lastMessageAt || '') || 0
+
+      if (messageTime(last) >= existingTime) {
+        extra.lastMessage = last.content
+        extra.lastMessageAt = last.created_at
+      }
+    }
+
+    upsertConversation(
+      {
+        user_id: userId,
+        username: otherUser?.username ?? existing?.username ?? null,
+        name: otherUser?.name ?? existing?.name ?? null,
+        avatar_url: otherUser
+          ? otherUser.avatar_url
+          : existing?.avatar_url,
+      },
+      extra,
+    )
+  }
+
+  async function loadChat(
+    userId,
+    { limit = 30, offset = 0 } = {},
+  ) {
     const requestKey = `${userId}:${limit}:${offset}`
     const existingRequest = historyRequests.get(requestKey)
+
     if (existingRequest) return existingRequest
 
-    const chat = chats.value[userId] || { messages: [], loading: false, hasMore: true }
+    const chat = ensureChat(userId)
     chat.loading = true
-    chats.value[userId] = chat
 
     const request = (async () => {
       try {
-        const list = await api(`/messages/${encodeURIComponent(userId)}?limit=${limit}&offset=${offset}`)
+        const list = await api(
+          `/messages/${encodeURIComponent(userId)}?limit=${limit}&offset=${offset}`,
+        )
+
+        if (chats.value[userId] !== chat) return chat
+
         const safeList = Array.isArray(list) ? list : []
-        const messages = [...safeList].reverse()
-        if (offset === 0) chat.messages = messages
-        else chat.messages = [...messages, ...chat.messages]
+
+        // Не теряем сообщения, пришедшие по WS во время запроса.
+        for (const message of safeList) {
+          upsertMessage(chat, message)
+        }
+
+        chat.messages.sort(
+          (first, second) => messageTime(first) - messageTime(second),
+        )
+
         chat.hasMore = safeList.length === limit
+
+        updateConversationFromHistory(userId, chat)
+
+        return chat
       } finally {
-        chat.loading = false
         historyRequests.delete(requestKey)
+
+        const prefix = `${userId}:`
+        chat.loading = [...historyRequests.keys()].some(
+          (key) => key.startsWith(prefix),
+        )
       }
-      return chat
     })()
 
     historyRequests.set(requestKey, request)
+
     return request
   }
 
-    async function sendMessage(receiverId, content) {
-    const msg = await api(`/messages/${encodeURIComponent(receiverId)}`, {
-      method: 'POST',
-      body: { content },
-    })
-
-    const chat = chats.value[receiverId] || {
-      messages: [],
-      loading: false,
-      hasMore: true,
-    }
-
-    const alreadyExists =
-      msg.message_id != null &&
-      chat.messages.some((item) => item.message_id === msg.message_id)
-
-    if (!alreadyExists) {
-      chat.messages.push(msg)
-    }
-
-    chats.value[receiverId] = chat
-
-    // Диалог создаём с получателем, а не с отправителем.
-    const existing = conversations.value.find(
-      (item) => String(item.user_id) === String(receiverId),
+  async function sendMessage(receiverId, content) {
+    const message = await api(
+      `/messages/${encodeURIComponent(receiverId)}`,
+      {
+        method: 'POST',
+        body: { content },
+      },
     )
 
-    const receiver =
-      msg.receiver &&
-      String(msg.receiver.user_id) === String(receiverId)
-        ? msg.receiver
-        : null
+    const chat = ensureChat(receiverId)
+    upsertMessage(chat, message)
+
+    chat.messages.sort(
+      (first, second) => messageTime(first) - messageTime(second),
+    )
+
+    const existing = findConversation(receiverId)
+
+    const receiver = sameId(message.receiver?.user_id, receiverId)
+      ? message.receiver
+      : null
 
     upsertConversation(
       {
         user_id: receiverId,
-        username: receiver?.username || existing?.username || null,
-        name: receiver?.name || existing?.name || null,
-        avatar_url: receiver?.avatar_url || existing?.avatar_url || null,
+        username: receiver?.username ?? existing?.username ?? null,
+        name: receiver?.name ?? existing?.name ?? null,
+        avatar_url: receiver
+          ? receiver.avatar_url
+          : existing?.avatar_url,
       },
       {
-        lastMessage: msg.content ?? content,
-        lastMessageAt: msg.created_at || new Date().toISOString(),
+        lastMessage: message.content ?? content,
+        lastMessageAt:
+          message.created_at || new Date().toISOString(),
       },
     )
 
-    return msg
+    return message
   }
 
   async function markRead(senderId) {
-    const inFlight = readRequests.get(senderId)
-    if (inFlight) return inFlight
+    const key = String(senderId)
 
-    // Coalesce repeated WS notifications: do not POST read-state for every message.
-    const lastSent = lastReadAt.get(senderId) || 0
-    if (Date.now() - lastSent < 10000) {
-      markConversationRead(senderId)
-      return
-    }
+    pendingReadRequests.add(key)
+
+    const existingRequest = readRequests.get(key)
+    if (existingRequest) return existingRequest
 
     const request = (async () => {
       try {
-        await api(`/messages/${encodeURIComponent(senderId)}/read`, { method: 'POST' })
-        lastReadAt.set(senderId, Date.now())
-        markConversationRead(senderId)
-      } catch {
-        // A later open/message event can retry the read receipt.
+        while (pendingReadRequests.has(key)) {
+          pendingReadRequests.delete(key)
+
+          const chat = chats.value[senderId]
+          const conversation = findConversation(senderId)
+
+          // Запоминаем только сообщения, известные до запроса.
+          const unreadIds = new Set(
+            (chat?.messages || [])
+              .filter(
+                (message) =>
+                  sameId(message.sender_id, senderId) &&
+                  message.is_read !== true,
+              )
+              .map((message) => String(message.message_id)),
+          )
+
+          const unreadBefore =
+            Number(conversation?.unread) || 0
+
+          await api(
+            `/messages/${encodeURIComponent(senderId)}/read`,
+            { method: 'POST' },
+          )
+
+          if (chat) {
+            for (const message of chat.messages) {
+              if (
+                sameId(message.sender_id, senderId) &&
+                unreadIds.has(String(message.message_id))
+              ) {
+                message.is_read = true
+              }
+            }
+          }
+
+          const currentConversation = findConversation(senderId)
+
+          if (currentConversation) {
+            // Новые сообщения, пришедшие во время запроса,
+            // не сбрасываем вместе со старыми.
+            currentConversation.unread = Math.max(
+              0,
+              (Number(currentConversation.unread) || 0) -
+                unreadBefore,
+            )
+
+            persist()
+          }
+        }
       } finally {
-        readRequests.delete(senderId)
+        pendingReadRequests.delete(key)
+        readRequests.delete(key)
       }
     })()
 
-    readRequests.set(senderId, request)
+    readRequests.set(key, request)
+
     return request
   }
 
   function handleIncoming(payload) {
     const senderId = payload.sender_id
-    const myId = auth.user?.user_id
-    if (senderId === myId) return
 
-    const conv = conversations.value.find((c) => c.user_id === senderId)
-    const chat = chats.value[senderId]
+    if (senderId == null) return
+    if (sameId(senderId, auth.user?.user_id)) return
 
-    if (chat) {
-      chat.messages.push({
-        message_id: payload.message_id,
-        sender_id: senderId,
-        content: payload.content,
-        is_read: true,
-        created_at: payload.created_at,
-        sender: conv
-          ? { user_id: conv.user_id, username: conv.username, name: conv.name, avatar_url: conv.avatar_url }
-          : null,
-      })
+    const existingConversation = findConversation(senderId)
+    const chat = ensureChat(senderId)
+
+    const duplicate = chat.messages.some(
+      (message) => sameId(message.message_id, payload.message_id),
+    )
+
+    const sender = sameId(payload.sender?.user_id, senderId)
+      ? payload.sender
+      : existingConversation
+        ? {
+            user_id: existingConversation.user_id,
+            username: existingConversation.username,
+            name: existingConversation.name,
+            avatar_url: existingConversation.avatar_url,
+          }
+        : null
+
+    upsertMessage(chat, {
+      message_id: payload.message_id,
+      sender_id: senderId,
+      content: payload.content,
+      created_at: payload.created_at,
+      is_read: payload.is_read === true,
+      sender,
+    })
+
+    chat.messages.sort(
+      (first, second) => messageTime(first) - messageTime(second),
+    )
+
+    const extra = {
+      unread:
+        (Number(existingConversation?.unread) || 0) +
+        (duplicate || payload.is_read === true ? 0 : 1),
     }
 
-    if (conv) {
-      conv.lastMessage = payload.content
-      conv.lastMessageAt = payload.created_at
-      if (!chat) conv.unread = (conv.unread || 0) + 1
-      persist()
-    } else {
-      conversations.value.unshift({
-        user_id: senderId,
-        username: null,
-        name: null,
-        avatar_url: null,
-        lastMessage: payload.content,
-        lastMessageAt: payload.created_at,
-        unread: 1,
-      })
-      persist()
+    const incomingTime = Date.parse(payload.created_at || '') || 0
+    const existingTime =
+      Date.parse(existingConversation?.lastMessageAt || '') || 0
+
+    if (!existingConversation || incomingTime >= existingTime) {
+      extra.lastMessage = payload.content
+      extra.lastMessageAt = payload.created_at
     }
 
-    if (chat) {
-      markRead(senderId)
-    }
+    upsertConversation(sender || { user_id: senderId }, extra)
+
+    // Наличие чата в памяти не означает, что пользователь его видит.
+    // Прочтение подтверждает только открытая страница диалога.
   }
 
   return {
