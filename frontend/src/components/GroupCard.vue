@@ -1,5 +1,5 @@
 <script setup>
-import GroupAvatar from '@/components/GroupAvatar.vue'
+import ModuleGroupCard from '@/modules/groups/components/GroupCard.vue'
 
 defineProps({
   group: { type: Object, required: true },
@@ -8,14 +8,8 @@ defineProps({
 </script>
 
 <template>
-  <div class="user-card">
-    <GroupAvatar :group="group" :size="88" />
-    <div class="user-card-body">
-      <div class="user-card-name">{{ group.name }}</div>
-      <p v-if="group.description" class="user-card-bio">{{ group.description }}</p>
-      <dl class="user-card-meta">
-        <div v-if="role"><dt>Роль</dt><dd>{{ role }}</dd></div>
-      </dl>
-    </div>
-  </div>
+  <ModuleGroupCard
+    :group="group"
+    :role="role"
+  />
 </template>
