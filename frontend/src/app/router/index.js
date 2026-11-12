@@ -3,6 +3,7 @@ import LandingView from '@/views/LandingView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { hasRefreshToken } from '@/api/client'
 import { authRoutes } from '@/modules/auth/routes'
+import { homeRoutes } from '@/modules/home/routes'
 import { chatRoutes } from '@/modules/chat/routes'
 import { groupRoutes } from '@/modules/groups/routes'
 import { profileRoutes } from '@/modules/profile/routes'
@@ -27,16 +28,9 @@ const router = createRouter({
       path: '/docs',
       redirect: '/docs/features',
     },
-    {
-      path: '/app',
-      name: 'app',
-      component: () => import('@/views/AppView.vue'),
-      meta: {
-        requiresAuth: true,
-      },
-    },
 
     ...authRoutes,
+    ...homeRoutes,
     ...chatRoutes,
     ...groupRoutes,
     ...profileRoutes,

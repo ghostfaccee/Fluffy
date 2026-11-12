@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { passwordErrorMessage } from '@/api/errors'
 import AppShell from '@/components/AppShell.vue'
 import { useTheme } from '@/composables/useTheme'
-import AccentPicker from '@/features/settings/components/AccentPicker.vue'
+import AccentPicker from '@/modules/settings/components/AccentPicker.vue'
 
 
 const auth = useAuthStore()
