@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useAvatarUpload } from '@/composables/useAvatarUpload'
+import { useAvatarUpload } from '@/modules/profile/composables/useAvatarUpload'
+import UserCard from '@/modules/profile/components/UserCard.vue'
 import { profileErrorMessage } from '@/api/errors'
 import AppShell from '@/components/AppShell.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
-import UserCard from '@/components/UserCard.vue'
 import ProfilePosts from '@/features/posts/components/ProfilePosts.vue'
 
 const auth = useAuthStore()

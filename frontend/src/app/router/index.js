@@ -2,11 +2,15 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LandingView from '@/views/LandingView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { hasRefreshToken } from '@/api/client'
+import { authRoutes } from '@/modules/auth/routes'
 import { chatRoutes } from '@/modules/chat/routes'
 import { groupRoutes } from '@/modules/groups/routes'
+import { profileRoutes } from '@/modules/profile/routes'
+import { settingsRoutes } from '@/modules/settings/routes'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+
   routes: [
     {
       path: '/',
@@ -24,27 +28,6 @@ const router = createRouter({
       redirect: '/docs/features',
     },
     {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/views/LoginView.vue'),
-      meta: {
-        guestOnly: true,
-      },
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: () => import('@/views/RegisterView.vue'),
-      meta: {
-        guestOnly: true,
-      },
-    },
-    {
-      path: '/verify-email',
-      name: 'verify-email',
-      component: () => import('@/views/VerifyEmailView.vue'),
-    },
-    {
       path: '/app',
       name: 'app',
       component: () => import('@/views/AppView.vue'),
@@ -52,33 +35,12 @@ const router = createRouter({
         requiresAuth: true,
       },
     },
-    {
-      path: '/me',
-      name: 'me',
-      component: () => import('@/views/MeView.vue'),
-      meta: {
-        requiresAuth: true,
-      },
-    },
-    {
-      path: '/settings',
-      name: 'settings',
-      component: () => import('@/views/SettingsView.vue'),
-      meta: {
-        requiresAuth: true,
-      },
-    },
-    {
-      path: '/users/:username',
-      name: 'user',
-      component: () => import('@/views/UserProfileView.vue'),
-      meta: {
-        requiresAuth: true,
-      },
-    },
 
+    ...authRoutes,
     ...chatRoutes,
     ...groupRoutes,
+    ...profileRoutes,
+    ...settingsRoutes,
   ],
 })
 
