@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useChatStore } from '@/modules/chat/stores/chat'
-import AppShell from '@/components/AppShell.vue'
+import AppShell from '@/app/layouts/AppShell.vue'
 import ChatListItem from '@/modules/chat/components/ChatListItem.vue'
 
 const chat = useChatStore()

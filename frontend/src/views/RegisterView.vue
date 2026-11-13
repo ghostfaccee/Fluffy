@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { registerErrorMessage } from '@/api/errors'
-import AuthShell from '@/components/AuthShell.vue'
+import AuthShell from '@/app/layouts/AuthShell.vue'
 
 const auth = useAuthStore()
 

@@ -1,5 +1,5 @@
 <script setup>
-import { useAccent } from '@/composables/useAccent'
+import { useAccent } from '@/shared/composables/useAccent'
 
 const { accents, selectedAccent, setAccent } = useAccent()
 </script>

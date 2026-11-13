@@ -4,8 +4,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useAvatarUpload } from '@/modules/profile/composables/useAvatarUpload'
 import UserCard from '@/modules/profile/components/UserCard.vue'
 import { profileErrorMessage } from '@/api/errors'
-import AppShell from '@/components/AppShell.vue'
-import UserAvatar from '@/components/UserAvatar.vue'
+import AppShell from '@/app/layouts/AppShell.vue'
+import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import ProfilePosts from '@/modules/posts/components/ProfilePosts.vue'
 
 const auth = useAuthStore()

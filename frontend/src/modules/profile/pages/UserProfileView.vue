@@ -3,10 +3,10 @@ import { onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/modules/chat/stores/chat'
-import AppShell from '@/components/AppShell.vue'
+import AppShell from '@/app/layouts/AppShell.vue'
 import UserCard from '@/modules/profile/components/UserCard.vue'
 import ProfilePosts from '@/modules/posts/components/ProfilePosts.vue'
-import UserAvatar from '@/components/UserAvatar.vue'
+import UserAvatar from '@/shared/ui/UserAvatar.vue'
 
 const route = useRoute()
 const router = useRouter()

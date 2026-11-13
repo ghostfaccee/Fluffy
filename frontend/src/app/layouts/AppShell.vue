@@ -5,8 +5,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useWsStore } from '@/stores/ws'
 import { useChatStore } from '@/modules/chat/stores/chat'
 import { useMessagingRealtime } from '@/app/composables/useMessagingRealtime.js'
-import LogoIcon from '@/components/LogoIcon.vue'
-import UserAvatar from '@/components/UserAvatar.vue'
+import LogoIcon from '@/shared/ui/LogoIcon.vue'
+import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import AppIcon from '@/shared/ui/AppIcon.vue'
 
 const auth = useAuthStore()

@@ -1,5 +1,5 @@
 <script setup>
-import LogoIcon from '@/components/LogoIcon.vue'
+import LogoIcon from '@/shared/ui/LogoIcon.vue'
 </script>
 
 <template>

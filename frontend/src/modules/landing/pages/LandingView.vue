@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import LogoIcon from '@/components/LogoIcon.vue'
+import LogoIcon from '@/shared/ui/LogoIcon.vue'
 
 const year = new Date().getFullYear()
 

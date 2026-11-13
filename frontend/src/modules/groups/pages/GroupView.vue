@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useGroupStore } from '@/modules/groups/stores/group'
 import { useAuthStore } from '@/stores/auth'
 import { useWsStore } from '@/stores/ws'
-import AppShell from '@/components/AppShell.vue'
+import AppShell from '@/app/layouts/AppShell.vue'
 import GroupAvatar from '@/modules/groups/components/GroupAvatar.vue'
 import GroupListItem from '@/modules/groups/components/GroupListItem.vue'
 

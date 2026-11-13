@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import UserAvatar from '@/components/UserAvatar.vue'
+import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import PostEditor from './PostEditor.vue'
 import { postsApi } from '../api/posts'
 

@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import UserAvatar from '@/components/UserAvatar.vue'
+import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import DoubleCheckIcon from '@/modules/chat/components/DoubleCheckIcon.vue'
 
 const props = defineProps({

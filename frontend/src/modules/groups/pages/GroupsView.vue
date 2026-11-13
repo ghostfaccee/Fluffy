@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGroupStore } from '@/modules/groups/stores/group'
-import AppShell from '@/components/AppShell.vue'
+import AppShell from '@/app/layouts/AppShell.vue'
 import GroupListItem from '@/modules/groups/components/GroupListItem.vue'
 
 const groupStore = useGroupStore()

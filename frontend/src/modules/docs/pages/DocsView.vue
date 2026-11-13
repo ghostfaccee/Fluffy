@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import LogoIcon from '@/components/LogoIcon.vue'
+import LogoIcon from '@/shared/ui/LogoIcon.vue'
 import { docsNavigation, docsPages } from '@/modules/docs/content/docsContent'
 
 const route = useRoute()

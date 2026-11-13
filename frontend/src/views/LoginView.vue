@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { loginErrorMessage, codeErrorMessage } from '@/api/errors'
-import AuthShell from '@/components/AuthShell.vue'
+import AuthShell from '@/app/layouts/AuthShell.vue'
 
 const auth = useAuthStore()
 const router = useRouter()

@@ -1,5 +1,5 @@
 <script setup>
-import UserAvatar from '@/components/UserAvatar.vue'
+import UserAvatar from '@/shared/ui/UserAvatar.vue'
 
 defineProps({
   conversation: { type: Object, required: true },

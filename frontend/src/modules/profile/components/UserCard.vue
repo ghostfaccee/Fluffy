@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import UserAvatar from '@/components/UserAvatar.vue'
+import UserAvatar from '@/shared/ui/UserAvatar.vue'
 
 const props = defineProps({
   user: { type: Object, required: true },

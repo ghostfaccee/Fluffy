@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/api/client'
-import AuthShell from '@/components/AuthShell.vue'
+import AuthShell from '@/app/layouts/AuthShell.vue'
 
 const route = useRoute()
 const router = useRouter()
