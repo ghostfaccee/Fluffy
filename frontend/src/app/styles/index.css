@@ -1,14 +1,11 @@
 /*
- * Порядок глобальных стилей.
- *
- * Исходные файлы пока остаются в src/styles.
- * При дальнейшей миграции заменяем подключения здесь,
- * сохраняя порядок каскада.
+ * Единая точка подключения глобальных стилей.
+ * Порядок импортов сохраняет существующий каскад.
  */
 
-@import "../../styles/base.css";
-@import "../../styles/auth.css";
-@import "../../styles/app.css";
-@import "../../styles/docs.css";
+@import "./base.css";
+@import "./auth.css";
+@import "./app.css";
+@import "./docs.css";
 
 @import "./root.css";
