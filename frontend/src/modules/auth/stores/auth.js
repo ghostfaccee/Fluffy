@@ -1,5 +1,12 @@
 import { defineStore } from 'pinia'
-import { api, setTokens, clearTokens, hasRefreshToken, hasUsableAccessToken } from '@/shared/api/client'
+import {
+  api,
+  setTokens,
+  clearTokens,
+  hasRefreshToken,
+  hasUsableAccessToken,
+} from '@/shared/api/client'
+import { useWsStore } from '@/shared/stores/ws'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -12,24 +19,50 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     setUser(user) {
+      const previousId = this.user?.user_id
+      const nextId = user?.user_id
+
+      if (
+        user == null ||
+        (
+          previousId != null &&
+          String(previousId) !== String(nextId)
+        )
+      ) {
+        useWsStore().disconnect()
+      }
+
       this.user = user
     },
 
     async requestLoginCode(username, password) {
-      await api('/auth/login', { method: 'POST', auth: false, body: { username, password } })
+      await api('/auth/login', {
+        method: 'POST',
+        auth: false,
+        body: { username, password },
+      })
     },
 
     async confirmLoginCode(username, code) {
       const tokens = await api(
         `/auth/login/verify/${encodeURIComponent(username)}`,
-        { method: 'POST', auth: false, body: { code } },
+        {
+          method: 'POST',
+          auth: false,
+          body: { code },
+        },
       )
+
       setTokens(tokens)
-      this.user = await api('/users/me')
+      this.setUser(await api('/users/me'))
     },
 
     async register(payload) {
-      return await api('/users', { method: 'POST', auth: false, body: payload })
+      return await api('/users', {
+        method: 'POST',
+        auth: false,
+        body: payload,
+      })
     },
 
     async fetchMe() {
@@ -43,7 +76,11 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async updateProfile(data) {
-      const user = await api('/users/me', { method: 'PATCH', body: data })
+      const user = await api('/users/me', {
+        method: 'PATCH',
+        body: data,
+      })
+
       this.setUser(user)
       return user
     },
@@ -53,6 +90,7 @@ export const useAuthStore = defineStore('auth', {
         method: 'PATCH',
         body: { old_password, new_password },
       })
+
       this.setUser(user)
       return user
     },
@@ -60,20 +98,21 @@ export const useAuthStore = defineStore('auth', {
     async deleteAccount() {
       await api('/users/me', { method: 'DELETE' })
       clearTokens()
-      this.user = null
+      this.setUser(null)
     },
 
     async restoreSession() {
       if (!hasRefreshToken() && !hasUsableAccessToken()) return
+
       try {
         // api() refreshes only when the cached access token is missing or near expiry.
         // A still-valid token survives a page reload via sessionStorage.
-        this.user = await api('/users/me')
+        this.setUser(await api('/users/me'))
       } catch (error) {
         // A rate limit or network outage is temporary: never destroy the session.
         if (error?.status !== 429 && error?.status !== 0) {
           clearTokens()
-          this.user = null
+          this.setUser(null)
         }
       }
     },
@@ -84,7 +123,7 @@ export const useAuthStore = defineStore('auth', {
       } catch {
       } finally {
         clearTokens()
-        this.user = null
+        this.setUser(null)
       }
     },
   },

@@ -1,26 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { api } from '@/shared/api/client'
+import { useAccountCache } from '@/shared/composables/useAccountCache'
 
 const GROUPS_KEY = 'fluffy.groups'
-
-function loadCachedGroups() {
-  try {
-    const raw = localStorage.getItem(GROUPS_KEY)
-    if (!raw) return []
-
-    const list = JSON.parse(raw)
-    return Array.isArray(list) ? list : []
-  } catch {
-    return []
-  }
-}
-
-function saveCachedGroups(list) {
-  try {
-    localStorage.setItem(GROUPS_KEY, JSON.stringify(list))
-  } catch {}
-}
 
 function sameId(first, second) {
   return (
@@ -31,7 +13,7 @@ function sameId(first, second) {
 }
 
 export const useGroupStore = defineStore('group', () => {
-  const groups = ref(loadCachedGroups())
+  const groups = ref([])
   const chats = ref({})
   const members = ref({})
 
@@ -39,11 +21,24 @@ export const useGroupStore = defineStore('group', () => {
   const senderSyncRequests = new Map()
   const pendingSenderSync = new Set()
 
+  const account = useAccountCache(GROUPS_KEY, (cached) => {
+    groups.value = cached
+    chats.value = {}
+    members.value = {}
+
+    historyRequests.clear()
+    senderSyncRequests.clear()
+    pendingSenderSync.clear()
+  })
+
   function persist() {
-    saveCachedGroups(groups.value)
+    account.persist(groups.value)
   }
 
   function upsertGroup(group) {
+    if (!account.active()) return null
+    if (group?.group_id == null) return null
+
     const existing = groups.value.find(
       (entry) => sameId(entry.group_id, group.group_id),
     )
@@ -62,6 +57,8 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   function removeGroup(groupId) {
+    if (!account.active()) return
+
     groups.value = groups.value.filter(
       (group) => !sameId(group.group_id, groupId),
     )
@@ -74,139 +71,151 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function fetchGroups() {
-    const list = await api('/groups')
+    return await account.request(
+      '/groups',
+      undefined,
+      (list) => {
+        groups.value = Array.isArray(list) ? list : []
+        persist()
 
-    groups.value = Array.isArray(list) ? list : []
-    persist()
-
-    return groups.value
+        return groups.value
+      },
+    )
   }
 
   async function fetchGroup(groupId) {
-    const group = await api(
+    return await account.request(
       `/groups/${encodeURIComponent(groupId)}`,
+      undefined,
+      (group) => {
+        upsertGroup(group)
+        return group
+      },
     )
-
-    upsertGroup(group)
-    return group
   }
 
   async function createGroup({ name, description }) {
-    const group = await api('/groups', {
-      method: 'POST',
-      body: {
-        name,
-        description: description || null,
+    return await account.request(
+      '/groups',
+      {
+        method: 'POST',
+        body: {
+          name,
+          description: description || null,
+        },
       },
-    })
-
-    upsertGroup(group)
-    return group
+      (group) => {
+        upsertGroup(group)
+        return group
+      },
+    )
   }
 
   async function updateGroup(groupId, data) {
-    const group = await api(
+    return await account.request(
       `/groups/${encodeURIComponent(groupId)}`,
       {
         method: 'PATCH',
         body: data,
       },
+      (group) => {
+        upsertGroup(group)
+        return group
+      },
     )
-
-    upsertGroup(group)
-    return group
   }
 
   async function deleteGroup(groupId) {
-    await api(`/groups/${encodeURIComponent(groupId)}`, {
-      method: 'DELETE',
-    })
-
-    removeGroup(groupId)
+    await account.request(
+      `/groups/${encodeURIComponent(groupId)}`,
+      { method: 'DELETE' },
+      () => {
+        removeGroup(groupId)
+      },
+    )
   }
 
   async function joinByToken(token) {
-    const group = await api(
+    return await account.request(
       `/groups/join/${encodeURIComponent(token)}`,
-      {
-        method: 'POST',
+      { method: 'POST' },
+      (group) => {
+        upsertGroup(group)
+        return group
       },
     )
-
-    upsertGroup(group)
-    return group
   }
 
   async function regenerateInviteToken(groupId) {
-    const group = await api(
+    return await account.request(
       `/groups/${encodeURIComponent(groupId)}/invite-token`,
-      {
-        method: 'POST',
+      { method: 'POST' },
+      (group) => {
+        upsertGroup(group)
+        return group
       },
     )
-
-    upsertGroup(group)
-    return group
   }
 
   async function leaveGroup(groupId) {
-    await api(
+    await account.request(
       `/groups/${encodeURIComponent(groupId)}/members/me`,
-      {
-        method: 'DELETE',
+      { method: 'DELETE' },
+      () => {
+        removeGroup(groupId)
       },
     )
-
-    removeGroup(groupId)
   }
 
   async function kickMember(groupId, userId) {
-    await api(
+    await account.request(
       `/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}`,
-      {
-        method: 'DELETE',
+      { method: 'DELETE' },
+      () => {
+        if (members.value[groupId]) {
+          members.value[groupId] = members.value[groupId].filter(
+            (member) => !sameId(member.user_id, userId),
+          )
+        }
       },
     )
-
-    if (members.value[groupId]) {
-      members.value[groupId] = members.value[groupId].filter(
-        (member) => !sameId(member.user_id, userId),
-      )
-    }
   }
 
   async function changeRole(groupId, userId, role) {
-    const result = await api(
+    return await account.request(
       `/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}/change-role`,
       {
         method: 'PATCH',
         body: { role },
       },
+      (result) => {
+        const member = members.value[groupId]?.find(
+          (entry) => sameId(entry.user_id, userId),
+        )
+
+        if (member) {
+          member.role = result?.role || role
+        }
+
+        return result
+      },
     )
-
-    const member = members.value[groupId]?.find(
-      (entry) => sameId(entry.user_id, userId),
-    )
-
-    if (member) {
-      member.role = result?.role || role
-    }
-
-    return result
   }
 
   async function fetchMembers(groupId) {
-    const list = await api(
+    return await account.request(
       `/groups/${encodeURIComponent(groupId)}/members`,
+      undefined,
+      (list) => {
+        members.value[groupId] = Array.isArray(list) ? list : []
+
+        return members.value[groupId]
+      },
     )
-
-    members.value[groupId] = Array.isArray(list) ? list : []
-
-    return members.value[groupId]
   }
 
   async function requestAvatarUploadUrl(groupId, contentType) {
-    return await api(
+    return await account.request(
       `/groups/${encodeURIComponent(groupId)}/avatar/upload-url`,
       {
         method: 'POST',
@@ -216,34 +225,34 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function setAvatar(groupId, key) {
-    const group = await api(
+    return await account.request(
       `/groups/${encodeURIComponent(groupId)}/avatar`,
       {
         method: 'PUT',
         body: { key },
       },
+      (group) => {
+        upsertGroup(group)
+        return group
+      },
     )
-
-    upsertGroup(group)
-    return group
   }
 
   async function deleteAvatar(groupId) {
-    await api(
+    await account.request(
       `/groups/${encodeURIComponent(groupId)}/avatar`,
-      {
-        method: 'DELETE',
+      { method: 'DELETE' },
+      () => {
+        const group = groups.value.find(
+          (entry) => sameId(entry.group_id, groupId),
+        )
+
+        if (group) {
+          group.avatar_url = null
+          persist()
+        }
       },
     )
-
-    const group = groups.value.find(
-      (entry) => sameId(entry.group_id, groupId),
-    )
-
-    if (group) {
-      group.avatar_url = null
-      persist()
-    }
   }
 
   function hasSenderProfile(sender) {
@@ -259,7 +268,6 @@ export const useGroupStore = defineStore('group', () => {
       }
     }
 
-    // Все дальнейшие изменения идут через реактивный объект.
     return chats.value[groupId]
   }
 
@@ -289,11 +297,9 @@ export const useGroupStore = defineStore('group', () => {
 
     const sender = hasSenderProfile(message.sender)
       ? message.sender
-      : (
-          hasSenderProfile(existing?.sender)
-            ? existing.sender
-            : findKnownSender(chat, message.sender_id)
-        )
+      : hasSenderProfile(existing?.sender)
+        ? existing.sender
+        : findKnownSender(chat, message.sender_id)
 
     if (existing) {
       Object.assign(existing, message, {
@@ -315,6 +321,9 @@ export const useGroupStore = defineStore('group', () => {
     groupId,
     { limit = 30, offset = 0 } = {},
   ) {
+    const ticket = account.ticket()
+    account.assertCurrent(ticket)
+
     const requestKey = `${groupId}:${limit}:${offset}`
     const existingRequest = historyRequests.get(requestKey)
 
@@ -325,68 +334,77 @@ export const useGroupStore = defineStore('group', () => {
 
     const request = (async () => {
       try {
-        const list = await api(
+        return await account.request(
           `/groups/${encodeURIComponent(groupId)}/messages?limit=${limit}&offset=${offset}`,
-        )
+          undefined,
+          (list) => {
+            // Пользователь мог покинуть группу во время запроса.
+            if (chats.value[groupId] !== chat) return chat
 
-        // За время запроса пользователь мог покинуть группу.
-        if (chats.value[groupId] !== chat) return chat
+            const safeList = Array.isArray(list) ? list : []
 
-        const safeList = Array.isArray(list) ? list : []
-
-        // Объединяем историю с сообщениями, полученными по WS,
-        // а не заменяем весь массив.
-        for (const message of [...safeList].reverse()) {
-          upsertMessage(chat, message)
-        }
-
-        const profiles = new Map()
-
-        for (const message of chat.messages) {
-          if (
-            message.sender_id != null &&
-            hasSenderProfile(message.sender)
-          ) {
-            profiles.set(
-              String(message.sender_id),
-              message.sender,
-            )
-          }
-        }
-
-        // Профиль из REST дополняет сообщения того же автора,
-        // которые пришли по WS без sender.
-        for (const message of chat.messages) {
-          if (
-            message.sender_id != null &&
-            !hasSenderProfile(message.sender)
-          ) {
-            const sender = profiles.get(
-              String(message.sender_id),
-            )
-
-            if (sender) {
-              message.sender = sender
+            // Не теряем сообщения, пришедшие по WS.
+            for (const message of [...safeList].reverse()) {
+              upsertMessage(chat, message)
             }
-          }
-        }
 
-        chat.messages.sort((first, second) => {
-          const firstTime =
-            Date.parse(first.created_at || '') || 0
+            const profiles = new Map()
 
-          const secondTime =
-            Date.parse(second.created_at || '') || 0
+            for (const message of chat.messages) {
+              if (
+                message.sender_id != null &&
+                hasSenderProfile(message.sender)
+              ) {
+                profiles.set(
+                  String(message.sender_id),
+                  message.sender,
+                )
+              }
+            }
 
-          return firstTime - secondTime
-        })
+            // Дополняем профили отправителей из REST.
+            for (const message of chat.messages) {
+              if (
+                message.sender_id != null &&
+                !hasSenderProfile(message.sender)
+              ) {
+                const sender = profiles.get(
+                  String(message.sender_id),
+                )
 
-        chat.hasMore = safeList.length === limit
+                if (sender) {
+                  message.sender = sender
+                }
+              }
+            }
 
-        return chat
+            chat.messages.sort((first, second) => {
+              const firstTime =
+                Date.parse(first.created_at || '') || 0
+
+              const secondTime =
+                Date.parse(second.created_at || '') || 0
+
+              return firstTime - secondTime
+            })
+
+            chat.hasMore = safeList.length === limit
+
+            return chat
+          },
+        )
       } finally {
-        chat.loading = false
-        historyRequests.delete(requestKey)
+        if (account.current(ticket)) {
+          if (historyRequests.get(requestKey) === request) {
+            historyRequests.delete(requestKey)
+          }
+
+          const prefix = `${groupId}:`
+
+          chat.loading = [...historyRequests.keys()].some(
+            (key) => key.startsWith(prefix),
+          )
+        }
       }
     })()
 
@@ -396,6 +414,9 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   function syncMissingSenders(groupId) {
+    if (!account.active()) return Promise.resolve()
+
+    const ticket = account.ticket()
     const key = String(groupId)
 
     pendingSenderSync.add(key)
@@ -404,16 +425,19 @@ export const useGroupStore = defineStore('group', () => {
 
     if (existingRequest) return existingRequest
 
-    const request = (async () => {
+    // Первый микротакт позволяет записать request в Map
+    // до выполнения блока finally даже при раннем выходе.
+    const request = Promise.resolve().then(async () => {
       try {
-        while (pendingSenderSync.has(key)) {
+        while (
+          account.current(ticket) &&
+          pendingSenderSync.has(key)
+        ) {
           pendingSenderSync.delete(key)
 
           const chat = chats.value[groupId]
           if (!chat) break
 
-          // Старый запрос мог начаться до входящего сообщения.
-          // Сначала ждём его, затем запрашиваем свежую историю.
           const currentRequest = historyRequests.get(
             `${groupId}:30:0`,
           )
@@ -422,20 +446,29 @@ export const useGroupStore = defineStore('group', () => {
             await currentRequest
           }
 
+          account.assertCurrent(ticket)
+
           if (chats.value[groupId] !== chat) break
 
           await loadChat(groupId)
         }
       } catch (cause) {
-        console.error(
-          'Не удалось загрузить отправителей сообщений группы:',
-          cause,
-        )
+        if (cause?.code !== 'SESSION_CHANGED') {
+          console.error(
+            'Не удалось загрузить отправителей сообщений группы:',
+            cause,
+          )
+        }
       } finally {
-        pendingSenderSync.delete(key)
-        senderSyncRequests.delete(key)
+        if (
+          account.current(ticket) &&
+          senderSyncRequests.get(key) === request
+        ) {
+          pendingSenderSync.delete(key)
+          senderSyncRequests.delete(key)
+        }
       }
-    })()
+    })
 
     senderSyncRequests.set(key, request)
 
@@ -443,24 +476,27 @@ export const useGroupStore = defineStore('group', () => {
   }
 
   async function sendMessage(groupId, content) {
-    const message = await api(
+    return await account.request(
       `/groups/${encodeURIComponent(groupId)}/messages`,
       {
         method: 'POST',
         body: { content },
       },
+      (message) => {
+        const chat = ensureChat(groupId)
+
+        upsertMessage(chat, message)
+
+        return message
+      },
     )
-
-    const chat = ensureChat(groupId)
-
-    upsertMessage(chat, message)
-
-    return message
   }
 
   function handleIncoming(payload) {
+    if (!account.active()) return
+
     const groupId = payload.group_id
-    if (!groupId) return
+    if (groupId == null) return
 
     const chat = chats.value[groupId]
     if (!chat) return

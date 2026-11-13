@@ -25,73 +25,126 @@ export const useWsStore = defineStore('ws', () => {
 
   function connect() {
     manuallyClosed = false
-    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+
+    if (
+      socket &&
+      (
+        socket.readyState === WebSocket.OPEN ||
+        socket.readyState === WebSocket.CONNECTING
+      )
+    ) {
       return
     }
+
     const token = getAccessToken()
     if (!token) return
 
-    const currentSocket = new WebSocket(wsUrl(), [SUBPROTOCOL, `${BEARER_PREFIX}${token}`])
+    const currentSocket = new WebSocket(
+      wsUrl(),
+      [SUBPROTOCOL, `${BEARER_PREFIX}${token}`],
+    )
+
     socket = currentSocket
 
     currentSocket.addEventListener('open', () => {
+      if (socket !== currentSocket || manuallyClosed) return
+
       connected.value = true
+
       const set = listeners.get('connected')
       if (set) {
         for (const fn of set) {
-          try { fn() } catch (e) { console.error('WS listener error:', e) }
+          try {
+            fn()
+          } catch (e) {
+            console.error('WS listener error:', e)
+          }
         }
       }
+
       if (stableTimer) clearTimeout(stableTimer)
-      stableTimer = setTimeout(() => { reconnectAttempts = 0 }, 10_000)
+
+      stableTimer = setTimeout(() => {
+        reconnectAttempts = 0
+      }, 10_000)
+
       startPing()
     })
 
     currentSocket.addEventListener('message', (event) => {
+      if (socket !== currentSocket || manuallyClosed) return
+
       let data
+
       try {
         data = JSON.parse(event.data)
       } catch {
         return
       }
+
       if (data?.type === 'pong') return
+
       const type = data?.type
       if (!type) return
+
       const set = listeners.get(type)
       if (set) {
         for (const fn of set) {
-          try { fn(data) } catch (e) { console.error('WS listener error:', e) }
+          try {
+            fn(data)
+          } catch (e) {
+            console.error('WS listener error:', e)
+          }
         }
       }
     })
 
     currentSocket.addEventListener('close', () => {
       if (socket !== currentSocket) return
+
       connected.value = false
       stopPing()
-      if (stableTimer) { clearTimeout(stableTimer); stableTimer = null }
+
+      if (stableTimer) {
+        clearTimeout(stableTimer)
+        stableTimer = null
+      }
+
       socket = null
+
       if (!manuallyClosed) scheduleReconnect()
     })
 
     currentSocket.addEventListener('error', () => {
-      try { currentSocket.close() } catch {}
+      try {
+        currentSocket.close()
+      } catch {}
     })
   }
 
   function disconnect() {
     manuallyClosed = true
     stopPing()
-    if (stableTimer) { clearTimeout(stableTimer); stableTimer = null }
+
+    if (stableTimer) {
+      clearTimeout(stableTimer)
+      stableTimer = null
+    }
+
     if (reconnectTimer) {
       clearTimeout(reconnectTimer)
       reconnectTimer = null
     }
+
     if (socket) {
       const currentSocket = socket
       socket = null
-      try { currentSocket.close() } catch {}
+
+      try {
+        currentSocket.close()
+      } catch {}
     }
+
     connected.value = false
   }
 
@@ -102,7 +155,10 @@ export const useWsStore = defineStore('ws', () => {
   }
 
   function on(type, fn) {
-    if (!listeners.has(type)) listeners.set(type, new Set())
+    if (!listeners.has(type)) {
+      listeners.set(type, new Set())
+    }
+
     listeners.get(type).add(fn)
     return () => off(type, fn)
   }
@@ -114,6 +170,7 @@ export const useWsStore = defineStore('ws', () => {
 
   function startPing() {
     stopPing()
+
     pingTimer = setInterval(() => {
       send({ type: 'ping' })
     }, PING_INTERVAL)
@@ -128,13 +185,26 @@ export const useWsStore = defineStore('ws', () => {
 
   function scheduleReconnect() {
     if (reconnectTimer) return
-    const delay = Math.min(1000 * 2 ** reconnectAttempts, MAX_BACKOFF)
+
+    const delay = Math.min(
+      1000 * 2 ** reconnectAttempts,
+      MAX_BACKOFF,
+    )
+
     reconnectAttempts += 1
+
     reconnectTimer = setTimeout(() => {
       reconnectTimer = null
       connect()
     }, delay)
   }
 
-  return { connected, connect, disconnect, send, on, off }
+  return {
+    connected,
+    connect,
+    disconnect,
+    send,
+    on,
+    off,
+  }
 })
