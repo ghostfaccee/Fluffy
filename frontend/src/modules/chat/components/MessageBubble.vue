@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/modules/auth/stores/auth'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import DoubleCheckIcon from '@/modules/chat/components/DoubleCheckIcon.vue'
 

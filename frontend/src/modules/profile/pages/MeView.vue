@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/modules/auth/stores/auth'
 import { useAvatarUpload } from '@/modules/profile/composables/useAvatarUpload'
 import UserCard from '@/modules/profile/components/UserCard.vue'
-import { profileErrorMessage } from '@/api/errors'
+import { profileErrorMessage } from '@/shared/api/errors'
 import AppShell from '@/app/layouts/AppShell.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import ProfilePosts from '@/modules/posts/components/ProfilePosts.vue'

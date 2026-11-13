@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { api, setTokens, clearTokens, hasRefreshToken, hasUsableAccessToken } from '@/api/client'
+import { api, setTokens, clearTokens, hasRefreshToken, hasUsableAccessToken } from '@/shared/api/client'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({

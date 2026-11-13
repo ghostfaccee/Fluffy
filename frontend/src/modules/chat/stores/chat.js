@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api } from '@/api/client'
-import { useAuthStore } from '@/stores/auth'
+import { api } from '@/shared/api/client'
+import { useAuthStore } from '@/modules/auth/stores/auth'
 
 const CONV_KEY = 'fluffy.conversations'
 

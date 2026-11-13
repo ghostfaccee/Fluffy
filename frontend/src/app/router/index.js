@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { hasRefreshToken } from '@/api/client'
+import { useAuthStore } from '@/modules/auth/stores/auth'
+import { hasRefreshToken } from '@/shared/api/client'
 
 import { landingRoutes } from '@/modules/landing/routes'
 import { docsRoutes } from '@/modules/docs/routes'

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getAccessToken } from '@/api/client'
+import { getAccessToken } from '@/shared/api/client'
 
 const SUBPROTOCOL = 'fluffy'
 const BEARER_PREFIX = 'bearer.'

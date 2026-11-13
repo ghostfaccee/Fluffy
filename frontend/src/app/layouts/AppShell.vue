@@ -1,8 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useWsStore } from '@/stores/ws'
+import { useAuthStore } from '@/modules/auth/stores/auth'
+import { useWsStore } from '@/shared/stores/ws'
 import { useChatStore } from '@/modules/chat/stores/chat'
 import { useMessagingRealtime } from '@/app/composables/useMessagingRealtime.js'
 import LogoIcon from '@/shared/ui/LogoIcon.vue'

@@ -1,5 +1,5 @@
 import { onMounted, onBeforeUnmount } from 'vue'
-import { useWsStore } from '@/stores/ws'
+import { useWsStore } from '@/shared/stores/ws'
 import { useChatStore } from '@/modules/chat/stores/chat'
 import { useGroupStore } from '@/modules/groups/stores/group'
 

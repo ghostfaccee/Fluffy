@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { passwordErrorMessage } from '@/api/errors'
+import { useAuthStore } from '@/modules/auth/stores/auth'
+import { passwordErrorMessage } from '@/shared/api/errors'
 import AppShell from '@/app/layouts/AppShell.vue'
 import { useTheme } from '@/shared/composables/useTheme'
 import AccentPicker from '@/modules/settings/components/AccentPicker.vue'

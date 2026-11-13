@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGroupStore } from '@/modules/groups/stores/group'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/modules/auth/stores/auth'
 import AppShell from '@/app/layouts/AppShell.vue'
 
 const route = useRoute()

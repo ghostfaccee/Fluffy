@@ -5,8 +5,8 @@ import { createPinia } from 'pinia'
 
 import App from '@/app/App.vue'
 import router from '@/app/router'
-import { setSessionExpiredHandler } from '@/api/client'
-import { useAuthStore } from '@/stores/auth'
+import { setSessionExpiredHandler } from '@/shared/api/client'
+import { useAuthStore } from '@/modules/auth/stores/auth'
 
 // Применяем сохранённую тему до первого рендера Vue.
 const savedTheme =

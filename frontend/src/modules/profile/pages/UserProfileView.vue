@@ -1,7 +1,7 @@
 <script setup>
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/modules/auth/stores/auth'
 import { useChatStore } from '@/modules/chat/stores/chat'
 import AppShell from '@/app/layouts/AppShell.vue'
 import UserCard from '@/modules/profile/components/UserCard.vue'

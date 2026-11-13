@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { api } from '@/api/client'
-import { useAuthStore } from '@/stores/auth'
+import { api } from '@/shared/api/client'
+import { useAuthStore } from '@/modules/auth/stores/auth'
 
 const MAX_SIZE = 5 * 1024 * 1024
 const ALLOWED = ['image/jpeg', 'image/png']

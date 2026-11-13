@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { api } from '@/api/client'
+import { api } from '@/shared/api/client'
 
 const GROUPS_KEY = 'fluffy.groups'
 
