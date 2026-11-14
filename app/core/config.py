@@ -50,6 +50,9 @@ class YamlSettings(BaseModel):
 
     MAX_WS_CONNECTIONS_PER_USER: int
 
+    USER_AVATAR_KEY: str
+    GROUP_AVATAR_KEY: str
+
     @classmethod
     def load(cls, yaml_path: str = 'config.yaml') -> YamlSettings:
         yaml_file = Path(yaml_path)

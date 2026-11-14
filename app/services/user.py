@@ -12,6 +12,7 @@ from app.schemas import UserRegister, UserUpdate, PasswordUpdate
 from app.utils import hash_password, verify_password
 from app.infrastructure import TokenService, TokenServiceReturnValues, VerificationTokenService, VerificationTokenServiceReturnValues, s3_avatars, AvatarUrlCacheService
 from app.tasks.email import send_verification_email
+from app.core import yaml_settings
 
 class UserService:
     def __init__(self, uow: UnitOfWork) -> None:
@@ -98,7 +99,7 @@ class UserService:
             return user
 
     async def generate_avatar_upload_url(self, user_id: UUID, content_type: str) -> tuple[str, str]:
-        key = f'avatars/profile/{user_id}/{uuid4()}.{'jpg' if content_type == 'image/jpeg' else 'png'}'
+        key = f'{self._avatar_prefix(user_id)}/{uuid4()}.{'jpg' if content_type == 'image/jpeg' else 'png'}'
         upload_url = await s3_avatars.generate_presigned_put_url(key, content_type)
         return upload_url, key
     
@@ -173,6 +174,9 @@ class UserService:
         return True
 
     def _validate_avatar_key(self, user_id: UUID, key: str) -> None:
-        prefix = f'avatars/profile/{user_id}/'
+        prefix = f'{self._avatar_prefix(user_id)}'
         if not key.startswith(prefix):
             raise user_exc.InvalidAvatarKey()
+
+    def _avatar_prefix(self, user_id: UUID) -> str:
+        return f'{yaml_settings.USER_AVATAR_KEY}{user_id}/'

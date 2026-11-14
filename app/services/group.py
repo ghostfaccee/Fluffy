@@ -9,7 +9,7 @@ from app.schemas import GroupCreate, GroupUpdate, GroupAvatarUploadUrlResponse, 
 from app.exceptions import group as group_exc
 from app.exceptions import redis as redis_exc
 from app.exceptions import s3_storage as s3_storage_exc
-from app.core import logger
+from app.core import logger, yaml_settings
 from app.infrastructure import GroupAvatarUrlCacheService, s3_avatars, PubSubService
 
 ROLE_RANK = {'member': 0, 'admin': 1, 'owner': 2}
@@ -87,10 +87,10 @@ class GroupService:
                 raise s3_storage_exc.S3InternalError()
     
     def _avatar_prefix(self, group_id: UUID) -> str:
-        return f'avatars/group/{group_id}/'
+        return f'{yaml_settings.GROUP_AVATAR_KEY}{group_id}/'
     
     def _validate_group_avatar_key(self, group_id: UUID, key: str) -> None:
-        prefix = f'avatars/group/{group_id}/'
+        prefix = f'{self._avatar_prefix(group_id)}'
         if not key.startswith(prefix):
             raise group_exc.InvalidAvatarKey()
 
