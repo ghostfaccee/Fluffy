@@ -336,7 +336,7 @@ async def test_set_someone_elses_avatar(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_set_avatar_but_delete_avatar__from_redis_error(
+async def test_set_avatar_but_delete_avatar_from_redis_error(
     db_session: AsyncSession,
     existing_user: User,
     monkeypatch: pytest.MonkeyPatch
@@ -348,7 +348,7 @@ async def test_set_avatar_but_delete_avatar__from_redis_error(
     service = user_module.UserService(UnitOfWork(db_session))
 
     with pytest.raises(redis_exc.InternalRedisError):
-        await service.set_avatar(existing_user.user_id, f'avatars/{existing_user.user_id}/')
+        await service.set_avatar(existing_user.user_id, f'avatars/profile/{existing_user.user_id}/')
     delete_avatar.assert_awaited_once()
 
 @pytest.mark.unit
@@ -370,7 +370,7 @@ async def test_set_avatar_but_delete_avatar_from_s3_error(
     service = user_module.UserService(UnitOfWork(db_session))
 
     with pytest.raises(s3_storage_exc.S3InternalError):
-        await service.set_avatar(existing_user.user_id, f'avatars/{existing_user.user_id}/')
+        await service.set_avatar(existing_user.user_id, f'avatars/profile/{existing_user.user_id}/')
     delete_avatar.assert_awaited_once()
     delete_object.assert_awaited_once()
 
@@ -392,7 +392,7 @@ async def test_set_avatar_success(
 
     service = user_module.UserService(UnitOfWork(db_session))
 
-    res = await service.set_avatar(existing_user.user_id, f'avatars/{existing_user.user_id}/')
+    res = await service.set_avatar(existing_user.user_id, f'avatars/profile/{existing_user.user_id}/')
 
     assert isinstance(res, User)
     delete_avatar.assert_awaited_once()
