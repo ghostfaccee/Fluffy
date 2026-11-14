@@ -1,11 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repository import UserRepository, MessageRepository
 from app.repository import GroupMemberRepository, GroupMessageRepository, GroupRepository
+from app.repository import PostRepository
 
 class UnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.user = UserRepository(session)
+        self.post = PostRepository(session)
         self.message = MessageRepository(session)
         self.group = GroupRepository(session)
         self.group_member = GroupMemberRepository(session)

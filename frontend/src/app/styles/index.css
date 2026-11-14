@@ -1,0 +1,11 @@
+/*
+ * Единая точка подключения глобальных стилей.
+ * Порядок импортов сохраняет существующий каскад.
+ */
+
+@import "./base.css";
+@import "./auth.css";
+@import "./app.css";
+@import "./docs.css";
+
+@import "./root.css";

@@ -1,0 +1,1201 @@
+/* Цвета и типографика основного фронтенда Fluffy. */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #191a1b;
+  --bg-soft: #222426;
+  --bg-card: #202224;
+
+  --surface: var(--bg-card);
+  --surface-hover: #292c2e;
+
+  --text: #f3f5f7;
+  --muted: #9b9fa5;
+
+  --border: rgb(255 255 255 / 11%);
+  --line: var(--border);
+
+  --accent: #42c99a;
+  --green: #42c99a;
+  --green-light: #70dfb7;
+  --accent-text: #111318;
+
+  --header-bg: rgb(25 26 27 / 92%);
+  --hero-glow-color: rgb(66 201 154 / 15%);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f4f7f9;
+  --bg-soft: #edf2f5;
+  --bg-card: #fff;
+
+  --surface: var(--bg-card);
+  --surface-hover: #edf2f5;
+
+  --text: #202b33;
+  --muted: #667580;
+
+  --border: rgb(35 55 68 / 14%);
+  --line: var(--border);
+
+  --accent: #42c99a;
+  --green: #20a879;
+  --green-light: #168c67;
+  --accent-text: #111318;
+
+  --header-bg: rgb(244 247 249 / 94%);
+  --hero-glow-color: rgb(66 201 154 / 13%);
+}
+
+body {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  line-height: 1.7;
+}
+
+h1,
+h2,
+h3 {
+  font-family: inherit;
+  letter-spacing: -0.035em;
+}
+
+.section-heading h2,
+.contact-inner h2 {
+  font-weight: 650;
+}
+
+.brand {
+  letter-spacing: -0.035em;
+}
+
+.button,
+.icon-button,
+.filter-button,
+.copy-button {
+  font-family: inherit;
+}
+
+.fl-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  vertical-align: middle;
+  pointer-events: none;
+}
+
+.button .fl-icon,
+.text-link .fl-icon,
+.contact-arrow .fl-icon,
+.resource-arrow .fl-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-button,
+.button,
+.filter-button {
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.button-primary:hover {
+  filter: brightness(1.06);
+}
+
+.filter-button[aria-pressed="true"] {
+  border-color: var(--accent);
+}
+
+/* Первый экран: без отдельной карточки и скриншота. */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-block: 104px 86px;
+}
+
+.hero .hero-glow,
+.hero .hero-visual {
+  display: none;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.hero-copy {
+  max-width: 900px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.hero .eyebrow {
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.hero h1 {
+  max-width: 900px;
+  margin-inline: auto;
+  font-size: clamp(50px, 7vw, 86px);
+  font-weight: 700;
+  line-height: 1.07;
+  letter-spacing: -0.055em;
+}
+
+.gradient-text {
+  color: var(--accent);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.hero-description {
+  max-width: 660px;
+  margin: 26px auto 0;
+  font-size: 17px;
+  line-height: 1.85;
+}
+
+.hero-actions {
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.hero-facts {
+  justify-content: center;
+  gap: 48px;
+  max-width: 680px;
+  margin: 44px auto 0;
+  padding-top: 25px;
+}
+
+.hero-fact {
+  justify-items: center;
+}
+
+.fact-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fact-value .fl-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--accent);
+}
+
+/* Два мягких блика вместо шумной декоративной картинки.
+   Анимируются только transform и opacity. */
+
+.hero::before,
+.hero::after {
+  position: absolute;
+  z-index: 0;
+  width: min(700px, 100vw);
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    var(--hero-glow-color) 0%,
+    transparent 68%
+  );
+  content: "";
+  pointer-events: none;
+}
+
+.hero::before {
+  top: -240px;
+  left: calc(50% - 530px);
+  animation: fluffy-glow-first 19s ease-in-out infinite alternate;
+}
+
+.hero::after {
+  right: calc(50% - 560px);
+  bottom: -320px;
+  opacity: 0.7;
+  animation: fluffy-glow-second 24s ease-in-out infinite alternate;
+}
+
+@keyframes fluffy-glow-first {
+  from {
+    transform: translate3d(-60px, 0, 0) scale(0.95);
+    opacity: 0.65;
+  }
+
+  to {
+    transform: translate3d(230px, 100px, 0) scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes fluffy-glow-second {
+  from {
+    transform: translate3d(80px, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-220px, -100px, 0);
+  }
+}
+
+/* Карточки: меньше декоративности, ближе к приложению. */
+
+.feature-card,
+.resource-card,
+.about-note,
+.requirements,
+.step-card,
+.development-note {
+  border-radius: 16px;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line);
+}
+
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.feature-icon .fl-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.note-icon,
+.development-note-icon {
+  display: flex;
+}
+
+/* Материалы: две ссылки вместо каталога внутренних README. */
+
+.resource-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.resource-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 28px;
+}
+
+.resource-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.resource-icon {
+  display: inline-flex;
+  color: var(--accent);
+}
+
+.resource-icon .fl-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.resource-arrow {
+  display: inline-flex;
+  color: var(--muted);
+  transition: transform 180ms ease;
+}
+
+.resource-card h3 {
+  margin-block: 28px 12px;
+  font-weight: 600;
+}
+
+.resource-card p {
+  max-width: 470px;
+  margin-bottom: 24px;
+}
+
+.resource-link {
+  display: block;
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.resource-card:hover {
+  border-color: var(--line);
+  background: var(--surface-hover);
+}
+
+.resource-card:hover .resource-arrow {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
+
+/* Контакты: отдельная сетка, перенос длинных адресов. */
+
+.contact-section {
+  padding-block: 80px;
+  border-top: 1px solid var(--line);
+}
+
+.contact-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  align-items: start;
+  gap: 64px;
+}
+
+.contact-inner > *,
+.contact-links,
+.contact-links a {
+  min-width: 0;
+}
+
+.contact-inner h2 {
+  margin-block: 14px 20px;
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.15;
+}
+
+.contact-inner p {
+  max-width: 470px;
+  font-size: 14px;
+}
+
+.contact-links {
+  display: grid;
+  gap: 12px;
+}
+
+.contact-links a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px 16px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  transition: background 180ms ease;
+}
+
+.contact-links a > span:first-child {
+  grid-column: 1;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.contact-links a > strong {
+  grid-column: 1;
+  font-size: 15px;
+  font-weight: 550;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.contact-links .contact-arrow {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: inline-flex;
+  color: var(--muted);
+}
+
+.contact-links a:hover {
+  background: var(--surface-hover);
+}
+
+.contact-links a:hover .contact-arrow {
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .hero {
+    padding-block: 72px 64px;
+  }
+
+  .hero-description {
+    font-size: 15px;
+  }
+
+  .hero-facts {
+    gap: 28px;
+  }
+
+  .contact-inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .contact-section {
+    padding-block: 64px;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero h1 {
+    font-size: clamp(44px, 12vw, 60px);
+  }
+
+  .hero .eyebrow {
+    font-size: 10px;
+  }
+
+  .hero-facts {
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .fact-value {
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .fact-label {
+    font-size: 10px;
+  }
+
+  .resource-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resource-card {
+    padding: 24px;
+  }
+
+  .contact-links a {
+    padding: 18px;
+  }
+
+  .contact-links a > strong {
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero::before,
+  .hero::after {
+    animation: none;
+  }
+}
+
+.container {
+  width: min(
+    var(--width, 1160px),
+    calc(100% - clamp(32px, 6vw, 64px))
+  );
+}
+
+.hero {
+  padding-block: clamp(56px, 8vw, 104px);
+}
+
+.hero-copy {
+  max-width: 900px;
+  margin-inline: 0;
+  text-align: left;
+}
+
+.hero .eyebrow {
+  justify-content: flex-start;
+  max-width: 100%;
+  line-height: 1.5;
+}
+
+.hero h1 {
+  margin-inline: 0;
+  font-size: clamp(44px, 7vw, 86px);
+  overflow-wrap: break-word;
+}
+
+.hero-description {
+  max-width: 660px;
+  margin: 24px 0 0;
+  font-size: clamp(15px, 1.5vw, 17px);
+}
+
+.hero-actions {
+  justify-content: flex-start;
+}
+
+.hero-facts {
+  justify-content: flex-start;
+  max-width: 680px;
+  margin: 40px 0 0;
+  gap: 24px 40px;
+}
+
+.hero-fact {
+  min-width: 0;
+  justify-items: start;
+}
+
+.fact-label {
+  max-width: none;
+}
+
+/* Содержимое сеток не должно расширять страницу. */
+
+.hero-inner > *,
+.about-layout > *,
+.feature-grid > *,
+.demo-grid > *,
+.resource-grid > *,
+.resources-grid > *,
+.contact-inner > *,
+.requirement-list > *,
+.step-card > *,
+.local-addresses > * {
+  min-width: 0;
+}
+
+.section-heading,
+.about-note,
+.feature-card,
+.resource-card,
+.contact-links a {
+  overflow-wrap: anywhere;
+}
+
+.button {
+  min-height: 46px;
+  text-align: center;
+  white-space: normal;
+}
+
+.icon-button {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.demo-open {
+  min-height: 44px;
+}
+
+.demo-open img {
+  height: auto;
+}
+
+.demo-filters {
+  max-width: 100%;
+}
+
+.filter-button {
+  min-height: 44px;
+}
+
+pre {
+  max-width: 100%;
+}
+
+.local-addresses a,
+.resource-link {
+  overflow-wrap: anywhere;
+}
+
+/* Планшеты и небольшие ноутбуки. */
+
+@media (max-width: 1000px) {
+  .header-inner {
+    gap: 12px;
+  }
+
+  .nav {
+    gap: 12px;
+  }
+
+  .nav a {
+    font-size: 12px;
+  }
+
+  .contact-inner {
+    gap: 32px;
+  }
+}
+
+@media (max-width: 900px) {
+  .header-inner {
+    min-height: 68px;
+  }
+
+  .header-tools {
+    margin-left: auto;
+  }
+
+  .header-link {
+    display: none;
+  }
+
+  .js .menu-toggle {
+    display: inline-grid;
+  }
+
+  .js .nav {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    left: 0;
+    display: none;
+    max-height: calc(100dvh - 96px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 10px;
+    margin-left: 0;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 16px 40px rgb(0 0 0 / 18%);
+  }
+
+  .js .nav.is-open {
+    display: grid;
+    gap: 4px;
+  }
+
+  .js .nav a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+
+  .js .nav a:hover,
+  .js .nav a[aria-current="location"] {
+    background: var(--surface-hover);
+  }
+}
+
+@media (max-width: 760px) {
+  html {
+    scroll-padding-top: 88px;
+  }
+
+  .section,
+  .contact-section {
+    padding-block: 56px;
+  }
+
+  .section-heading {
+    margin-bottom: 28px;
+  }
+
+  .section-heading h2,
+  .contact-inner h2 {
+    font-size: clamp(28px, 5.5vw, 40px);
+  }
+
+  .about-layout,
+  .contact-inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .feature-grid,
+  .demo-grid {
+    gap: 16px;
+  }
+
+  .resource-grid,
+  .resources-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-facts {
+    justify-content: flex-start;
+    gap: 24px 32px;
+  }
+
+  pre {
+    padding: 16px 16px 58px;
+  }
+
+  .copy-button {
+    top: auto;
+    right: 10px;
+    bottom: 10px;
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+
+  .lightbox {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+
+  .lightbox-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .lightbox-image {
+    height: auto;
+    max-height: 62dvh;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+  }
+}
+
+@media (max-width: 560px) {
+  .feature-grid,
+  .demo-grid,
+  .requirement-list,
+  .local-addresses {
+    grid-template-columns: 1fr;
+  }
+
+  .hero .eyebrow {
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 22px;
+    font-size: 11px;
+  }
+
+  .hero .eyebrow .status-dot {
+    margin-top: 5px;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 10.5vw, 58px);
+    letter-spacing: -0.045em;
+  }
+
+  .hero-description {
+    margin-top: 20px;
+    line-height: 1.75;
+  }
+
+  .hero-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: start;
+    width: 100%;
+    max-width: 360px;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .hero-actions .button {
+    width: 100%;
+  }
+
+  .hero-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 16px;
+    margin-top: 32px;
+    padding-top: 22px;
+  }
+
+  .fact-value {
+    font-size: 13px;
+  }
+
+  .fact-label {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .feature-card,
+  .about-note,
+  .resource-card,
+  .requirements,
+  .development-note {
+    padding: 22px;
+  }
+
+  .step-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 22px;
+  }
+
+  .demo-toolbar {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .demo-filters {
+    gap: 6px;
+  }
+
+  .filter-button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .lightbox-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .lightbox-description {
+    max-width: none;
+  }
+
+  .lightbox-controls {
+    justify-content: space-between;
+  }
+
+  .lightbox-position {
+    display: inline;
+  }
+
+  .footer-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .footer-links {
+    justify-content: flex-start;
+    gap: 12px 20px;
+  }
+}
+
+.footer .brand,
+.footer .brand span {
+  color: var(--text);
+}
+
+
+/*
+=======
+=======
+=======
+=======
+*/
+/* =========================
+   Бренд в футере
+   ========================= */
+
+.footer .brand,
+.footer .brand span {
+  color: var(--text);
+}
+
+/* =========================
+   Первый экран с устройствами
+   ========================= */
+
+.hero .hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 4vw, 64px);
+}
+
+.hero .hero-copy {
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  text-align: left;
+}
+
+.hero h1 {
+  font-size: clamp(44px, 5.4vw, 72px);
+}
+
+.hero-description {
+  max-width: 580px;
+}
+
+.hero-facts {
+  gap: 22px;
+}
+
+/* Вся композиция находится в потоке:
+   её высота учитывается при раскладке страницы. */
+
+.hero-devices {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-width: 0;
+  padding: 36px 38px 64px 0;
+}
+
+/* Дополнительный мягкий свет за устройствами. */
+
+.hero-devices::before {
+  position: absolute;
+  z-index: -1;
+  inset: -12% -10%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    var(--hero-glow-color) 0%,
+    transparent 66%
+  );
+  content: "";
+  pointer-events: none;
+}
+
+/* Ноутбук */
+
+.device-laptop {
+  position: relative;
+  width: 100%;
+}
+
+.device-laptop-lid {
+  position: relative;
+  padding: 13px 7px 7px;
+  border: 1px solid #454a4d;
+  border-radius: 14px 14px 5px 5px;
+  background: #26292b;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 20%);
+}
+
+.device-laptop-camera {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #7c8589;
+  transform: translateX(-50%);
+}
+
+.device-laptop-screen {
+  aspect-ratio: 16 / 10;
+  border-radius: 5px;
+}
+
+.device-laptop-base {
+  position: relative;
+  width: calc(100% + 24px);
+  height: 11px;
+  margin-left: -12px;
+  border: 1px solid #555b5f;
+  border-top: 0;
+  border-radius: 2px 2px 12px 12px;
+  background: linear-gradient(#737a7e, #3b4043);
+}
+
+.device-laptop-base::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 18%;
+  height: 4px;
+  border-radius: 0 0 5px 5px;
+  background: #303537;
+  transform: translateX(-50%);
+  content: "";
+}
+
+/* Телефон */
+
+.device-phone {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  width: 28%;
+  min-width: 96px;
+  padding: 6px;
+  border: 1px solid #555c60;
+  border-radius: 25px;
+  background: #242729;
+  box-shadow:
+    0 20px 45px rgb(0 0 0 / 28%),
+    inset 0 0 0 1px rgb(255 255 255 / 5%);
+}
+
+.device-phone::before {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  left: 50%;
+  width: 31%;
+  height: 8px;
+  border-radius: 999px;
+  background: #111415;
+  transform: translateX(-50%);
+  content: "";
+}
+
+.device-phone-screen {
+  aspect-ratio: 9 / 19.5;
+  border-radius: 19px;
+}
+
+/* Скриншоты и заглушки */
+
+.device-screen {
+  position: relative;
+  overflow: hidden;
+  background: #191a1b;
+}
+
+.device-screen img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: #191a1b;
+}
+
+.device-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  color: #9b9fa5;
+  text-align: center;
+}
+
+.device-placeholder strong {
+  color: #f3f5f7;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.device-placeholder span {
+  max-width: 180px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.device-placeholder::before {
+  width: 24px;
+  height: 3px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  background: #42c99a;
+  content: "";
+}
+
+.device-screen.is-loaded .device-placeholder {
+  display: none;
+}
+
+/* Планшет: устройства под текстом. */
+
+@media (max-width: 1000px) {
+  .hero .hero-inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 38px;
+  }
+
+  .hero .hero-copy {
+    max-width: 740px;
+  }
+
+  .hero h1 {
+    font-size: clamp(44px, 7vw, 72px);
+  }
+
+  .hero-devices {
+    width: min(100%, 660px);
+    margin-inline: auto;
+    padding: 24px 52px 76px 12px;
+  }
+
+  .hero-facts {
+    gap: 24px 32px;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero .hero-inner {
+    gap: 28px;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 10.5vw, 58px);
+  }
+
+  .hero-devices {
+    padding: 18px 34px 62px 10px;
+  }
+
+  .device-laptop-lid {
+    padding: 11px 5px 5px;
+    border-radius: 10px 10px 4px 4px;
+  }
+
+  .device-laptop-base {
+    width: calc(100% + 16px);
+    height: 8px;
+    margin-left: -8px;
+  }
+
+  .device-phone {
+    width: 29%;
+    min-width: 82px;
+    padding: 4px;
+    border-radius: 19px;
+  }
+
+  .device-phone-screen {
+    border-radius: 15px;
+  }
+
+  .device-phone::before {
+    top: 9px;
+    height: 6px;
+  }
+
+  .device-placeholder {
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .device-placeholder strong {
+    font-size: 12px;
+  }
+
+  .device-placeholder span {
+    font-size: 9px;
+  }
+
+  .device-phone .device-placeholder span {
+    display: none;
+  }
+}

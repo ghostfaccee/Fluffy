@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import get_db
 from app.model import User
 from app.repository import UnitOfWork
-from app.services import UserService, AuthService, MessageService, GroupService, GroupMessageService
+from app.services import UserService, AuthService, MessageService, GroupService, GroupMessageService, PostService
 from app.utils import decode_access_token
 from app.exceptions import auth as auth_exc
 
@@ -28,6 +28,9 @@ async def get_group_service(uow: UnitOfWork = Depends(get_uow)) -> GroupService:
 
 async def get_group_message_service(uow: UnitOfWork = Depends(get_uow)) -> GroupMessageService:
     return GroupMessageService(uow)
+
+async def get_post_service(uow: UnitOfWork = Depends(get_uow)) -> PostService:
+    return PostService(uow)
 
 security = HTTPBearer()
 
