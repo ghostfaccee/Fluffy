@@ -6,7 +6,7 @@ from fastapi import Request, APIRouter, Depends, status
 
 from app.model import User
 from app.exceptions import user as user_exc
-from app.schemas import UserResponse, UserRegister, UserUpdate, PasswordUpdate, AvatarUploadResponse, AvatarUploadRequest, AvatarSetRequest, PostResponse
+from app.schemas import UserResponse, UserRegister, UserUpdate, PasswordUpdate, AvatarUploadResponse, AvatarUploadRequest, AvatarSetRequest, PostResponse, MusicUploadRequest, MusicUploadResponse, MusicSetRequest
 from app.dependencies import get_user_service, get_current_user_uuid, get_post_service
 from app.services import UserService, PostService
 from app.utils.responses import build_user_response, build_post_response
@@ -43,6 +43,23 @@ async def get_another_user_by_username(request: Request, username: str, current_
 async def update_me(request: Request, data: UserUpdate, current_user_uuid: UUID = Depends(get_current_user_uuid), service: UserService = Depends(get_user_service)) -> UserResponse:
     user = await service.update(current_user_uuid, data)
     return await build_user_response(user)
+
+@router.post('/me/music/upload-url', response_model = MusicUploadResponse, status_code = status.HTTP_200_OK)
+@limiter.limit('10/minute')
+async def get_music_upload_url(request: Request, data: MusicUploadRequest, current_user_uuid: UUID = Depends(get_current_user_uuid), service: UserService = Depends(get_user_service)) -> MusicUploadResponse:
+    upload_url, key = await service.generate_music_upload_url(current_user_uuid, data.content_type)
+    return MusicUploadResponse(upload_url = upload_url, key = key)
+
+@router.put('/me/music', response_model = UserResponse, status_code = status.HTTP_200_OK)
+@limiter.limit('10/minute')
+async def set_music(request: Request, data: MusicSetRequest, current_user_uuid: UUID = Depends(get_current_user_uuid), service: UserService = Depends(get_user_service)) -> UserResponse:
+    user = await service.set_music(current_user_uuid, data.key)
+    return await build_user_response(user)
+
+@router.delete('/me/music', status_code = status.HTTP_204_NO_CONTENT)
+@limiter.limit('10/minute')
+async def delete_my_music(request: Request, current_user_uuid: UUID = Depends(get_current_user_uuid), service: UserService = Depends(get_user_service)) -> None:
+    await service.delete_music(current_user_uuid)
 
 @router.post('/me/avatar/upload-url', response_model = AvatarUploadResponse, status_code = status.HTTP_200_OK)
 @limiter.limit('10/minute')

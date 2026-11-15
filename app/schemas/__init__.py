@@ -1,4 +1,4 @@
-from app.schemas.user import UserRegister, UserUpdate, PasswordUpdate, UserResponse, AvatarSetRequest, AvatarUploadRequest, AvatarUploadResponse
+from app.schemas.user import UserRegister, UserUpdate, PasswordUpdate, UserResponse, AvatarSetRequest, AvatarUploadRequest, AvatarUploadResponse, MusicUploadRequest, MusicUploadResponse, MusicSetRequest
 from app.schemas.auth import UserLoginRequest, RefreshTokenRequest, TokenResponse, LoginVerifyRequest
 from app.schemas.message import MessageCreate, MessageResponse
 from app.schemas.group import GroupCreate, GroupMemberResponse, GroupMessageCreate, GroupMessageResponse
@@ -13,5 +13,6 @@ __all__ = [
     'MessageCreate', 'MessageResponse', 'GroupCreate', 'GroupMemberResponse', 'GroupMessageCreate',
     'GroupMessageResponse', 'GroupResponse', 'GroupUpdate', 'GroupAvatarUploadUrlResponse',
     'GroupAvatarUploadRequest', 'GroupAvatarSetRequest', 'GroupMemberRoleUpdate',
-    'PostCreate', 'PostUpdate', 'PostResponse'
+    'PostCreate', 'PostUpdate', 'PostResponse', 'MusicUploadRequest', 'MusicUploadResponse',
+    'MusicSetRequest'
 ]

@@ -2,6 +2,16 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
+class MusicUploadRequest(BaseModel):
+    content_type: str = Field(..., pattern = '^audio/(mpeg|wav)$')
+
+class MusicUploadResponse(BaseModel):
+    upload_url: str
+    key: str
+
+class MusicSetRequest(BaseModel):
+    key: str
+
 class AvatarUploadRequest(BaseModel):
     content_type: str = Field(..., pattern = '^image/(jpeg|png)$')
 
@@ -31,7 +41,9 @@ class UserResponse(BaseModel):
     username: str
     email: str
     bio: Optional[str] = None
+
     avatar_url: Optional[str] = None
+    music_url: Optional[str] = None
 
     city: Optional[str] = None
     university: Optional[str] = None

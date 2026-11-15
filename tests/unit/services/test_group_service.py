@@ -12,7 +12,7 @@ from app.utils import hash_password
 from app.exceptions import group as group_exc
 from app.exceptions import redis as redis_exc
 from app.exceptions import s3_storage as s3_storage_exc
-from app.infrastructure import GroupAvatarUrlCacheService, s3_avatars
+from app.infrastructure import GroupAvatarUrlCacheService, s3_service
 
 # --- fixtures ---
 
@@ -284,7 +284,7 @@ async def test_cleanup_avatar_with_old_key_but_s3_internal_error(
     delete_object = AsyncMock(return_value = False)
 
     monkeypatch.setattr(GroupAvatarUrlCacheService, 'delete_avatar', delete_avatar)
-    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
 
     service = group_module.GroupService(UnitOfWork(db_session))
     with pytest.raises(s3_storage_exc.S3InternalError):
@@ -303,7 +303,7 @@ async def test_cleanup_avatar_with_old_key_success(
     delete_object = AsyncMock(return_value = True)
 
     monkeypatch.setattr(GroupAvatarUrlCacheService, 'delete_avatar', delete_avatar)
-    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
 
     service = group_module.GroupService(UnitOfWork(db_session))
 
@@ -605,7 +605,7 @@ async def test_generate_avatar_upload_url_success(
     monkeypatch: pytest.MonkeyPatch
 ) -> None:
     generate_presigned_put_url = AsyncMock(return_value = 'upload-url')
-    monkeypatch.setattr(s3_avatars, 'generate_presigned_put_url', generate_presigned_put_url)
+    monkeypatch.setattr(s3_service, 'generate_presigned_put_url', generate_presigned_put_url)
 
     service = group_module.GroupService(UnitOfWork(db_session))
     res = await service.generate_avatar_upload_url(test_group.group_id, test_user.user_id, 'png')

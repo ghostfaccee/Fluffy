@@ -10,7 +10,7 @@ from app.exceptions import group as group_exc
 from app.exceptions import redis as redis_exc
 from app.exceptions import s3_storage as s3_storage_exc
 from app.core import logger, yaml_settings
-from app.infrastructure import GroupAvatarUrlCacheService, s3_avatars, PubSubService
+from app.infrastructure import GroupAvatarUrlCacheService, s3_service, PubSubService
 
 ROLE_RANK = {'member': 0, 'admin': 1, 'owner': 2}
 
@@ -82,7 +82,7 @@ class GroupService:
         if not status:
             raise redis_exc.InternalRedisError()
         if old_key:
-            status = await s3_avatars.delete_object(old_key)
+            status = await s3_service.delete_object(old_key)
             if not status:
                 raise s3_storage_exc.S3InternalError()
     
@@ -165,7 +165,7 @@ class GroupService:
         _, member = await self._get_group_and_member(group_id, user_id)
         self._require_role(member, 'admin')
         key = f'{self._avatar_prefix(group_id)}{uuid4()}.{'jpg' if content_type == 'image/jpeg' else 'png'}'
-        upload_url = await s3_avatars.generate_presigned_put_url(key, content_type)
+        upload_url = await s3_service.generate_presigned_put_url(key, content_type, yaml_settings.GROUP_AVATAR_PRESIGNED_PUT_URL_LIFETIME_MINUTES * 60)
         return GroupAvatarUploadUrlResponse(
             upload_url = upload_url,
             key = key

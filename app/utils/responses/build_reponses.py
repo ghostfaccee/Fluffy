@@ -1,13 +1,18 @@
 from app.model import User, Group, GroupMessage, Message, Post
 from app.schemas import UserResponse, MessageResponse, GroupResponse, GroupMessageResponse, PostResponse
-from app.infrastructure import AvatarUrlCacheService, GroupAvatarUrlCacheService
+from app.infrastructure import AvatarUrlCacheService, GroupAvatarUrlCacheService, UserMusicCacheService
 from app.exceptions import s3_storage as s3_storage_exc
 
 async def build_user_response(user: User) -> UserResponse:
     avatar_url = None
+    music_url = None
     if user.avatar_key:
         avatar_url = await AvatarUrlCacheService.get_avatar(user.user_id, user.avatar_key)
         if avatar_url is None:
+            raise s3_storage_exc.S3InternalError()
+    if user.music_key:
+        music_url = await UserMusicCacheService.get_music(user.user_id, user.music_key)
+        if music_url is None:
             raise s3_storage_exc.S3InternalError()
     return UserResponse(
         user_id = user.user_id,
@@ -15,7 +20,9 @@ async def build_user_response(user: User) -> UserResponse:
         username = user.username,
         email = user.email,
         bio = user.bio,
+
         avatar_url = avatar_url,
+        music_url = music_url,
 
         city = user.city,
         university = user.university,
