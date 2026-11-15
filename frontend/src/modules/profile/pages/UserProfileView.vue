@@ -5,6 +5,7 @@ import { useAuthStore } from '@/modules/auth/stores/auth'
 import { useChatStore } from '@/modules/chat/stores/chat'
 import AppShell from '@/app/layouts/AppShell.vue'
 import UserCard from '@/modules/profile/components/UserCard.vue'
+import ProfileMusic from '@/modules/profile/components/ProfileMusic.vue'
 import ProfilePosts from '@/modules/posts/components/ProfilePosts.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 
@@ -16,6 +17,7 @@ const chat = useChatStore()
 const user = ref(null)
 const loading = ref(false)
 const error = ref('')
+
 let generation = 0
 
 function prepareConversation() {
@@ -38,6 +40,7 @@ async function load(username) {
     }
 
     const data = await auth.fetchUserByUsername(username)
+
     if (current !== generation) return
 
     if (data.username === auth.user?.username) {
@@ -47,8 +50,8 @@ async function load(username) {
 
     user.value = data
 
-    // Если диалог уже существует, обновляем имя, ник и аватар.
-    // Простое открытие профиля не создаёт новый диалог.
+    // Открытие профиля не должно создавать новый диалог.
+    // Уже существующему диалогу обновляем данные пользователя.
     const existingConversation = chat.conversations.find(
       (conversation) =>
         String(conversation.user_id) === String(data.user_id),
@@ -73,7 +76,9 @@ async function load(username) {
       error.value = 'Не удалось загрузить профиль.'
     }
   } finally {
-    if (current === generation) loading.value = false
+    if (current === generation) {
+      loading.value = false
+    }
   }
 }
 
@@ -97,6 +102,7 @@ onBeforeUnmount(() => {
 
       <div v-else-if="error" class="public-profile__status" role="alert">
         <p>{{ error }}</p>
+
         <button
           class="btn btn-secondary btn-small"
           type="button"
@@ -107,27 +113,46 @@ onBeforeUnmount(() => {
       </div>
 
       <template v-else-if="user">
-        <section class="app-section">
-          <div class="app-profile-row">
-            <div class="app-profile-avatar">
-              <UserAvatar :user="user" :size="128" />
-            </div>
+        <div
+          class="profile-overview"
+          :class="{ 'profile-overview--with-music': user.music_url }"
+        >
+          <section class="app-section profile-overview__main">
+            <div class="app-profile-row">
+              <div class="app-profile-avatar">
+                <UserAvatar :user="user" :size="128" />
+              </div>
 
-            <div class="app-profile-info">
-              <UserCard :user="user" hide-avatar />
+              <div class="app-profile-info">
+                <UserCard :user="user" hide-avatar />
 
-              <div class="app-profile-actions">
-                <RouterLink
-                :to="{ name: 'chat', params: { userId: user.user_id } }"
-                class="btn btn-primary"
-                @click="prepareConversation"
-              >
-                Написать сообщение
-              </RouterLink>
+                <div class="app-profile-actions">
+                  <RouterLink
+                    :to="{
+                      name: 'chat',
+                      params: { userId: user.user_id },
+                    }"
+                    class="btn btn-primary"
+                    @click="prepareConversation"
+                  >
+                    Написать сообщение
+                  </RouterLink>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+
+          <aside
+            v-if="user.music_url"
+            class="profile-overview__side"
+            aria-label="Музыка"
+          >
+            <ProfileMusic
+              :key="user.user_id"
+              :music-url="user.music_url"
+            />
+          </aside>
+        </div>
 
         <ProfilePosts :key="user.username" :username="user.username" />
       </template>
@@ -136,14 +161,30 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.public-profile {
-  min-width: 0;
+.profile-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
-.public-profile__actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 14px;
+.profile-overview--with-music {
+  grid-template-columns: minmax(0, 1fr) 290px;
+}
+
+.profile-overview__main {
+  min-width: 0;
+  margin: 0;
+}
+
+.profile-overview__main .app-profile-info {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-overview__side {
+  min-width: 0;
 }
 
 .public-profile__status {
@@ -152,5 +193,11 @@ onBeforeUnmount(() => {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.6;
+}
+
+@media (max-width: 1100px) {
+  .profile-overview--with-music {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

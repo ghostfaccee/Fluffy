@@ -18,7 +18,7 @@ class UserMusicCacheService:
             stored_url = await redis.get(key)
             if stored_url:
                 return stored_url
-            presigned_url = await s3_service.generate_presigned_get_url(key, yaml_settings.USER_MUSIC_PRESIGNED_GET_URL_LIFETIME_MINUTES * 60)
+            presigned_url = await s3_service.generate_presigned_get_url(music_key, yaml_settings.USER_MUSIC_PRESIGNED_GET_URL_LIFETIME_MINUTES * 60)
             await redis.set(key, presigned_url, ex = yaml_settings.USER_MUSIC_CACHE_LIFETIME_MINUTES * 60)
             return presigned_url
         except Exception as e:
