@@ -64,11 +64,16 @@ class YamlSettings(BaseModel):
     USER_MUSIC_PRESIGNED_GET_URL_LIFETIME_MINUTES: int
     USER_MUSIC_CACHE_LIFETIME_MINUTES: int
 
+    STORY_PRESIGNED_PUT_URL_LIFETIME_MINUTES: int
+    STORY_PRESIGNED_GET_URL_LIFETIME_MINUTES: int
+    STORY_CACHE_LIFETIME_MINUTES: int
+
     MAX_WS_CONNECTIONS_PER_USER: int
 
     USER_AVATAR_KEY: str
     USER_MUSIC_KEY: str
     GROUP_AVATAR_KEY: str
+    STORY_KEY: str
 
     @classmethod
     def load(cls, yaml_path: str = 'config.yaml') -> YamlSettings:

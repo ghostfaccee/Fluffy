@@ -4,7 +4,7 @@ from app.core import RedisClient, yaml_settings, logger
 from app.infrastructure import s3_service
 
 class UserMusicCacheService:
-    MUSIC_URL_PREFIX = 'user_music'
+    MUSIC_URL_PREFIX = 'user_music_url'
 
     @classmethod
     def _music_url_key(cls, user_id: UUID) -> str:

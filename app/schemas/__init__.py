@@ -5,6 +5,7 @@ from app.schemas.group import GroupCreate, GroupMemberResponse, GroupMessageCrea
 from app.schemas.group import GroupResponse, GroupUpdate, GroupAvatarUploadUrlResponse, GroupAvatarUploadRequest, GroupAvatarSetRequest
 from app.schemas.group import GroupMemberRoleUpdate
 from app.schemas.post import PostCreate, PostUpdate, PostResponse
+from app.schemas.story import StoryCreate, StoryUploadRequest
 
 __all__ = [
     'UserRegister', 'UserUpdate', 'PasswordUpdate', 'UserLoginRequest',
@@ -14,5 +15,5 @@ __all__ = [
     'GroupMessageResponse', 'GroupResponse', 'GroupUpdate', 'GroupAvatarUploadUrlResponse',
     'GroupAvatarUploadRequest', 'GroupAvatarSetRequest', 'GroupMemberRoleUpdate',
     'PostCreate', 'PostUpdate', 'PostResponse', 'MusicUploadRequest', 'MusicUploadResponse',
-    'MusicSetRequest'
+    'MusicSetRequest', 'StoryCreate', 'StoryUploadRequest'
 ]
