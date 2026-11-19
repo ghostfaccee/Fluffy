@@ -36,6 +36,6 @@ class Story(Base):
     )
 
     __table_args__ = (
-        Index('ix_stories_author_expires', 'author_id', 'expires_at')
+        Index('ix_stories_author_expires', 'author_id', 'expires_at'),
         # a composite index is required to retrieve an author's active stories
     )

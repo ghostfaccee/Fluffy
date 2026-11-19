@@ -1,7 +1,8 @@
 from app.model import User, Group, GroupMessage, Message, Post
-from app.schemas import UserResponse, MessageResponse, GroupResponse, GroupMessageResponse, PostResponse
-from app.infrastructure import AvatarUrlCacheService, GroupAvatarUrlCacheService, UserMusicCacheService
+from app.schemas import UserResponse, MessageResponse, GroupResponse, GroupMessageResponse, PostResponse, StoryResponse
+from app.infrastructure import AvatarUrlCacheService, GroupAvatarUrlCacheService, UserMusicCacheService, StoryMediaUrlCacheService
 from app.exceptions import s3_storage as s3_storage_exc
+from app.exceptions import story as story_exc
 
 async def build_user_response(user: User) -> UserResponse:
     avatar_url = None
@@ -80,5 +81,23 @@ async def build_post_response(post: Post) -> PostResponse:
         title = post.title,
         content = post.content,
         created_at = post.created_at,
+        author = author_response
+    )
+
+async def build_story_response(story: Story) -> StoryResponse:
+    if story is None:
+        raise story_exc.StoryNotFound()
+    author_response = await build_user_response(story.author)
+    media_url = await StoryMediaUrlCacheService.get_story_media(story.media_key)
+    if media_url is None:
+        raise s3_storage_exc.S3InternalError()
+    return StoryResponse(
+        # TODO: we have N+1 problem for redis: For 20 messages from the service,
+        # resend 20 requests. It’s better to optimize later.
+        story_id = story.story_id,
+        title = story.title,
+        media_url = media_url,
+        created_at = story.created_at,
+        expires_at = story.expires_at,
         author = author_response
     )

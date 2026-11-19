@@ -6,6 +6,7 @@ from app.api.v1.endpoints.message import router as message_router
 from app.api.v1.endpoints.websocket import router as ws_rotuer
 from app.api.v1.endpoints.group import router as group_router
 from app.api.v1.endpoints.post import router as post_router
+from app.api.v1.endpoints.story import router as story_router
 
 router = APIRouter()
 
@@ -19,3 +20,4 @@ router.include_router(message_router)
 router.include_router(ws_rotuer)
 router.include_router(group_router)
 router.include_router(post_router)
+router.include_router(story_router)

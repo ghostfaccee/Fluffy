@@ -6,10 +6,16 @@ from fastapi import Request, APIRouter, Depends, status
 
 from app.model import User
 from app.exceptions import user as user_exc
-from app.schemas import UserResponse, UserRegister, UserUpdate, PasswordUpdate, AvatarUploadResponse, AvatarUploadRequest, AvatarSetRequest, PostResponse, MusicUploadRequest, MusicUploadResponse, MusicSetRequest
-from app.dependencies import get_user_service, get_current_user_uuid, get_post_service
-from app.services import UserService, PostService
-from app.utils.responses import build_user_response, build_post_response
+from app.schemas import (
+    UserResponse, UserRegister, UserUpdate, PasswordUpdate, 
+    AvatarUploadResponse, AvatarUploadRequest, 
+    AvatarSetRequest, PostResponse, 
+    MusicUploadRequest, MusicUploadResponse, MusicSetRequest,
+    StoryResponse
+)
+from app.dependencies import get_user_service, get_current_user_uuid, get_post_service, get_story_service
+from app.services import UserService, PostService, StoryService
+from app.utils.responses import build_user_response, build_post_response, build_story_response
 from app.middleware import RateLimit
 from app.infrastructure import CachingService
 
@@ -96,3 +102,11 @@ async def delete_me(request: Request, current_user_uuid: UUID = Depends(get_curr
 async def user_posts(request: Request, username: str, limit: int = 20, offset: int = 0, current_user_uuid: UUID = Depends(get_current_user_uuid), service: PostService = Depends(get_post_service)) -> list[PostResponse]:
     posts = await service.get_user_posts(username, limit, offset)
     return [await build_post_response(p) for p in posts]
+
+# The user's stories belong to them, so this is where their feed of active stories is located.
+
+@router.get('/{username}/stories', response_model = list[StoryResponse], status_code = status.HTTP_200_OK)
+@limiter.limit('10/minute')
+async def get_user_active_stories(request: Request, username: str, current_user_uuid: UUID = Depends(get_current_user_uuid), service: StoryService = Depends(get_story_service)) -> StoryResponse:
+    stories = await service.get_user_stories(current_user_uuid, username)
+    return [await build_story_response(s) for s in stories]

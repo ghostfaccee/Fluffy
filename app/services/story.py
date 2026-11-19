@@ -1,6 +1,7 @@
 from uuid import UUID, uuid4
 
-from app.model import UnitOfWork, Story, User
+from app.model import Story, User
+from app.repository import UnitOfWork
 from app.schemas import StoryCreate, StoryUploadRequest
 from app.core import yaml_settings
 from app.exceptions import story as story_exc
@@ -12,7 +13,7 @@ class StoryService:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
     
-    async def generate_story_upload_key(
+    async def generate_story_upload_url(
         self,
         user_id: UUID,
         data: StoryUploadRequest
@@ -44,19 +45,16 @@ class StoryService:
         await self.uow.commit()
         return story
     
-    async def get_user_stories(self, request_user_id: UUID, user_id: UUID) -> list[Story]:
+    async def get_user_stories(self, request_user_id: UUID, username: str) -> list[Story]:
         if await self.uow.user.get(request_user_id) is None:
             raise user_exc.UserDoesNotExists()
-        user = await self.uow.user.get(user_id)
+        user = await self.uow.user.get_by_username(username)
         if user is None:
             raise user_exc.UserDoesNotExists()
-        return await self.uow.story.get_active_stories_by_author_id(user_id)
+        return await self.uow.story.get_active_stories_by_author_id(user.user_id)
     
-    async def get_active_story_by_id(self, request_user_id, user_id: UUID, story_id: UUID) -> Story | None:
+    async def get_active_story_by_id(self, request_user_id, story_id: UUID) -> Story | None:
         if await self.uow.user.get(request_user_id) is None:
-            raise user_exc.UserDoesNotExists()
-        user = await self.uow.user.get(user_id)
-        if user is None:
             raise user_exc.UserDoesNotExists()
         return await self.uow.story.get_active_by_id(story_id)
     
