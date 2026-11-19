@@ -32,7 +32,8 @@ class Story(Base):
     ) # index = True: The index will be useful for queries like WHERE expires_at > X, to retrieve active stories
 
     author: Mapped['User'] = relationship(
-        foreign_keys = [author_id]
+        foreign_keys = [author_id],
+        lazy = 'joined'
     )
 
     __table_args__ = (

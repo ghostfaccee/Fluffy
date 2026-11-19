@@ -107,6 +107,6 @@ async def user_posts(request: Request, username: str, limit: int = 20, offset: i
 
 @router.get('/{username}/stories', response_model = list[StoryResponse], status_code = status.HTTP_200_OK)
 @limiter.limit('10/minute')
-async def get_user_active_stories(request: Request, username: str, current_user_uuid: UUID = Depends(get_current_user_uuid), service: StoryService = Depends(get_story_service)) -> StoryResponse:
+async def get_user_active_stories(request: Request, username: str, current_user_uuid: UUID = Depends(get_current_user_uuid), service: StoryService = Depends(get_story_service)) -> list[StoryResponse]:
     stories = await service.get_user_stories(current_user_uuid, username)
     return [await build_story_response(s) for s in stories]

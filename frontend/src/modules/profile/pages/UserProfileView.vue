@@ -7,7 +7,7 @@ import AppShell from '@/app/layouts/AppShell.vue'
 import UserCard from '@/modules/profile/components/UserCard.vue'
 import ProfileMusic from '@/modules/profile/components/ProfileMusic.vue'
 import ProfilePosts from '@/modules/posts/components/ProfilePosts.vue'
-import UserAvatar from '@/shared/ui/UserAvatar.vue'
+import ProfileStories from '@/modules/stories/components/ProfileStories.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -50,8 +50,7 @@ async function load(username) {
 
     user.value = data
 
-    // Открытие профиля не должно создавать новый диалог.
-    // Уже существующему диалогу обновляем данные пользователя.
+    // Открытие профиля не создаёт новый диалог.
     const existingConversation = chat.conversations.find(
       (conversation) =>
         String(conversation.user_id) === String(data.user_id),
@@ -118,9 +117,13 @@ onBeforeUnmount(() => {
           :class="{ 'profile-overview--with-music': user.music_url }"
         >
           <section class="app-section profile-overview__main">
-            <div class="app-profile-row">
-              <div class="app-profile-avatar">
-                <UserAvatar :user="user" :size="128" />
+            <div class="app-profile-row profile-overview__row">
+              <div class="app-profile-avatar profile-overview__avatar-column">
+                <ProfileStories
+                  :key="`${auth.user?.user_id}:${user.user_id}`"
+                  :user="user"
+                  :size="128"
+                />
               </div>
 
               <div class="app-profile-info">
@@ -178,6 +181,16 @@ onBeforeUnmount(() => {
   margin: 0;
 }
 
+.profile-overview__row {
+  align-items: flex-start;
+}
+
+.profile-overview__avatar-column {
+  flex: 0 0 196px;
+  width: 196px;
+  min-width: 0;
+}
+
 .profile-overview__main .app-profile-info {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -198,6 +211,19 @@ onBeforeUnmount(() => {
 @media (max-width: 1100px) {
   .profile-overview--with-music {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-overview__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profile-overview__avatar-column {
+    flex: 0 0 auto;
+    align-self: center;
+    width: min(100%, 240px);
   }
 }
 </style>
