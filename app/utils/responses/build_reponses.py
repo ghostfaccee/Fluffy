@@ -85,8 +85,6 @@ async def build_post_response(post: Post) -> PostResponse:
     )
 
 async def build_story_response(story: Story) -> StoryResponse:
-    if story is None:
-        raise story_exc.StoryNotFound()
     author_response = await build_user_response(story.author)
     media_url = await StoryMediaUrlCacheService.get_story_media(story.media_key)
     if media_url is None:

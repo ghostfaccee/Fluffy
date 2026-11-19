@@ -15,7 +15,3 @@ class AccessDenied(HTTPException):
 class StoryLimitExceeded(HTTPException):
     def __init__(self, limit: int = 5):
         super().__init__(status.HTTP_403_FORBIDDEN, f'You have exceeded the allowed limit of active stories. Limit: {limit}.')
-
-class StoryNotFound(HTTPException):
-    def __init__(self):
-        super().__init__(status.HTTP_404_NOT_FOUND, 'Story not found')

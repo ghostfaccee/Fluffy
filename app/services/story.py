@@ -24,7 +24,7 @@ class StoryService:
         elif content_type.startswith('video'):
             extension = 'mp4' if content_type == 'video/mp4' else 'mpeg'
         key = f'{self._story_prefix(user_id)}{uuid4()}.{extension}'
-        upload_url = s3_service.generate_presigned_put_url(key, content_type, yaml_settings.STORY_PRESIGNED_PUT_URL_LIFETIME_MINUTES * 60)
+        upload_url = await s3_service.generate_presigned_put_url(key, content_type, yaml_settings.STORY_PRESIGNED_PUT_URL_LIFETIME_MINUTES * 60)
         return upload_url, key
 
     async def create(self, author_id: UUID, data: StoryCreate) -> Story:
@@ -53,10 +53,13 @@ class StoryService:
             raise user_exc.UserDoesNotExists()
         return await self.uow.story.get_active_stories_by_author_id(user.user_id)
     
-    async def get_active_story_by_id(self, request_user_id, story_id: UUID) -> Story | None:
+    async def get_active_story_by_id(self, request_user_id: UUID, story_id: UUID) -> Story:
         if await self.uow.user.get(request_user_id) is None:
             raise user_exc.UserDoesNotExists()
-        return await self.uow.story.get_active_by_id(story_id)
+        story = await self.uow.story.get_active_by_id(story_id)
+        if story is None:
+            raise story_exc.StoryDoesNotExists()
+        return story
     
     async def get_all_author_stories(self, author_id: UUID) -> list[Story]:
         author = await self.uow.user.get(author_id)
@@ -64,7 +67,7 @@ class StoryService:
             raise user_exc.UserDoesNotExists()
         return await self.uow.story.get_all_stories_by_author_id(author_id)
     
-    async def get_author_story(self, author_id: UUID, story_id: UUID) -> Story | None:
+    async def get_author_story(self, author_id: UUID, story_id: UUID) -> Story:
         author, story = await self._get_user_and_story(author_id, story_id)
         self._is_author(author, story)
         return story
