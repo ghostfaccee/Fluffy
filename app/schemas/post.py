@@ -25,3 +25,7 @@ class PostResponse(BaseModel):
 
 class PostMediaUploadUrl(BaseModel):
     content_type: str = Field(..., pattern = '^(image/(jpeg|png)|video/(mp4|mpeg))$')
+
+class PostMediaUploadResponse(BaseModel):
+    upload_url: str
+    key: str

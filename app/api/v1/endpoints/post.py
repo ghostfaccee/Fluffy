@@ -3,13 +3,22 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status, Request
 
 from app.middleware import RateLimit
-from app.schemas import PostResponse, PostCreate, PostUpdate
+from app.schemas import PostResponse, PostCreate, PostUpdate, PostMediaUploadResponse, PostMediaUploadUrl
 from app.dependencies import get_current_user_uuid, get_post_service
 from app.services import PostService
 from app.utils.responses import build_post_response
 
 router = APIRouter(prefix = '/posts', tags = ['posts'])
 limiter = RateLimit.get_limiter()
+
+@router.post('/upload-url', response_model = PostMediaUploadResponse, status_code = status.HTTP_200_OK)
+@limiter.limit('15/monute')
+async def upload_media(request: Request, data: PostMediaUploadUrl, current_user_uuid: UUID = Depends(get_current_user_uuid), service: PostService = Depends(get_post_service)) -> PostMediaUploadResponse:
+    upload_url, key = await service.generate_media_upload_url(current_user_uuid, data)
+    return PostMediaUploadResponse(
+        upload_url = update_url,
+        key = key
+    )
 
 @router.post('', response_model = PostResponse, status_code = status.HTTP_201_CREATED)
 @limiter.limit('15/minute')
