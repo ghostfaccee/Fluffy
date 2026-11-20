@@ -6,7 +6,9 @@ from app.schemas import StoryCreate, StoryUploadRequest
 from app.core import yaml_settings
 from app.exceptions import story as story_exc
 from app.exceptions import user as user_exc
-from app.infrastructure import s3_service
+from app.exceptions import redis as redis_exc
+from app.exceptions import s3_storage as s3_storage_exc
+from app.infrastructure import s3_service, StoryMediaUrlCacheService
 
 class StoryService:
 
@@ -75,8 +77,15 @@ class StoryService:
     async def delete(self, author_id: UUID, story_id: UUID) -> None:
         author, story = await self._get_user_and_story(author_id, story_id)
         self._is_author(author, story)
+        story_key = story.media_key
+        deleted = await s3_service.delete_object(story_key)
+        if not deleted:
+            raise s3_storage_exc.S3InternalError()
         await self.uow.story.delete(story)
         await self.uow.commit()
+        deleted = await StoryMediaUrlCacheService.delete_story_media(story_key)
+        if not deleted:
+            raise redis_exc.InternalRedisError()
 
     async def _get_user_and_story(self, user_id: UUID, story_id: UUID) -> tuple[User, Story]:
         user = await self.uow.user.get(user_id)

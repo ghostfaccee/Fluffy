@@ -4,12 +4,13 @@ from app.infrastructure.login_verification import LoginCodeService, LoginCodeSer
 from app.infrastructure.storage import s3_service
 from app.infrastructure.caching import AvatarUrlCacheService, GroupAvatarUrlCacheService, UserMusicCacheService
 from app.infrastructure.websocket import PubSubService
-from app.infrastructure.caching import CachingService, StoryMediaUrlCacheService
+from app.infrastructure.caching import CachingService, StoryMediaUrlCacheService, PostMediaUrlCacheService
 
 __all__ = [
     'TokenService', 'TokenServiceReturnValues',
     'VerificationTokenService' , 'VerificationTokenServiceReturnValues',
     'LoginCodeService', 'LoginCodeServiceReturnValues', 's3_service',
     'AvatarUrlCacheService', 'PubSubService', 'GroupAvatarUrlCacheService',
-    'CachingService', 'UserMusicCacheService', 'StoryMediaUrlCacheService'
+    'CachingService', 'UserMusicCacheService', 'StoryMediaUrlCacheService',
+    'PostMediaUrlCacheService'
 ]

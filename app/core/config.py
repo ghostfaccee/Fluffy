@@ -68,12 +68,17 @@ class YamlSettings(BaseModel):
     STORY_PRESIGNED_GET_URL_LIFETIME_MINUTES: int
     STORY_CACHE_LIFETIME_MINUTES: int
 
+    POST_MEDIA_PRESIGNED_PUT_URL_LIFETINE_MINUTES: int
+    POST_MEDIA_PRESIGNED_GET_URL_LIFETIME_MINUTES: int
+    POST_MEDIA_CACHE_LIFETIME_MINUTES: int
+
     MAX_WS_CONNECTIONS_PER_USER: int
 
     USER_AVATAR_KEY: str
     USER_MUSIC_KEY: str
     GROUP_AVATAR_KEY: str
     STORY_KEY: str
+    POST_MEDIA_KEY: str
 
     @classmethod
     def load(cls, yaml_path: str = 'config.yaml') -> YamlSettings:

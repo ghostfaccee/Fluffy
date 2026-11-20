@@ -1,6 +1,6 @@
 from app.model import User, Group, GroupMessage, Message, Post
 from app.schemas import UserResponse, MessageResponse, GroupResponse, GroupMessageResponse, PostResponse, StoryResponse
-from app.infrastructure import AvatarUrlCacheService, GroupAvatarUrlCacheService, UserMusicCacheService, StoryMediaUrlCacheService
+from app.infrastructure import AvatarUrlCacheService, GroupAvatarUrlCacheService, UserMusicCacheService, StoryMediaUrlCacheService, PostMediaUrlCacheService
 from app.exceptions import s3_storage as s3_storage_exc
 from app.exceptions import story as story_exc
 
@@ -74,12 +74,16 @@ async def build_group_message_response(message: GroupMessage) -> GroupMessageRes
 
 async def build_post_response(post: Post) -> PostResponse:
     author_response = await build_user_response(post.author)
+    media_url = None
+    if post.media_key:
+        media_url = await PostMediaUrlCacheService.get_post_media_url(post.media_key)
     return PostResponse(
         # TODO: we have N+1 problem for redis: For 20 messages from the service,
         # resend 20 requests. It’s better to optimize later. (from build_user_response)
         post_id = post.post_id,
         title = post.title,
         content = post.content,
+        media_url = media_url,
         created_at = post.created_at,
         author = author_response
     )

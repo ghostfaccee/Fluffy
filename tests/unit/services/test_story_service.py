@@ -7,11 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.model import User, Story
 from app.schemas import StoryUploadRequest, StoryCreate
 from app.utils import hash_password
-from app.infrastructure import s3_service
+from app.infrastructure import s3_service, StoryMediaUrlCacheService
 from app.repository import UnitOfWork
 from app.services import story as story_module
 from app.exceptions import user as user_exc
 from app.exceptions import story as story_exc
+from app.exceptions import s3_storage as s3_storage_exc
+from app.exceptions import redis as redis_exc
 
 # --- fixtures ---
 
@@ -239,15 +241,61 @@ async def test_get_author_story_success(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_delete_but_user_doesnt_exists(
+async def test_delete_but_s3_internal_error(
+    db_session: AsyncMock,
+    test_story_author: User,
+    test_story_with_author: Story,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delete_object = AsyncMock(return_value = False)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
+    service = story_module.StoryService(UnitOfWork(db_session))
+    with pytest.raises(s3_storage_exc.S3InternalError):
+        await service.delete(test_story_author.user_id, test_story_with_author.story_id)
+    delete_object.assert_awaited_once()
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_delete_but_internal_redis_error(
     db_session: AsyncSession,
     test_story_author: User,
-    test_story_with_author: Story
+    test_story_with_author: Story,
+    monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    delete_object = AsyncMock(return_value = True)
+    delete_story_media = AsyncMock(return_value = False)
+
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
+    monkeypatch.setattr(StoryMediaUrlCacheService, 'delete_story_media', delete_story_media)
+
+    service = story_module.StoryService(UnitOfWork(db_session))
+    with pytest.raises(redis_exc.InternalRedisError):
+        await service.delete(test_story_author.user_id, test_story_with_author.story_id)
+    with pytest.raises(story_exc.StoryDoesNotExists):
+        await service.get_author_story(test_story_author.user_id, test_story_with_author.story_id)
+    delete_object.assert_awaited_once()
+    delete_story_media.assert_awaited_once()
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_delete_success(
+    db_session: AsyncSession,
+    test_story_author: User,
+    test_story_with_author: Story,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delete_object = AsyncMock(return_value = True)
+    delete_story_media = AsyncMock(return_value = True)
+
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
+    monkeypatch.setattr(StoryMediaUrlCacheService, 'delete_story_media', delete_story_media)
+
     service = story_module.StoryService(UnitOfWork(db_session))
     await service.delete(test_story_author.user_id, test_story_with_author.story_id)
     with pytest.raises(story_exc.StoryDoesNotExists):
         await service.get_author_story(test_story_author.user_id, test_story_with_author.story_id)
+    delete_object.assert_awaited_once()
+    delete_story_media.assert_awaited_once()
 
 # --- _get_user_and_story ---
 
