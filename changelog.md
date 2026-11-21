@@ -1,7 +1,7 @@
 # Fluffy | Changelog
 
 **Текущая версия:**
-* * <a href="#v110">v1.1.0</a>
+* <a href="#v110">v1.1.0</a>
 
 **Предыдущие версии:**
 * <a href="#v100---release">v1.0.0 Release</a>
