@@ -16,7 +16,7 @@ limiter = RateLimit.get_limiter()
 async def upload_media(request: Request, data: PostMediaUploadUrl, current_user_uuid: UUID = Depends(get_current_user_uuid), service: PostService = Depends(get_post_service)) -> PostMediaUploadResponse:
     upload_url, key = await service.generate_media_upload_url(current_user_uuid, data)
     return PostMediaUploadResponse(
-        upload_url = update_url,
+        upload_url = upload_url,
         key = key
     )
 

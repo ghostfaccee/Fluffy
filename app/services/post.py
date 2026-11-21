@@ -78,10 +78,12 @@ class PostService:
         user, post = await self._get_user_and_post(user_id, post_id)
         await self._is_author(user, post)
         update_data = data.model_dump(exclude_unset = True)
-        key_rotation = 'media_key' in update_data and post.media_key
+        old_key = post.media_key
+        key_rotation = 'media_key' in update_data and old_key
         if key_rotation:
-            self._validate_post_key(user_id, data.media_key)
-            deleted = await s3_service.delete_object(post.media_key)
+            if update_data.get('media_key') is not None:
+                self._validate_post_key(user_id, data.media_key)
+            deleted = await s3_service.delete_object(old_key)
             if not deleted:
                 raise s3_storage_exc.S3InternalError()
         for key, value in update_data.items():
@@ -89,7 +91,7 @@ class PostService:
         post.author = user
         await self.uow.commit()
         if key_rotation:
-            deleted = await PostMediaUrlCacheService.delete_post_media(post.media_key)
+            deleted = await PostMediaUrlCacheService.delete_post_media(old_key)
             if not deleted:
                 raise redis_exc.InternalRedisError()
         return post
