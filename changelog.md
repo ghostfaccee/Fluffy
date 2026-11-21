@@ -1,9 +1,10 @@
 # Fluffy | Changelog
 
 **Текущая версия:**
-* <a href="#v100---release">v1.0.0 Release</a>
+* * <a href="#v110">v1.1.0</a>
 
 **Предыдущие версии:**
+* <a href="#v100---release">v1.0.0 Release</a>
 * <a href="#v100-beta2">v1.0.0-beta.2</a>
 * <a href="#v100-beta1---бета-релиз">v1.0.0-beta.1 - Бета релиз</a>
 
