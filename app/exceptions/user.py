@@ -25,3 +25,7 @@ class UserAlreadyExists(HTTPException):
 class InvalidAvatarKey(HTTPException):
     def __init__(self):
         super().__init__(status.HTTP_400_BAD_REQUEST, 'This is someone elses avatar key. The user attempted to claim someone elses avatar key for themselves.')
+
+class InvalidMusicKey(HTTPException):
+    def __init__(self):
+        super().__init__(status.HTTP_400_BAD_REQUEST, 'This is a music key that belongs to someone else. The user attempted to claim a music key that was not their own.')

@@ -10,8 +10,13 @@ from app.repository import UnitOfWork, UserRepository
 from app.model import User
 from app.schemas import UserRegister, UserUpdate, PasswordUpdate
 from app.utils import hash_password, verify_password
-from app.infrastructure import TokenService, TokenServiceReturnValues, VerificationTokenService, VerificationTokenServiceReturnValues, s3_avatars, AvatarUrlCacheService
+from app.infrastructure import (
+    TokenService, TokenServiceReturnValues, 
+    VerificationTokenService, VerificationTokenServiceReturnValues, 
+    s3_service, AvatarUrlCacheService, UserMusicCacheService
+)
 from app.tasks.email import send_verification_email
+from app.core import yaml_settings
 
 class UserService:
     def __init__(self, uow: UnitOfWork) -> None:
@@ -96,10 +101,48 @@ class UserService:
                 send_verification_email.delay(update_data['email'], user_id, verification_token)
                 await self._invalidate_token(user_id)
             return user
+    
+    async def generate_music_upload_url(self, user_id: UUID, content_type: str) -> tuple[str, str]:
+        key = f'{self._music_prefix(user_id)}/{uuid4()}.{'mp3' if content_type == 'audio/mpeg' else 'wav'}'
+        upload_url = await s3_service.generate_presigned_put_url(key, content_type, yaml_settings.USER_MUSIC_PRESIGNED_PUT_URL_LIFETIME_MINUTES * 60)
+        return upload_url, key
+
+    async def set_music(self, user_id: UUID, key: str) -> User:
+        user = await self.uow.user.get(user_id)
+        if user is None:
+            raise user_exc.UserDoesNotExists()
+        self._validate_music_key(user_id, key)
+        old_key = user.music_key
+        user.music_key = key
+        await self.uow.commit()
+        status = await UserMusicCacheService.delete_music(user_id)
+        if not status:
+            raise redis_exc.InternalRedisError()
+        if old_key:
+            status = await s3_service.delete_object(old_key)
+            if not status:
+                raise s3_storage_exc.S3InternalError()
+        return user
+    
+    async def delete_music(self, user_id: UUID) -> User:
+        user = await self.uow.user.get(user_id)
+        if user is None:
+            raise user_exc.UserDoesNotExists()
+        old_key = user.music_key
+        user.music_key = None
+        await self.uow.commit()
+        status = await UserMusicCacheService.delete_music(user_id)
+        if not status:
+            raise redis_exc.InternalRedisError()
+        if old_key:
+            status = await s3_service.delete_object(old_key)
+            if not status:
+                raise s3_storage_exc.S3InternalError()
+        return user
 
     async def generate_avatar_upload_url(self, user_id: UUID, content_type: str) -> tuple[str, str]:
-        key = f'avatars/{user_id}/{uuid4()}.{'jpg' if content_type == 'image/jpeg' else 'png'}'
-        upload_url = await s3_avatars.generate_presigned_put_url(key, content_type)
+        key = f'{self._avatar_prefix(user_id)}/{uuid4()}.{'jpg' if content_type == 'image/jpeg' else 'png'}'
+        upload_url = await s3_service.generate_presigned_put_url(key, content_type, yaml_settings.AVATAR_PRESIGNED_PUT_URL_LIFETIME_MINUTES * 60)
         return upload_url, key
     
     async def set_avatar(self, user_id: UUID, key: str) -> User:
@@ -114,7 +157,7 @@ class UserService:
         if not status:
             raise redis_exc.InternalRedisError()
         if old_key:
-            status = await s3_avatars.delete_object(old_key)
+            status = await s3_service.delete_object(old_key)
             if not status:
                 raise s3_storage_exc.S3InternalError()
         return user
@@ -130,7 +173,7 @@ class UserService:
         if not status:
             raise redis_exc.InternalRedisError()
         if old_key:
-            status = await s3_avatars.delete_object(old_key)
+            status = await s3_service.delete_object(old_key)
             if not status:
                 raise s3_storage_exc.S3InternalError()
     
@@ -150,6 +193,7 @@ class UserService:
         if user is None:
             raise user_exc.UserDoesNotExists()
         avatar_key = user.avatar_key
+        music_key = user.music_key
         await self.uow.user.delete(user)
         await self._invalidate_token(user_id)
         await self.uow.commit()
@@ -157,7 +201,11 @@ class UserService:
         if not status:
             raise redis_exc.InternalRedisError()
         if avatar_key:
-            status = await s3_avatars.delete_object(avatar_key)
+            status = await s3_service.delete_object(avatar_key)
+            if not status:
+                raise s3_storage_exc.S3InternalError()
+        if music_key:
+            status = await s3_service.delete_object(music_key)
             if not status:
                 raise s3_storage_exc.S3InternalError()
 
@@ -173,6 +221,17 @@ class UserService:
         return True
 
     def _validate_avatar_key(self, user_id: UUID, key: str) -> None:
-        prefix = f'avatars/{user_id}/'
+        prefix = f'{self._avatar_prefix(user_id)}'
         if not key.startswith(prefix):
             raise user_exc.InvalidAvatarKey()
+    
+    def _validate_music_key(self, user_id: UUID, key: str) -> None:
+        prefix = f'{self._music_prefix(user_id)}'
+        if not key.startswith(prefix):
+            raise user_exc.InvalidMusicKey()
+
+    def _avatar_prefix(self, user_id: UUID) -> str:
+        return f'{yaml_settings.USER_AVATAR_KEY}{user_id}/'
+    
+    def _music_prefix(self, user_id: UUID) -> str:
+        return f'{yaml_settings.USER_MUSIC_KEY}{user_id}/'

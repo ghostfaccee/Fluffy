@@ -15,7 +15,9 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(20), unique = True, index = True)
     email: Mapped[str] = mapped_column(String(255), unique = True, index = True)
     bio: Mapped[str | None] = mapped_column(String(60))
+
     avatar_key: Mapped[str | None] = mapped_column(String(500))
+    music_key: Mapped[str | None] = mapped_column(String(500))
 
     city: Mapped[str| None] = mapped_column(String(20), index = True)
     university: Mapped[str | None] = mapped_column(String(20), index = True)

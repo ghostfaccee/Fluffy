@@ -10,11 +10,11 @@ from app.core import env_settings, yaml_settings, logger
 class S3Service:
     def __init__(self) -> None:
         self.session = aioboto3.Session()
-        self.bucket = env_settings.S3_AVATARS_BUCKET_NAME
-        self.endpoint_url = env_settings.S3_AVATARS_ENDPOINT_URL
-        self.region = env_settings.S3_AVATARS_REGION
-        self.access_key = env_settings.S3_AVATARS_ACCESS_KEY
-        self.secret_key = env_settings.S3_AVATARS_SECRET_KEY
+        self.bucket = env_settings.S3_SERVICE_BUCKET_NAME
+        self.endpoint_url = env_settings.S3_SERVICE_ENDPOINT_URL
+        self.region = env_settings.S3_SERVICE_REGION
+        self.access_key = env_settings.S3_SERVICE_ACCESS_KEY
+        self.secret_key = env_settings.S3_SERVICE_SECRET_KEY
     
     def _get_client(self) -> AbstractAsyncContextManager[AioBaseClient]:
         return self.session.client(
@@ -30,7 +30,7 @@ class S3Service:
         self, 
         key: str, 
         content_type: str, 
-        expires_in: int = yaml_settings.AVATAR_PRESIGNED_PUT_URL_LIFETIME_MINUTES * 60
+        expires_in: int = yaml_settings.DEFAULT_PRESIGNED_PUT_URL_LIFETIME_MINUTES * 60
     ) -> str:
         async with self._get_client() as s3:
             url: str = await s3.generate_presigned_url(
@@ -47,7 +47,7 @@ class S3Service:
     async def generate_presigned_get_url(
         self,
         key: str,
-        expires_in: int = yaml_settings.AVATAR_PRESIGNED_GET_URL_LIFETIME_MINUTES * 60
+        expires_in: int = yaml_settings.DEFAULT_PRESIGNED_GET_URL_LIFETIME_MINUTES * 60
     ) -> str:
         async with self._get_client() as s3:
             url: str = await s3.generate_presigned_url(
@@ -69,4 +69,4 @@ class S3Service:
             logger.error(f'Failed to delete S3 object: {key}: {e}')
             return False
 
-s3_avatars: S3Service = S3Service()
+s3_service: S3Service = S3Service()

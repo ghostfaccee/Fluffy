@@ -14,6 +14,7 @@ class Post(Base):
     author_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), ForeignKey('users.user_id', ondelete = 'CASCADE'), index = True)
     title: Mapped[str] = mapped_column(String(200))
     content: Mapped[str] = mapped_column(String(4096))
+    media_key: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone = True), server_default = func.now())
 
     author: Mapped['User'] = relationship(

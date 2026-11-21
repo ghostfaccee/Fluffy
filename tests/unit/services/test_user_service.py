@@ -14,8 +14,8 @@ from app.exceptions import redis as redis_exc
 from app.exceptions import s3_storage as s3_storage_exc
 from app.schemas import UserRegister, UserUpdate, PasswordUpdate
 from app.infrastructure import VerificationTokenServiceReturnValues, VerificationTokenService
-from app.infrastructure import TokenService, TokenServiceReturnValues, s3_avatars
-from app.infrastructure import AvatarUrlCacheService
+from app.infrastructure import TokenService, TokenServiceReturnValues, s3_service
+from app.infrastructure import AvatarUrlCacheService, UserMusicCacheService
 
 # --- fixtures --- 
 
@@ -293,6 +293,186 @@ async def test_update_user_success(
         send_verification_email.assert_called_once()
         invalidate_token.assert_awaited_once()
 
+# --- generate music upload url ---
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_generate_music_upload_url_success(
+    db_session: AsyncSession,
+    existing_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    generate_presigned_put_url = AsyncMock(return_value = 'upload-url')
+    monkeypatch.setattr(s3_service, 'generate_presigned_put_url', generate_presigned_put_url)
+
+    service = user_module.UserService(UnitOfWork(db_session))
+
+    upload_url, key = await service.generate_music_upload_url(existing_user.user_id, 'audio/mpeg')
+
+    assert isinstance(upload_url, str) and upload_url == 'upload-url'
+    assert isinstance(key, str)
+    generate_presigned_put_url.assert_awaited_once()
+
+# --- set music ---
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_set_music_but_user_doesnt_exists(
+    db_session: AsyncSession
+) -> None:
+    service = user_module.UserService(UnitOfWork(db_session))
+    with pytest.raises(user_exc.UserDoesNotExists):
+        await service.set_music(uuid4(), 'key')
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_set_someone_elses_music(
+    db_session: AsyncSession,
+    existing_user: User
+) -> None:
+    service = user_module.UserService(UnitOfWork(db_session))
+    with pytest.raises(user_exc.InvalidMusicKey):
+        await service.set_music(existing_user.user_id, f'music/profile/{uuid4()}/')
+    
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_set_music_but_internal_redis_error(
+    db_session: AsyncSession,
+    existing_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delete_music = AsyncMock(return_value = False)
+    monkeypatch.setattr(UserMusicCacheService, 'delete_music', delete_music)
+
+    service = user_module.UserService(UnitOfWork(db_session))
+    with pytest.raises(redis_exc.InternalRedisError):
+        await service.set_music(existing_user.user_id, f'music/profile/{existing_user.user_id}/')
+    
+    delete_music.assert_awaited_once()
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_set_music_but_delete_from_s3_error(
+    db_session: AsyncSession,
+    existing_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    existing_user.music_key = 'key'
+    await db_session.commit()
+
+    delete_music = AsyncMock(return_value = True)
+    delete_object = AsyncMock(return_value = False)
+
+    monkeypatch.setattr(UserMusicCacheService, 'delete_music', delete_music)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
+
+    service = user_module.UserService(UnitOfWork(db_session))
+    with pytest.raises(s3_storage_exc.S3InternalError):
+        await service.set_music(existing_user.user_id, f'music/profile/{existing_user.user_id}/')
+    
+    delete_music.assert_awaited_once()
+    delete_object.assert_awaited_once()
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_set_music_success(
+    db_session: AsyncSession,
+    existing_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    existing_user.music_key = 'key'
+    await db_session.commit()
+
+    delete_music = AsyncMock(return_value = True)
+    delete_object = AsyncMock(return_value = True)
+
+    monkeypatch.setattr(UserMusicCacheService, 'delete_music', delete_music)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
+
+    service = user_module.UserService(UnitOfWork(db_session))
+
+    res = await service.set_music(existing_user.user_id, f'music/profile/{existing_user.user_id}/')
+
+    assert isinstance(res, User)
+    delete_music.assert_awaited_once()
+    delete_object.assert_awaited_once()
+
+# --- delete music ---
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_delete_music_but_user_doesnt_exists(
+    db_session: AsyncSession
+) -> None:
+    service = user_module.UserService(UnitOfWork(db_session))
+    
+    with pytest.raises(user_exc.UserDoesNotExists):
+        await service.delete_music(uuid4())
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_delete_music_but_internal_redis_error(
+    db_session: AsyncSession,
+    existing_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delete_music = AsyncMock(return_value = False)
+    monkeypatch.setattr(UserMusicCacheService, 'delete_music', delete_music)
+
+    service = user_module.UserService(UnitOfWork(db_session))
+    with pytest.raises(redis_exc.InternalRedisError):
+        await service.delete_music(existing_user.user_id)
+    
+    delete_music.assert_awaited_once()
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_delete_music_but_internal_s3_error(
+    db_session: AsyncSession,
+    existing_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    existing_user.music_key = 'key'
+    await db_session.commit()
+
+    delete_music = AsyncMock(return_value = True)
+    delete_object = AsyncMock(return_value = False)
+
+    monkeypatch.setattr(UserMusicCacheService, 'delete_music', delete_music)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
+
+    service = user_module.UserService(UnitOfWork(db_session))
+
+    with pytest.raises(s3_storage_exc.S3InternalError):
+        await service.delete_music(existing_user.user_id)
+    
+    delete_music.assert_awaited_once()
+    delete_object.assert_awaited_once()
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_delete_music_success(
+    db_session: AsyncSession,
+    existing_user: User,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    existing_user.music_key = 'key'
+    await db_session.commit()
+
+    delete_music = AsyncMock(return_value = True)
+    delete_object = AsyncMock(return_value = True)
+
+    monkeypatch.setattr(UserMusicCacheService, 'delete_music', delete_music)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
+
+    service = user_module.UserService(UnitOfWork(db_session))
+
+    res = await service.delete_music(existing_user.user_id)
+
+    assert isinstance(res, User)    
+    delete_music.assert_awaited_once()
+    delete_object.assert_awaited_once()
+
 # --- generate avatar upload url ---
 
 @pytest.mark.unit
@@ -303,7 +483,7 @@ async def test_generate_avatar_upload_url_success(
     monkeypatch: pytest.MonkeyPatch
 ) -> None:
     generate_presigned_put_url = AsyncMock(return_value = 'upload-url')
-    monkeypatch.setattr(s3_avatars, 'generate_presigned_put_url', generate_presigned_put_url)
+    monkeypatch.setattr(s3_service, 'generate_presigned_put_url', generate_presigned_put_url)
 
     service = user_module.UserService(UnitOfWork(db_session))
 
@@ -336,7 +516,7 @@ async def test_set_someone_elses_avatar(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_set_avatar_but_delete_avatar__from_redis_error(
+async def test_set_avatar_but_delete_avatar_from_redis_error(
     db_session: AsyncSession,
     existing_user: User,
     monkeypatch: pytest.MonkeyPatch
@@ -348,7 +528,7 @@ async def test_set_avatar_but_delete_avatar__from_redis_error(
     service = user_module.UserService(UnitOfWork(db_session))
 
     with pytest.raises(redis_exc.InternalRedisError):
-        await service.set_avatar(existing_user.user_id, f'avatars/{existing_user.user_id}/')
+        await service.set_avatar(existing_user.user_id, f'avatars/profile/{existing_user.user_id}/')
     delete_avatar.assert_awaited_once()
 
 @pytest.mark.unit
@@ -365,12 +545,12 @@ async def test_set_avatar_but_delete_avatar_from_s3_error(
     delete_object = AsyncMock(return_value = False)
 
     monkeypatch.setattr(AvatarUrlCacheService, 'delete_avatar', delete_avatar)
-    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
 
     service = user_module.UserService(UnitOfWork(db_session))
 
     with pytest.raises(s3_storage_exc.S3InternalError):
-        await service.set_avatar(existing_user.user_id, f'avatars/{existing_user.user_id}/')
+        await service.set_avatar(existing_user.user_id, f'avatars/profile/{existing_user.user_id}/')
     delete_avatar.assert_awaited_once()
     delete_object.assert_awaited_once()
 
@@ -388,11 +568,11 @@ async def test_set_avatar_success(
     delete_object = AsyncMock(return_value = True)
 
     monkeypatch.setattr(AvatarUrlCacheService, 'delete_avatar', delete_avatar)
-    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
 
     service = user_module.UserService(UnitOfWork(db_session))
 
-    res = await service.set_avatar(existing_user.user_id, f'avatars/{existing_user.user_id}/')
+    res = await service.set_avatar(existing_user.user_id, f'avatars/profile/{existing_user.user_id}/')
 
     assert isinstance(res, User)
     delete_avatar.assert_awaited_once()
@@ -440,7 +620,7 @@ async def test_delete_avatar_but_s3_internal_error_while_deleting_object(
     delete_object = AsyncMock(return_value = False)
 
     monkeypatch.setattr(AvatarUrlCacheService, 'delete_avatar', delete_avatar)
-    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
 
     service = user_module.UserService(UnitOfWork(db_session))
 
@@ -463,7 +643,7 @@ async def test_delete_avatar_success(
     delete_object = AsyncMock(return_value = True)
 
     monkeypatch.setattr(AvatarUrlCacheService, 'delete_avatar', delete_avatar)
-    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
 
     service = user_module.UserService(UnitOfWork(db_session))
 
@@ -565,7 +745,7 @@ async def test_delete_but_internal_s3_error_while_delete_object(
     delete_object = AsyncMock(return_value = False)
     
     monkeypatch.setattr(AvatarUrlCacheService, 'delete_avatar', delete_avatar)
-    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
 
     service = user_module.UserService(UnitOfWork(db_session))
 
@@ -589,7 +769,7 @@ async def test_delete_success(
     delete_object = AsyncMock(return_value = True)
     
     monkeypatch.setattr(AvatarUrlCacheService, 'delete_avatar', delete_avatar)
-    monkeypatch.setattr(s3_avatars, 'delete_object', delete_object)
+    monkeypatch.setattr(s3_service, 'delete_object', delete_object)
 
     service = user_module.UserService(UnitOfWork(db_session))
 

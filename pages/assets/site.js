@@ -22,7 +22,6 @@
     { id: 'chat', label: 'Общение' },
     { id: 'profile', label: 'Профили' },
     { id: 'theme', label: 'Оформление' },
-    { id: 'posts', label: 'Посты' },
     { id: 'customization', label: 'Кастомизация' }
   ]
 
@@ -86,18 +85,6 @@
       title: 'Светлая тема',
       description: 'Альтернативное оформление приложения.',
       category: 'theme',
-    },
-    {
-      src: 'assets/demo/WritePost.png',
-      title: 'Создание поста',
-      description: 'Посты имеют заголовок и контент.',
-      category: 'posts'
-    },
-    {
-      src: 'assets/demo/Post.png',
-      title: 'Посты',
-      description: 'Отображение в профиле.',
-      category: 'posts'
     },
     {
       src: 'assets/demo/GraphiteAccent.png',

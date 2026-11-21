@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useAuthStore } from '@/modules/auth/stores/auth'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import PostEditor from './PostEditor.vue'
+import PostMedia from './PostMedia.vue'
 import { postsApi } from '../api/posts'
 
 const props = defineProps({
@@ -90,7 +91,7 @@ async function load(reset = false) {
 }
 
 function openEditor(post = null) {
-  if (loading.value || deleting.value) return
+  if (!ownProfile.value || loading.value || deleting.value) return
   editedPost.value = post
   editorOpen.value = true
 }
@@ -143,6 +144,10 @@ watch(
   { immediate: true },
 )
 
+watch(ownProfile, (own) => {
+  if (!own) closeEditor()
+})
+
 onBeforeUnmount(() => {
   generation += 1
 })
@@ -163,7 +168,7 @@ onBeforeUnmount(() => {
       </button>
     </header>
 
-    <div v-if="editorOpen" class="pp-card pp-editor">
+    <div v-if="editorOpen && ownProfile" class="pp-card pp-editor">
       <PostEditor
         :key="editedPost?.post_id || 'new'"
         :post="editedPost"
@@ -202,6 +207,8 @@ onBeforeUnmount(() => {
 
       <h3 class="pp-title">{{ post.title }}</h3>
       <p class="pp-content">{{ post.content }}</p>
+
+      <PostMedia v-if="post.media_url" class="pp-media" :post="post" />
 
       <footer v-if="ownProfile" class="pp-actions">
         <button
@@ -319,6 +326,10 @@ onBeforeUnmount(() => {
   line-height: 1.75;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.pp-media {
+  margin-top: 14px;
 }
 
 .pp-actions {

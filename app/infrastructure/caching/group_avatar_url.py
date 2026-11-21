@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import Optional
 
 from app.core import RedisClient, logger, yaml_settings
-from app.infrastructure.storage import s3_avatars
+from app.infrastructure.storage import s3_service
 
 class GroupAvatarUrlCacheService:
     AVATAR_URL_PREFIX = 'group_avatar_url'
@@ -19,8 +19,8 @@ class GroupAvatarUrlCacheService:
             stored_url = await redis.get(key)
             if stored_url:
                 return stored_url
-            presigned_url = await s3_avatars.generate_presigned_get_url(avatar_key)
-            await redis.set(key, presigned_url, ex = yaml_settings.AVATAR_URL_CACHE_LIFETIME_MINUTES * 60)
+            presigned_url = await s3_service.generate_presigned_get_url(avatar_key, yaml_settings.GROUP_AVATAR_PRESIGNED_GET_URL_LIFETIME_MINUTES * 60)
+            await redis.set(key, presigned_url, ex = yaml_settings.GROUP_AVATAR_URL_CACHE_LIFETIME_MINUTES * 60)
             return presigned_url
         except Exception as e:
             logger.error(f'Failed to get avatar: {e}')

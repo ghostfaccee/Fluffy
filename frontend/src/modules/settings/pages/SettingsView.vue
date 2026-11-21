@@ -1,44 +1,55 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/auth/stores/auth'
 import { passwordErrorMessage } from '@/shared/api/errors'
 import AppShell from '@/app/layouts/AppShell.vue'
 import { useTheme } from '@/shared/composables/useTheme'
 import AccentPicker from '@/modules/settings/components/AccentPicker.vue'
-
+import StoriesArchive from '@/modules/stories/components/StoriesArchive.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
 const { theme, setTheme } = useTheme()
 
-const passwordForm = ref({ old_password: '', new_password: '' })
+const archiveOpen = ref(false)
+
+const passwordForm = ref({
+  old_password: '',
+  new_password: '',
+})
 const passwordLoading = ref(false)
 const passwordError = ref('')
 const passwordSuccess = ref(false)
 
+const showDeleteConfirm = ref(false)
+const deleteLoading = ref(false)
+const deleteError = ref('')
+
 async function changePassword() {
   if (passwordLoading.value) return
+
   passwordError.value = ''
   passwordSuccess.value = false
   passwordLoading.value = true
+
   try {
     await auth.updatePassword({
       old_password: passwordForm.value.old_password,
       new_password: passwordForm.value.new_password,
     })
+
     passwordSuccess.value = true
-    passwordForm.value = { old_password: '', new_password: '' }
-  } catch (e) {
-    passwordError.value = passwordErrorMessage(e)
+    passwordForm.value = {
+      old_password: '',
+      new_password: '',
+    }
+  } catch (cause) {
+    passwordError.value = passwordErrorMessage(cause)
   } finally {
     passwordLoading.value = false
   }
 }
-
-const showDeleteConfirm = ref(false)
-const deleteLoading = ref(false)
-const deleteError = ref('')
 
 function toggleDelete() {
   showDeleteConfirm.value = !showDeleteConfirm.value
@@ -47,8 +58,10 @@ function toggleDelete() {
 
 async function deleteAccount() {
   if (deleteLoading.value) return
+
   deleteError.value = ''
   deleteLoading.value = true
+
   try {
     await auth.deleteAccount()
     router.push({ name: 'landing' })
@@ -57,13 +70,19 @@ async function deleteAccount() {
     deleteLoading.value = false
   }
 }
+
+watch(
+  () => auth.user?.user_id,
+  () => {
+    archiveOpen.value = false
+  },
+)
 </script>
 
 <template>
   <AppShell>
     <div class="container">
       <section class="app-section">
-
         <AccentPicker />
 
         <div class="settings-card settings-card--appearance">
@@ -74,7 +93,12 @@ async function deleteAccount() {
               Выбери оформление Fluffy. Настройка сохранится на этом устройстве.
             </p>
           </div>
-          <div class="theme-options" role="group" aria-label="Тема оформления">
+
+          <div
+            class="theme-options"
+            role="group"
+            aria-label="Тема оформления"
+          >
             <button
               class="theme-option"
               :class="{ 'theme-option--active': theme === 'dark' }"
@@ -82,10 +106,27 @@ async function deleteAccount() {
               :aria-pressed="theme === 'dark'"
               @click="setTheme('dark')"
             >
-              <span class="theme-preview theme-preview--dark" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span class="theme-option-copy"><strong>Тёмная</strong><small>Мягкая для глаз</small></span>
-              <span v-if="theme === 'dark'" class="theme-check" aria-hidden="true">✓</span>
+              <span
+                class="theme-preview theme-preview--dark"
+                aria-hidden="true"
+              >
+                <i></i><i></i><i></i>
+              </span>
+
+              <span class="theme-option-copy">
+                <strong>Тёмная</strong>
+                <small>Мягкая для глаз</small>
+              </span>
+
+              <span
+                v-if="theme === 'dark'"
+                class="theme-check"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
             </button>
+
             <button
               class="theme-option"
               :class="{ 'theme-option--active': theme === 'light' }"
@@ -93,9 +134,25 @@ async function deleteAccount() {
               :aria-pressed="theme === 'light'"
               @click="setTheme('light')"
             >
-              <span class="theme-preview theme-preview--light" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span class="theme-option-copy"><strong>Светлая</strong><small>Чистая и яркая</small></span>
-              <span v-if="theme === 'light'" class="theme-check" aria-hidden="true">✓</span>
+              <span
+                class="theme-preview theme-preview--light"
+                aria-hidden="true"
+              >
+                <i></i><i></i><i></i>
+              </span>
+
+              <span class="theme-option-copy">
+                <strong>Светлая</strong>
+                <small>Чистая и яркая</small>
+              </span>
+
+              <span
+                v-if="theme === 'light'"
+                class="theme-check"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
             </button>
           </div>
         </div>
@@ -107,11 +164,47 @@ async function deleteAccount() {
               Имя, логин, email и остальные данные — в профиле.
             </p>
           </div>
-          <RouterLink to="/me" class="btn btn-secondary">Открыть профиль</RouterLink>
+
+          <RouterLink to="/me" class="btn btn-secondary">
+            Открыть профиль
+          </RouterLink>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <h2 id="settings-stories-title" class="settings-card-title">
+              Архив историй
+            </h2>
+
+            <p class="settings-card-hint">
+              Все ваши опубликованные истории, включая активные.
+              Архив доступен только вам.
+            </p>
+          </div>
+
+          <button
+            class="btn btn-secondary"
+            type="button"
+            :aria-expanded="archiveOpen"
+            aria-controls="settings-stories-archive"
+            @click="archiveOpen = !archiveOpen"
+          >
+            {{ archiveOpen ? 'Скрыть архив' : 'Открыть архив историй' }}
+          </button>
+
+          <div
+            v-if="archiveOpen"
+            id="settings-stories-archive"
+            role="region"
+            aria-labelledby="settings-stories-title"
+          >
+            <StoriesArchive />
+          </div>
         </div>
 
         <div class="settings-card settings-card--warning">
           <span class="settings-card-label">Warning zone</span>
+
           <div class="settings-card-head">
             <h2 class="settings-card-title">Смена пароля</h2>
             <p class="settings-card-hint">
@@ -119,20 +212,45 @@ async function deleteAccount() {
             </p>
           </div>
 
-          <p v-if="passwordError" class="form-error" role="alert">{{ passwordError }}</p>
-          <p v-if="passwordSuccess" class="form-info" role="status">Пароль изменён.</p>
+          <p v-if="passwordError" class="form-error" role="alert">
+            {{ passwordError }}
+          </p>
+
+          <p v-if="passwordSuccess" class="form-info" role="status">
+            Пароль изменён.
+          </p>
 
           <form class="settings-form" @submit.prevent="changePassword">
             <div class="field">
               <label for="p-old">Старый пароль</label>
-              <input id="p-old" v-model="passwordForm.old_password" type="password" minlength="3" maxlength="10" required />
+              <input
+                id="p-old"
+                v-model="passwordForm.old_password"
+                type="password"
+                minlength="3"
+                maxlength="10"
+                required
+              />
             </div>
+
             <div class="field">
               <label for="p-new">Новый пароль</label>
-              <input id="p-new" v-model="passwordForm.new_password" type="password" minlength="3" maxlength="10" required />
+              <input
+                id="p-new"
+                v-model="passwordForm.new_password"
+                type="password"
+                minlength="3"
+                maxlength="10"
+                required
+              />
             </div>
+
             <div class="settings-actions">
-              <button class="btn btn-secondary" type="submit" :disabled="passwordLoading">
+              <button
+                class="btn btn-secondary"
+                type="submit"
+                :disabled="passwordLoading"
+              >
                 {{ passwordLoading ? 'Меняем…' : 'Сменить пароль' }}
               </button>
             </div>
@@ -141,28 +259,50 @@ async function deleteAccount() {
 
         <div class="settings-card settings-card--danger">
           <span class="settings-card-label">Danger zone</span>
+
           <div class="settings-card-head">
             <h2 class="settings-card-title">Удаление аккаунта</h2>
             <p class="settings-card-hint">
-              Действие необратимо. Профиль и все данные будут удалены без возможности восстановления.
+              Действие необратимо. Профиль и все данные будут удалены
+              без возможности восстановления.
             </p>
           </div>
 
-          <p v-if="deleteError" class="form-error" role="alert">{{ deleteError }}</p>
+          <p v-if="deleteError" class="form-error" role="alert">
+            {{ deleteError }}
+          </p>
 
           <div v-if="!showDeleteConfirm">
-            <button class="btn btn-danger" type="button" @click="toggleDelete">
+            <button
+              class="btn btn-danger"
+              type="button"
+              @click="toggleDelete"
+            >
               Удалить аккаунт
             </button>
           </div>
 
           <div v-else>
-            <p class="settings-confirm">Точно удалить? Это необратимо.</p>
+            <p class="settings-confirm">
+              Точно удалить? Это необратимо.
+            </p>
+
             <div class="settings-actions">
-              <button class="btn btn-danger" type="button" :disabled="deleteLoading" @click="deleteAccount">
+              <button
+                class="btn btn-danger"
+                type="button"
+                :disabled="deleteLoading"
+                @click="deleteAccount"
+              >
                 {{ deleteLoading ? 'Удаляем…' : 'Да, удалить' }}
               </button>
-              <button class="btn btn-secondary" type="button" :disabled="deleteLoading" @click="toggleDelete">
+
+              <button
+                class="btn btn-secondary"
+                type="button"
+                :disabled="deleteLoading"
+                @click="toggleDelete"
+              >
                 Отмена
               </button>
             </div>
