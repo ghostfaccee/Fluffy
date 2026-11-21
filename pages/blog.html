@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#191a1b">
+  <meta name="description" content="Блог Fluffy: обновления проекта, разработка и технические решения.">
+  <title>Блог — Fluffy</title>
+
+  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./assets/styles.css">
+  <link rel="stylesheet" href="./assets/refinement.css">
+  <link rel="stylesheet" href="./assets/blog.css">
+</head>
+<body id="top">
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand blog-brand" href="./blog.html" aria-label="Fluffy — блог">
+        <img src="./assets/logo.svg" alt="" class="brand-logo">
+        <span>Fluffy<span class="blog-brand-suffix" aria-hidden="true"> /blog</span></span>
+      </a>
+
+      <nav class="nav" aria-label="Основная навигация">
+        <a href="./index.html#about">О проекте</a>
+        <a href="./index.html#features">Возможности</a>
+        <a href="./index.html#demo">Демо</a>
+        <a href="./index.html#start">Запуск</a>
+        <a href="./index.html#resources">Материалы</a>
+        <a href="./blog.html" aria-current="page">Блог проекта</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="blog-page">
+    <div id="fluffy-blog" class="container"></div>
+    <p id="fluffy-blog-status" class="container blog-status" role="status">
+      Загружаем записи…
+    </p>
+    <noscript>
+      <p class="container blog-status">Для просмотра блога включи JavaScript.</p>
+    </noscript>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <a class="brand footer-brand" href="./index.html">
+        <img src="./assets/logo.svg" alt="" class="brand-logo">
+        <span>Fluffy</span>
+      </a>
+      <p>Социальная сеть с открытым исходным кодом.</p>
+      <a href="https://github.com/ghostfaccee/Fluffy" target="_blank" rel="noopener noreferrer">
+        GitHub <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+  </footer>
+
+  <script src="./assets/site.js" defer></script>
+  <script src="./assets/refinement.js" defer></script>
+  <script src="./blog-data.js" defer></script>
+  <script src="./blog-render.js" defer></script>
+</body>
+</html>
