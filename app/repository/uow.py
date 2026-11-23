@@ -3,6 +3,7 @@ from app.repository import UserRepository, MessageRepository
 from app.repository import GroupMemberRepository, GroupMessageRepository, GroupRepository
 from app.repository import PostRepository
 from app.repository import StoryRepository
+from app.repository import FriendshipRepository
 
 class UnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
@@ -14,6 +15,7 @@ class UnitOfWork:
         self.group_member = GroupMemberRepository(session)
         self.group_message = GroupMessageRepository(session)
         self.story = StoryRepository(session)
+        self.friendship = FriendshipRepository(session)
     
     async def commit(self) -> None:
         await self.session.commit()

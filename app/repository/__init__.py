@@ -4,9 +4,10 @@ from app.repository.group import GroupRepository, GroupMemberRepository, GroupMe
 from app.repository.post import PostRepository
 from app.repository.story import StoryRepository
 from app.repository.uow import UnitOfWork
+from app.repository.friendship import FriendshipRepository
 
 __all__ = [
     'UserRepository', 'MessageRepository', 'UnitOfWork',
     'GroupRepository', 'GroupMessageRepository', 'GroupMemberRepository',
-    'PostRepository', 'StoryRepository'
+    'PostRepository', 'StoryRepository', 'FriendshipRepository'
 ]
