@@ -1,7 +1,7 @@
 import uuid
 
 from datetime import datetime
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func, UniqueConstraint, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,6 +21,12 @@ class Group(Base):
 
 class GroupMember(Base):
     __tablename__ = 'group_members'
+    __table_args__ = (
+        CheckConstraint(
+            'role IN (\'member\',\'admin\',\'owner\')',
+            name = 'ck_group_member_role'
+        ),
+    )
 
     group_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), ForeignKey('groups.group_id', ondelete = 'CASCADE'), primary_key = True)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True), ForeignKey('users.user_id', ondelete = 'CASCADE'), primary_key = True)

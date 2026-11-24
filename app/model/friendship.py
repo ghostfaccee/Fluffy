@@ -12,7 +12,7 @@ class Friendship(Base):
         CheckConstraint('user_low_id < user_high_id', name = 'ck_friendship_order'),
         CheckConstraint(
             'requested_by IN (user_low_id, user_high_id)',
-            name = 'ch_friendship_requester'
+            name = 'ck_friendship_requester'
         ),
         CheckConstraint(
             'status IN (\'pending\', \'accepted\')',

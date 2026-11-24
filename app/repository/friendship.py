@@ -37,6 +37,6 @@ class FriendshipRepository:
     
     async def get_all_accepted(self, user_id: UUID) -> list[Friendship]:
         return await self._get_list(user_id, 'accepted')
-    
-    async def get_all_pending(self, user_id: UUID) -> list[Friendship]:
-        return await self._get_list(user_id, 'pending')
+
+    async def delete(self, friendship: Friendship) -> None:
+        await self.session.delete(friendship)

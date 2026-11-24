@@ -1,0 +1,76 @@
+from uuid import UUID
+
+from app.repository import UnitOfWork
+from app.model import Friendship
+from app.exceptions import user as user_exc
+from app.exceptions import friendship as friendship_exc
+
+class FriendshipService:
+
+    def __init__(self, uow: UnitOfWork) -> None:
+        self.uow = uow
+    
+    async def create(self, from_user_id: UUID, to_user_id: UUID) -> Friendship:
+        from_user = await self.uow.user.get(from_user_id)
+        if from_user is None:
+            raise user_exc.UserDoesNotExists()
+        to_user = await self.uow.user.get(to_user_id)
+        if to_user is None:
+            raise user_exc.UserDoesNotExists
+        low_user_id, high_user_id = sorted(from_user_id, to_user_id)
+        friendship = Friendship(
+            user_low_id = low_user_id,
+            user_high_id = high_user_id,
+            requested_by = from_user_id
+        )
+        self.uow.friendship.add(friendship)
+        await self.uow.commit()
+        return friendship
+    
+    async def get_friendship_of_two_users(self, first_user_id: UUID, second_user_id: UUID) -> Friendship:
+        first_user = await self.uow.user.get(first_user_id)
+        if first_user is None:
+            raise user_exc.UserDoesNotExists()
+        second_user = await self.uow.user.get(second_user_id)
+        if second_user is None:
+            raise user_exc.UserDoesNotExists()
+        low_user_id, high_user_id = sorted(first_user_id, second_user_id)
+        friendship = await self.uow.friendship.get(low_user_id, high_user_id)
+        if friendship is None:
+            raise friendship_exc.FriendshipDoesNotExists()
+        return friendship
+    
+    async def get_incoming_friendships(self, user_id: UUID) -> list[Friendship]:
+        user = await self.uow.user.get(user_id)
+        if user is None:
+            raise user_exc.UserDoesNotExists()
+        friendships = await self.uow.friendship.get_incoming(user_id)
+        return friendships
+    
+    async def get_outgoing_friendships(self, user_id: UUID) -> list[Friendship]:
+        user = await self.uow.user.get(user_id)
+        if user is None:
+            raise user_exc.UserDoesNotExists()
+        friendships = await self.uow.friendship.get_outgoing(user_id)
+        return friendships
+
+    async def get_all_accepted_friendships(self, user_id: UUID) -> list[Friendship]:
+        user = await self.uow.user.get(user_id)
+        if user is None:
+            raise user_exc.UserDoesNotExists()
+        friendships = await self.uow.friendship.get_all_accepted(user_id)
+        return friendships
+    
+    async def delete(self, first_user_id: UUID, second_user_id: UUID) -> None:
+        # Either person—the one who sent the friend request or the one who accepted it—can remove the friendship.
+        first_user = await self.uow.user.get(first_user_id)
+        if first_user is None:
+            raise user_exc.UserDoesNotExists()
+        second_user = await self.uow.user.get(second_user_id)
+        if second_user is None:
+            raise user_exc.UserDoesNotExists()
+        low_user_id, high_user_id = sorted(first_user_id, second_user_id)
+        friendship = await self.uow.friendship.get(low_user_id, high_user_id)
+        if friendship is None:
+            raise friendship_exc.FriendshipDoesNotExists()
+        await self.uow.friendship.delete(friendship)
