@@ -16,7 +16,7 @@ class FriendshipService:
             raise user_exc.UserDoesNotExists()
         to_user = await self.uow.user.get(to_user_id)
         if to_user is None:
-            raise user_exc.UserDoesNotExists
+            raise user_exc.UserDoesNotExists()
         low_user_id, high_user_id = sorted(from_user_id, to_user_id)
         friendship = Friendship(
             user_low_id = low_user_id,
@@ -27,14 +27,19 @@ class FriendshipService:
         await self.uow.commit()
         return friendship
     
+    async def accept(self, receiving_user_id: UUID, sending_user_id: UUID) -> Friendship:
+        low_user_id, high_user_id = await self._get_low_and_high_user_ids(receiving_user_id, sending_user_id)
+        friendship = await self.uow.friendship.get(low_user_id, high_user_id)
+        if friendship is None:
+            raise friendship_exc.FriendshipDoesNotExists()
+        if friendship.requested_by != sending_user_id:
+            raise friendship_exc.SenderCannotAcceptFriendship()
+        friendship.status = 'accepted'
+        await self.uow.commit()
+        return friendship
+    
     async def get_friendship_of_two_users(self, first_user_id: UUID, second_user_id: UUID) -> Friendship:
-        first_user = await self.uow.user.get(first_user_id)
-        if first_user is None:
-            raise user_exc.UserDoesNotExists()
-        second_user = await self.uow.user.get(second_user_id)
-        if second_user is None:
-            raise user_exc.UserDoesNotExists()
-        low_user_id, high_user_id = sorted(first_user_id, second_user_id)
+        low_user_id, high_user_id = await self._get_low_and_high_user_ids(first_user_id, second_user_id)
         friendship = await self.uow.friendship.get(low_user_id, high_user_id)
         if friendship is None:
             raise friendship_exc.FriendshipDoesNotExists()
@@ -63,6 +68,13 @@ class FriendshipService:
     
     async def delete(self, first_user_id: UUID, second_user_id: UUID) -> None:
         # Either person—the one who sent the friend request or the one who accepted it—can remove the friendship.
+        low_user_id, high_user_id = await self._get_low_and_high_user_ids(first_user_id, second_user_id)
+        friendship = await self.uow.friendship.get(low_user_id, high_user_id)
+        if friendship is None:
+            raise friendship_exc.FriendshipDoesNotExists()
+        await self.uow.friendship.delete(friendship)
+
+    async def _get_low_and_high_user_ids(self, first_user_id: UUID, second_user_id: UUID) -> tuple[UUID, UUID]:
         first_user = await self.uow.user.get(first_user_id)
         if first_user is None:
             raise user_exc.UserDoesNotExists()
@@ -70,7 +82,4 @@ class FriendshipService:
         if second_user is None:
             raise user_exc.UserDoesNotExists()
         low_user_id, high_user_id = sorted(first_user_id, second_user_id)
-        friendship = await self.uow.friendship.get(low_user_id, high_user_id)
-        if friendship is None:
-            raise friendship_exc.FriendshipDoesNotExists()
-        await self.uow.friendship.delete(friendship)
+        return low_user_id, high_user_id

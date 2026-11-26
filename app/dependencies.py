@@ -7,7 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import get_db
 from app.model import User
 from app.repository import UnitOfWork
-from app.services import UserService, AuthService, MessageService, GroupService, GroupMessageService, PostService, StoryService
+from app.services import (
+    UserService, AuthService, MessageService, 
+    GroupService, GroupMessageService, PostService, 
+    StoryService, FriendshipService
+)
 from app.utils import decode_access_token
 from app.exceptions import auth as auth_exc
 
@@ -34,6 +38,9 @@ async def get_post_service(uow: UnitOfWork = Depends(get_uow)) -> PostService:
 
 async def get_story_service(uow: UnitOfWork = Depends(get_uow)) -> StoryService:
     return StoryService(uow)
+
+async def get_frienship_service(uow: UnitOfWork = Depends(get_uow)) -> FriendshipService:
+    return FriendshipService(uow)
 
 security = HTTPBearer()
 

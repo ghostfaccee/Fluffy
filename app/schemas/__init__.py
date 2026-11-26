@@ -6,6 +6,7 @@ from app.schemas.group import GroupResponse, GroupUpdate, GroupAvatarUploadUrlRe
 from app.schemas.group import GroupMemberRoleUpdate
 from app.schemas.post import PostCreate, PostUpdate, PostResponse, PostMediaUploadUrl, PostMediaUploadResponse
 from app.schemas.story import StoryCreate, StoryUploadRequest, StoryUploadResponse, StoryResponse
+from app.schemas.friendship import FriendshipResponse
 
 __all__ = [
     'UserRegister', 'UserUpdate', 'PasswordUpdate', 'UserLoginRequest',
@@ -16,5 +17,5 @@ __all__ = [
     'GroupAvatarUploadRequest', 'GroupAvatarSetRequest', 'GroupMemberRoleUpdate',
     'PostCreate', 'PostUpdate', 'PostResponse', 'MusicUploadRequest', 'MusicUploadResponse',
     'MusicSetRequest', 'StoryCreate', 'StoryUploadRequest', 'StoryUploadResponse', 'StoryResponse',
-    'PostMediaUploadUrl', 'PostMediaUploadResponse'
+    'PostMediaUploadUrl', 'PostMediaUploadResponse', 'FriendshipResponse'
 ]
