@@ -21,17 +21,17 @@ async def create_friendship(request: Request, user_id: UUID, current_user_uuid: 
 async def get_friendship(request: Request, user_id: UUID, current_user_uuid: UUID = Depends(get_current_user_uuid), service: FriendshipService = Depends(get_frienship_service)) -> Friendship:
     return await service.get_friendship_of_two_users(current_user_uuid, user_id)
 
-@router.get('/incoming', response_model = list[FriendshipResponse], status_code = status.HTTP_200_OK)
+@router.get('/all/incoming', response_model = list[FriendshipResponse], status_code = status.HTTP_200_OK)
 @limiter.limit('20/minute')
 async def get_incoming_friendships(request: Request, current_user_uuid: UUID = Depends(get_current_user_uuid), service: FriendshipService = Depends(get_frienship_service)) -> list[Friendship]:
     return await service.get_incoming_friendships(current_user_uuid)
 
-@router.get('/outgoing', response_model = list[FriendshipResponse], status_code = status.HTTP_200_OK)
+@router.get('/all/outgoing', response_model = list[FriendshipResponse], status_code = status.HTTP_200_OK)
 @limiter.limit('20/minute')
 async def get_outgoing_friendships(request: Request, current_user_uuid: UUID = Depends(get_current_user_uuid), service: FriendshipService = Depends(get_frienship_service)) -> list[Friendship]:
     return await service.get_outgoing_friendships(current_user_uuid)
 
-@router.get('/accepted', response_model = list[FriendshipResponse], status_code = status.HTTP_200_OK)
+@router.get('/all/accepted', response_model = list[FriendshipResponse], status_code = status.HTTP_200_OK)
 @limiter.limit('20/minute')
 async def get_all_accepted_friendships(request: Request, current_user_uuid: UUID = Depends(get_current_user_uuid), service: FriendshipService = Depends(get_frienship_service)) -> list[Friendship]:
     return await service.get_all_accepted_friendships(current_user_uuid)
@@ -41,7 +41,7 @@ async def get_all_accepted_friendships(request: Request, current_user_uuid: UUID
 async def accept_friendship(request: Request, user_id: UUID, current_user_uuid: UUID = Depends(get_current_user_uuid), service: FriendshipService = Depends(get_frienship_service)) -> Friendship:
     return await service.accept(current_user_uuid, user_id)
 
-@router.delete('/delete/{user_id}', status_code = status.HTTP_204_NO_CONTENT)
+@router.delete('/{user_id}', status_code = status.HTTP_204_NO_CONTENT)
 @limiter.limit('20/minute')
 async def delete(request: Request, user_id: UUID, current_user_uuid: UUID = Depends(get_current_user_uuid), service: FriendshipService = Depends(get_frienship_service)) -> None:
     await service.delete(current_user_uuid, user_id)

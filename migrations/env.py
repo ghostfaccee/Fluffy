@@ -20,6 +20,7 @@ from app.model import Message
 from app.model import Group, GroupMember, GroupMessage
 from app.model import Post
 from app.model import Story
+from app.model import Friendship
 target_metadata = Base.metadata
 # ===========
 

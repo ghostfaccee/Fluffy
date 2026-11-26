@@ -7,3 +7,7 @@ class FriendshipDoesNotExists(HTTPException):
 class SenderCannotAcceptFriendship(HTTPException):
     def __init__(self):
         super().__init__(status.HTTP_403_FORBIDDEN, 'The sender cannot accept the friend request')
+
+class FriendshipIsNotPending(HTTPException):
+    def __init__(self):
+        super().__init__(status.HTTP_409_CONFLICT, 'Friendship is not pending')

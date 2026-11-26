@@ -11,13 +11,7 @@ class FriendshipService:
         self.uow = uow
     
     async def create(self, from_user_id: UUID, to_user_id: UUID) -> Friendship:
-        from_user = await self.uow.user.get(from_user_id)
-        if from_user is None:
-            raise user_exc.UserDoesNotExists()
-        to_user = await self.uow.user.get(to_user_id)
-        if to_user is None:
-            raise user_exc.UserDoesNotExists()
-        low_user_id, high_user_id = sorted(from_user_id, to_user_id)
+        low_user_id, high_user_id = await self._get_low_and_high_user_ids(from_user_id, to_user_id)
         friendship = Friendship(
             user_low_id = low_user_id,
             user_high_id = high_user_id,
@@ -34,6 +28,8 @@ class FriendshipService:
             raise friendship_exc.FriendshipDoesNotExists()
         if friendship.requested_by != sending_user_id:
             raise friendship_exc.SenderCannotAcceptFriendship()
+        if friendship.status != 'pending':
+            raise friendship_exc.FriendshipIsNotPending()
         friendship.status = 'accepted'
         await self.uow.commit()
         return friendship
@@ -81,5 +77,5 @@ class FriendshipService:
         second_user = await self.uow.user.get(second_user_id)
         if second_user is None:
             raise user_exc.UserDoesNotExists()
-        low_user_id, high_user_id = sorted(first_user_id, second_user_id)
+        low_user_id, high_user_id = sorted([first_user_id, second_user_id])
         return low_user_id, high_user_id

@@ -3,7 +3,7 @@ from app.repository import UserRepository, MessageRepository
 from app.repository import GroupMemberRepository, GroupMessageRepository, GroupRepository
 from app.repository import PostRepository
 from app.repository import StoryRepository
-from app.repository import FriendshipRepository
+from app.repository.friendship import FriendshipRepository # circular import
 
 class UnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
