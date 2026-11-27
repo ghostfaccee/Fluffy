@@ -69,6 +69,7 @@ class FriendshipService:
         if friendship is None:
             raise friendship_exc.FriendshipDoesNotExists()
         await self.uow.friendship.delete(friendship)
+        await self.uow.commit()
 
     async def _get_low_and_high_user_ids(self, first_user_id: UUID, second_user_id: UUID) -> tuple[UUID, UUID]:
         first_user = await self.uow.user.get(first_user_id)
