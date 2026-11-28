@@ -1,4 +1,5 @@
 .env
+/pages/api/openapi.json
 .venv
 logs
 __pycache__

@@ -50,6 +50,17 @@ dokcer compose --profile prod exec api alembic upgrade head
 Интерактивная документация FastAPI будет доступна по адресу `http://localhost:8000/docs`. Документация redoc будет доступна по адресу: `http://localhost:8000/redoc`.
 Документация openapi json будет доступна по адресу `http://localhost:8000/openapi.json`.
 
+[Публичная документация HTTP API](https://ghostfaccee.github.io/Fluffy/api/) обновляется автоматически при деплое GitHub Pages после пуша в `main`. Чтобы новый эндпоинт появился в документации, подключите его роутер к FastAPI и укажите схемы запроса и ответа, а при необходимости `summary`, `description` и `tags`. Править `openapi.json` вручную не нужно.
+
+Чтобы посмотреть версию для Pages локально, выполните из корня репозитория в существующем Python-окружении с настройками `.env`:
+
+```bash
+python -m scripts.export_openapi
+python -m http.server 8081 --directory pages
+```
+
+Откройте `http://localhost:8081/api/`. Генерация не запускает API и не подключается к БД или Redis. В публичной версии отправка запросов через Swagger отключена; для неё используйте локальный `/docs`.
+
 ### 3. Запуск фронтенда (для разработки)
 
 Если бекенд уже запущен, но вы решили править директорию `frontend/` во время разработки и хотите сразу видеть изменения,
