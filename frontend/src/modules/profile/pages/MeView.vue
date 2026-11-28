@@ -9,6 +9,7 @@ import AppShell from '@/app/layouts/AppShell.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import ProfilePosts from '@/modules/posts/components/ProfilePosts.vue'
 import ProfileStories from '@/modules/stories/components/ProfileStories.vue'
+import FriendshipList from '@/modules/friendships/components/FriendshipList.vue'
 
 const auth = useAuthStore()
 const { uploading, error: avatarError, upload, remove } = useAvatarUpload()
@@ -177,6 +178,11 @@ async function saveProfile() {
                   :key="user.user_id"
                   :user="user"
                   :size="128"
+                />
+                <FriendshipList
+                  :key="`friends:${user.user_id}`"
+                  kind="accepted"
+                  :current-user-id="user.user_id"
                 />
               </div>
 

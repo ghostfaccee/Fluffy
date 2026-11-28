@@ -8,6 +8,7 @@ import { useMessagingRealtime } from '@/app/composables/useMessagingRealtime.js'
 import LogoIcon from '@/shared/ui/LogoIcon.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import AppIcon from '@/shared/ui/AppIcon.vue'
+import FriendshipNotifications from '@/modules/friendships/components/FriendshipNotifications.vue'
 
 const auth = useAuthStore()
 const ws = useWsStore()
@@ -158,15 +159,13 @@ async function logout() {
           </span>
         </form>
 
-        <RouterLink
-          :to="{ name: 'me' }"
-          class="fl-account"
-        >
-          <UserAvatar :user="user" :size="36" />
-          <span>
-            {{ user?.name || user?.username || 'Мой профиль' }}
-          </span>
-        </RouterLink>
+        <div class="fl-header-actions">
+          <FriendshipNotifications v-if="user" :key="user.user_id" :current-user-id="user.user_id" />
+          <RouterLink v-if="user" :to="{ name: 'me' }" class="fl-account" aria-label="Мой профиль">
+            <UserAvatar :user="user" :size="36" />
+            <span>{{ user.name || user.username || 'Мой профиль' }}</span>
+          </RouterLink>
+        </div>
       </div>
     </header>
 
@@ -358,10 +357,17 @@ async function logout() {
   font-size: 12px;
 }
 
+.fl-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
 .fl-account {
   display: flex;
   align-items: center;
-  justify-self: end;
   gap: 10px;
   min-width: 0;
   max-width: 220px;

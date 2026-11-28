@@ -44,6 +44,14 @@ async def get_another_user_by_username(request: Request, username: str, current_
         raise user_exc.UserDoesNotExists()
     return await build_user_response(user)
 
+@router.get('/id/{user_id}', response_model = UserResponse, status_code = status.HTTP_200_OK)
+@limiter.limit('30/minute')
+async def get_user_by_user_id(request: Request, user_id: UUID, current_user_uuid: UUID = Depends(get_current_user_uuid), service: UserService = Depends(get_user_service)) -> UserResponse:
+    user = await service.get(user_id)
+    if user is None:
+        raise user_exc.UserDoesNotExists()
+    return await build_user_response(user)
+
 @router.patch('/me', response_model = UserResponse, status_code = status.HTTP_200_OK)
 @limiter.limit('10/minute')
 async def update_me(request: Request, data: UserUpdate, current_user_uuid: UUID = Depends(get_current_user_uuid), service: UserService = Depends(get_user_service)) -> UserResponse:
