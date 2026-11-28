@@ -33,4 +33,5 @@ class Friendship(Base):
     )
     requested_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid = True))
     status: Mapped[str] = mapped_column(String(20), default = 'pending')
-    # In the repository, we use a composite parameter in the `get` method query. There’s no need to add an index, though—Postgres creates one automatically.
+    # In the repository, we use a composite parameter in
+    #  the `get` method query. There’s no need to add an index, though—Postgres creates one automatically.
