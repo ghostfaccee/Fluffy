@@ -8,6 +8,8 @@ import UserCard from '@/modules/profile/components/UserCard.vue'
 import ProfileMusic from '@/modules/profile/components/ProfileMusic.vue'
 import ProfilePosts from '@/modules/posts/components/ProfilePosts.vue'
 import ProfileStories from '@/modules/stories/components/ProfileStories.vue'
+import FriendshipButton from '@/modules/friendships/components/FriendshipButton.vue'
+import FriendshipList from '@/modules/friendships/components/FriendshipList.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -124,6 +126,13 @@ onBeforeUnmount(() => {
                   :user="user"
                   :size="128"
                 />
+                <FriendshipList
+                  v-if="auth.user && auth.user.user_id !== user.user_id"
+                  :key="`friends:${auth.user.user_id}:${user.user_id}`"
+                  kind="accepted"
+                  :current-user-id="auth.user.user_id"
+                  :profile-user-id="user.user_id"
+                />
               </div>
 
               <div class="app-profile-info">
@@ -140,6 +149,12 @@ onBeforeUnmount(() => {
                   >
                     Написать сообщение
                   </RouterLink>
+                  <FriendshipButton
+                    v-if="auth.user && auth.user.user_id !== user.user_id"
+                    :key="`${auth.user.user_id}:${user.user_id}`"
+                    :current-user-id="auth.user.user_id"
+                    :user-id="user.user_id"
+                  />
                 </div>
               </div>
             </div>

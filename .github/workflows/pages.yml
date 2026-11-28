@@ -5,7 +5,12 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "pages/**" 
+      - "pages/**"
+      - "app/**"
+      - "config.yaml"
+      - "requirements.txt"
+      - "scripts/export_openapi.py"
+      - ".github/workflows/pages.yml"
 
   workflow_dispatch:
 
@@ -27,15 +32,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Export OpenAPI schema
+        env:
+          POSTGRES_URL: postgresql+asyncpg://docs:docs@127.0.0.1:5432/docs
+          REDIS_URL: redis://127.0.0.1:6379/0
+          SECRET_JWT_KEY: openapi-export-placeholder
+          SECRET_REFRESH_KEY: openapi-export-placeholder
+        run: python -m scripts.export_openapi
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: './pages'
-      
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

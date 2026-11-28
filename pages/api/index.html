@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Документация API — Fluffy</title>
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.36.0/swagger-ui.css"
+        integrity="sha384-z/AtSaOHGn5MJ5auAHXUypohywlIWLBZo1jeGmhdpVIbCnFhxAH92cwdV41oyINc"
+        crossorigin="anonymous">
+  <style>
+    body { margin: 0; background: #fafafa; font-family: system-ui, sans-serif; }
+    header { padding: 16px clamp(16px, 4vw, 48px); background: #191a1b; color: #fff; }
+    header nav { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+    header a { color: #a2e7cf; }
+    header p { margin: 8px 0 0; font-size: 14px; }
+    #swagger-ui > p { padding: 16px; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav aria-label="Документация API">
+      <a href="../">← Fluffy</a>
+      <a href="./openapi.json">Скачать OpenAPI JSON</a>
+    </nav>
+    <p>Справочник HTTP API Fluffy. Для отправки запросов используйте <code>/docs</code> на запущенном сервере.</p>
+  </header>
+
+  <main id="swagger-ui">
+    <p>Если Swagger UI не загрузился, откройте <a href="./openapi.json">схему OpenAPI</a>.</p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.36.0/swagger-ui-bundle.js"
+          integrity="sha384-fUpRgC19yPykTqzdrUbdAg8NTiu16NEKf9U12J+IJWCg8/1mEI8f2+PEIz60Wyd+"
+          crossorigin="anonymous"></script>
+  <script>
+    if (window.SwaggerUIBundle) {
+      SwaggerUIBundle({
+        url: './openapi.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        supportedSubmitMethods: [],
+        validatorUrl: null,
+      })
+    }
+  </script>
+</body>
+</html>

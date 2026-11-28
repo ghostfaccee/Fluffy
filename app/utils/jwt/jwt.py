@@ -12,7 +12,7 @@ def create_access_token(data: dict, expires: int = yaml_settings.JWT_TOKEN_EXPIR
 
 def decode_access_token(token: str) -> Optional[dict]:
     try:
-        payload = jwt.decode(token, env_settings.SECRET_JWT_KEY, yaml_settings.ALGORITHM)
+        payload = jwt.decode(token, env_settings.SECRET_JWT_KEY, algorithms = [yaml_settings.ALGORITHM])
         if payload.get('type') != 'access':
             return None
         return payload
@@ -27,7 +27,7 @@ def create_refresh_token(data: dict, expires: int = yaml_settings.REFRESH_TOKEN_
 
 def decode_refresh_token(token: str) -> Optional[dict]:
     try:
-        payload = jwt.decode(token, env_settings.SECRET_REFRESH_KEY, yaml_settings.ALGORITHM)
+        payload = jwt.decode(token, env_settings.SECRET_REFRESH_KEY, algorithms = [yaml_settings.ALGORITHM])
         if payload.get('type') != 'refresh':
             return None
         return payload
