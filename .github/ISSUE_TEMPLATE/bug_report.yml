@@ -1,0 +1,39 @@
+name: Сообщить об ошибке
+description: Опишите ошибку в работе Fluffy
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Этот отчёт будет публичным. Не прикладывайте пароли, токены, `.env` и персональные данные.
+        Об уязвимостях сообщайте приватно по [политике безопасности](https://github.com/ghostfaccee/Fluffy/security/policy).
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги воспроизведения
+      description: Опишите, с чего начать и какие действия приводят к ошибке.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактическое поведение
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Окружение
+      description: Укажите версию или хеш коммита, способ запуска, а также ОС и браузер, если они важны.
+    validations:
+      required: true
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Логи и скриншоты
+      description: По возможности приложите материалы, предварительно удалив конфиденциальные данные.

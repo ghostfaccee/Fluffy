@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Приватно сообщить об уязвимости
+    url: https://github.com/ghostfaccee/Fluffy/security/policy
+    about: В политике безопасности указано, как отправить приватный отчёт.

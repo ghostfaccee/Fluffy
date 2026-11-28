@@ -39,7 +39,7 @@
 ```bash
 docker compose --profile prod up --build -d
 # запуск контейнеров
-dokcer compose --profile prod exec api alembic upgrade head
+docker compose --profile prod exec api alembic upgrade head
 # применение миграций
 ```
 
@@ -87,6 +87,13 @@ npm run dev
 Файлы ревизий Alembic находятся в директории `migrations/versions/`.
 
 Перед внесением или применением изменений в схему базы данных ознакомьтесь с [руководством по миграциям](migrations/readme.md).
+
+## Участие в проекте
+
+- [Сообщить об ошибке или предложить улучшение](https://github.com/ghostfaccee/Fluffy/issues/new/choose)
+- [Руководство для участников](CONTRIBUTING.md)
+- [Кодекс поведения](CODE_OF_CONDUCT.md)
+- [Политика безопасности и приватные отчёты об уязвимостях](SECURITY.md)
 
 ## Лицензия и контакты
 
