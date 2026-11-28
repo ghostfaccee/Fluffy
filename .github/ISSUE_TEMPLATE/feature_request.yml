@@ -1,0 +1,22 @@
+name: Предложить улучшение
+description: Предложите новую возможность или улучшение Fluffy
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую задачу нужно решить?
+      description: Опишите сценарий и чего вам в нём не хватает.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Желаемый результат
+      description: Опишите, как должна работать предлагаемая возможность.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативы и дополнительный контекст
+      description: Если есть, расскажите об обходных путях или приложите ссылки на связанные задачи.
